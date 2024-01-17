@@ -1,0 +1,68 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "build": {
+    "beforeBuildCommand": "npm run sveltekit:build",
+    "beforeDevCommand": "npm run sveltekit:dev",
+    "devPath": "http://localhost:5173",
+    "distDir": "../build"
+  },
+  "package": {
+    "productName": "programmier-trainer",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "dialog": {
+        "all": true
+      },
+      "fs": {
+        "all": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "copyright": "2024 HTL Villach",
+      "longDescription": "Programmierwerkstatt 2024 Tag der offenen Tür HTL Villach",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "identifier": "at.htlvillach.programmier-trainer",
+      "deb": {
+        "depends": []
+      },
+      "externalBin": [],
+      "macOS": {
+        "entitlements": null,
+        "exceptionDomain": "",
+        "frameworks": [],
+        "providerShortName": null,
+        "signingIdentity": null
+      },
+      "resources": [],
+      "shortDescription": "",
+      "targets": "all"
+    },
+    "security": {
+      "csp": null
+    },
+    "updater": {
+      "active": false
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "Tag der offenen Tür 2024 Programmierwerkstatt",
+        "height": 600,
+        "width": 800,
+        "minHeight": 400,
+        "minWidth": 500
+      }
+    ]
+  }
+}

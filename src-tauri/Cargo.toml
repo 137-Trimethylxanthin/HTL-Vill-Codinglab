@@ -1,0 +1,24 @@
+[package]
+name = "programmier-trainer"
+version = "0.1.0"
+description = "Programmierwerkstatt 2024 Tag der offenen Tür HTL Villach"
+authors = ["Sitter Max", "Rechberger Simon"]
+license = "MIT"
+default-run = "programmier-trainer"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "1.5.1", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+tauri = { version = "1.5.4", features = [ "fs-all", "dialog-all"] }
+
+[features]
+# this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.
+# If you use cargo directly instead of tauri's cli you can use this feature flag to switch between tauri's `dev` and `build` modes.
+# DO NOT REMOVE!!
+custom-protocol = [ "tauri/custom-protocol" ]
