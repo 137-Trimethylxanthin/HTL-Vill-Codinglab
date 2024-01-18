@@ -1,0 +1,105 @@
+:root{
+    --base: #eff1f5;
+    --mantel:#e6e9ef;
+    --crust:#dce0e8;
+
+    --surface0: #ccd0da;
+    --surface1: #bcc0cc;
+    --surface2: #acb0be;
+
+    --overlay0: #9ca0b0;
+    --overlay1: #8c8fa1;
+    --overlay2: #7c7f93;
+
+    --subtext0: #6c6f85;
+    --subtext1: #5c5f77;
+    --text: #4c4f69;
+
+    --lavender: #7287fd;
+    --blue: #1e66f5;
+    --saphire: #209fb5;
+    --sky: #04a5e5;
+    --teal: #179299;
+    --green: #40a02b;
+    --yellow: #df8e1d;
+    --peach: #fe640b;
+    --maroon: #e64553;
+    --red: #d20f39;
+    --mauve: #8839ef;
+    --pink: #ea76cb;
+    --flamingo: #dd7878;
+    --rosewater: #dc8a78;
+}
+[data-theme="dark"] {
+    --base: #24273a;
+    --mantel:#1e2030;
+    --crust:#181926;
+
+    --surface0: #363a4f;
+    --surface1: #494d64;
+    --surface2: #5b6078;
+
+    --overlay0: #6e738d;
+    --overlay1: #8087a2;
+    --overlay2: #939ab7;
+
+    --subtext0: #a5adcb;
+    --subtext1: #b8c0e0;
+    --text: #cad3f5;
+
+    --lavender: #b7bdf8;
+    --blue: #8aadf4;
+    --saphire: #7dc4e4;
+    --sky: #91d7e3;
+    --teal: #8bd5ca;
+    --green: #a6da95;
+    --yellow: #eed49f;
+    --peach: #f5a97f;
+    --maroon: #ee99a0;
+    --red: #ed8796;
+    --mauve: #c6a0f6;
+    --pink: #f5bde6;
+    --flamingo: #f0c6c6;
+    --rosewater: #f4dbd6;
+}
+
+
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    scroll-behavior: smooth ;
+    transition: all 0.25s ease-in-out;
+    color-scheme: dark;
+    color: var(--text)
+
+}
+
+body{
+    font-family: 'Fira Code', sans-serif;
+    font-weight: 500;
+    background-color: var(--base);
+    margin: auto 1em auto 1em;
+}
+
+header{
+    margin-bottom: 1em;
+}
+
+
+#close{
+    width: 100%;
+    background: var(--crust);
+    border-bottom-left-radius: 0.5em;
+    border-bottom-right-radius: 0.5em;
+    height: 1.5vh;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+}
+
+#close:hover{
+    background: var(--mantel);
+    box-shadow: var(--surface0) 0 0.1em 0.6em;
+    cursor: pointer;
+    height: 2vh;
+}
