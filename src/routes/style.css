@@ -103,3 +103,102 @@ header{
     cursor: pointer;
     height: 2vh;
 }
+
+#close:active{
+    background: var(--surface0);
+    box-shadow: var(--surface1) 0 0.1em 0.6em;
+    height: 1.5vh;
+}
+
+
+
+#open {
+    width: 100%;
+    border-bottom-left-radius: 0.5em;
+    border-bottom-right-radius: 0.5em;
+    height: 10vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#open ul {
+    list-style: none;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 100%;
+    flex-direction: row;
+    width: 100%;
+    background: var(--crust);
+    border-bottom-left-radius: 0.5em;
+    border-bottom-right-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+}
+
+#open ul li {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    border-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    background: var(--crust);
+}
+
+#open ul li:hover {
+    background: var(--mantel);
+    box-shadow: var(--surface0) 0 0.1em 0.6em;
+    cursor: pointer;
+}
+
+#open ul li:active {
+    background: var(--surface0);
+    box-shadow: var(--surface1) 0 0.1em 0.6em;
+}
+
+#openToggle {
+    width: 10vw;
+    background: var(--crust);
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    border-bottom-left-radius: 0.5em;
+    border-bottom-right-radius: 0.5em;
+    height: 5vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#openToggle:hover {
+    background: var(--mantel);
+    box-shadow: var(--surface0) 0 0.1em 0.6em;
+    height: 6vh;
+    cursor: pointer;
+}
+
+#openToggle:active {
+    background: var(--surface0);
+    box-shadow: var(--surface1) 0 0.1em 0.6em;
+}
+
+.levelbtn{
+    width: 10vw;
+    background: var(--surface0);
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    border-bottom-left-radius: 0.5em;
+    border-bottom-right-radius: 0.5em;
+    height: 5vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+
+
+
+
+

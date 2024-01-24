@@ -28,12 +28,15 @@
 
 </script>
 
+
 <header>
     {#if isOpen}
         <div id="open">
             <ul>
-                <li></li>
+                <li>test</li>
+                <li>test</li>
             </ul>
+            <div on:click={toggleHeader} id="openToggle">Close</div>
         </div>
     {:else}
         <div on:click={toggleHeader} id="close" ></div>
