@@ -1,16 +1,17 @@
-<script>
+<script lang="ts">
     import { invoke } from '@tauri-apps/api';
     
-    import { writable } from 'svelte/store';
 
-    const tauriMessage = writable('Loading...');
-    
-    invoke('hello').then((message) => {
-        console.log(message);
-        tauriMessage.set(message);
-    });
+
+    function openCodeWithFilename(fileName: string) {
+        return function() {
+            invoke('open_code_with_filename', { fileName })
+        }
+    }
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
-<p>Message from tauri: {$tauriMessage}</p>
+<h1>Wilkommen Freunde</h1>
+
+<button on:click={openCodeWithFilename("level1.py")}>Start Lvl 1</button>
+<button on:click={openCodeWithFilename("level2.py")}>Start Lvl 2</button>
+<button on:click={openCodeWithFilename("level3.py")}>Start Lvl 3</button>
