@@ -14,6 +14,83 @@ struct ApplicationState {
     dirname: Mutex<String>,
 }
 
+struct VSCodeInstallation {}
+
+impl VSCodeInstallation {
+    fn get_installed_extensions() -> Vec<String> {
+        let output = if cfg!(target_os = "windows") {
+            Command::new("cmd")
+                .args(["/C", "code --list-extensions"])
+                .output()
+                .expect("failed to execute process")
+        } else {
+            Command::new("sh")
+                .arg("-c")
+                .arg("code --list-extensions")
+                .output()
+                .expect("failed to execute process")
+        };
+
+        let output_string = String::from_utf8(output.stdout).unwrap();
+        output_string.split("\n").map(|s| s.to_string()).collect()
+    }
+
+    fn install_extension(extension: &str) {
+        let output = if cfg!(target_os = "windows") {
+            Command::new("cmd")
+                .args(["/C", format!("code --install-extension {}", extension).as_str()])
+                .output()
+                .expect("failed to execute process")
+        } else {
+            Command::new("sh")
+                .arg("-c")
+                .arg(format!("code --install-extension {}", extension).as_str())
+                .output()
+                .expect("failed to execute process")
+        };
+
+        println!("{:?}", output.stdout);
+    }
+
+    fn get_settings_path() -> String {
+        let path = if cfg!(target_os = "windows") {
+            let appdata = std::env::var("APPDATA").unwrap();
+            format!("{}\\Code\\User\\settings.json", appdata)
+        } else if cfg!(target_os = "macos") {
+            let home = std::env::var("HOME").unwrap();
+            format!("{}/Library/Application Support/Code/User/settings.json", home)
+        } else {
+            let home = std::env::var("HOME").unwrap();
+            format!("{}/.config/Code/User/settings.json", home)
+        };
+        path
+    }
+
+    fn settings_disable_workspace_trust() {
+        let settings_path = VSCodeInstallation::get_settings_path();
+        let settings_file = fs::read_to_string(settings_path.clone()).unwrap();
+        let mut settings_json: serde_json::Value = serde_json::from_str(&settings_file).unwrap();
+        settings_json["security.workspace.trust.enabled"] = serde_json::json!(false);
+        let new_settings_file = serde_json::to_string_pretty(&settings_json).unwrap();
+        fs::write(settings_path, new_settings_file).unwrap();
+    }
+
+    fn prepare_open() {
+        let installed_extensions = VSCodeInstallation::get_installed_extensions();
+        let required_extensions = vec![
+            "ms-python.python",
+            "ms-python.vscode-pylance",
+            "njpwerner.autodocstring"
+        ];
+        for extension in required_extensions {
+            if !installed_extensions.contains(&extension.to_string()) {
+                VSCodeInstallation::install_extension(extension);
+            }
+        }
+        // VSCodeInstallation::settings_disable_workspace_trust(); TODO: Fix this, it is broken
+    }
+}
+
 fn get_sys_time_in_secs() -> u64 {
     match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
         Ok(n) => n.as_secs(),
@@ -54,6 +131,7 @@ async fn setup_user<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<
         .resolve_resource("python/")
         .expect("failed to resolve resource");
     copy_dir_all(resource_path, document_directory).unwrap();
+    VSCodeInstallation::prepare_open();
     Ok(true)
 }
 
@@ -93,5 +171,3 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
-
-
