@@ -67,7 +67,7 @@
     {#if isOpen}
         <div id="open">
             <ul>
-                <li><button on:click={logOut}>Abmelden</button>
+                <li><button on:click={logOut}>Abmelden</button></li>
                 <li>test</li>
             </ul>
             <div on:click={toggleHeader} id="openToggle">Close</div>
@@ -77,4 +77,7 @@
     {/if}
 </header>
 
+
 <slot />
+
+
