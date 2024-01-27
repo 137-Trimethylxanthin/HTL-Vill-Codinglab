@@ -18,6 +18,9 @@
       },
       "fs": {
         "all": true
+      },
+      "process": {
+        "exit": true
       }
     },
     "bundle": {

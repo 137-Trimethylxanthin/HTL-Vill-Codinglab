@@ -90,24 +90,27 @@ header{
 
 #close{
     width: 100%;
-    background: var(--crust);
+    background: var(--overlay0);
     border-bottom-left-radius: 0.5em;
     border-bottom-right-radius: 0.5em;
     height: 1.5vh;
-    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    opacity: .6;
 }
 
 #close:hover{
-    background: var(--mantel);
-    box-shadow: var(--surface0) 0 0.1em 0.6em;
+    background: var(--overlay2);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
     cursor: pointer;
     height: 2vh;
+    opacity: 1;
 }
 
 #close:active{
     background: var(--surface0);
     box-shadow: var(--surface1) 0 0.1em 0.6em;
     height: 1.5vh;
+    opacity: 1;
 }
 
 
@@ -131,37 +134,52 @@ header{
     height: 100%;
     flex-direction: row;
     width: 100%;
-    background: var(--crust);
+    background: var(--overlay2);
     border-bottom-left-radius: 0.5em;
     border-bottom-right-radius: 0.5em;
     box-shadow: var(--mantel) 0 0.1em 0.6em;
 }
 
-#open ul li {
+
+#open ul li button {
+    border: none;
+    background: none;
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--text);
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100%;
-    width: 100%;
     border-radius: 0.5em;
     box-shadow: var(--mantel) 0 0.1em 0.6em;
-    background: var(--crust);
+    background: var(--surface0);
+    padding: 1vh 1vw;
+
+
 }
 
-#open ul li:hover {
+#open ul li button:hover {
     background: var(--mantel);
     box-shadow: var(--surface0) 0 0.1em 0.6em;
     cursor: pointer;
+    transform: scale(1.1);
 }
 
-#open ul li:active {
+#open ul li button:active {
     background: var(--surface0);
     box-shadow: var(--surface1) 0 0.1em 0.6em;
+    transform: scale(.9);
 }
+
+
+
+
 
 #openToggle {
     width: 10vw;
-    background: var(--crust);
+    background: var(--overlay2);
+    color: var(--crust);
     box-shadow: var(--mantel) 0 0.1em 0.6em;
     border-bottom-left-radius: 0.5em;
     border-bottom-right-radius: 0.5em;
@@ -173,8 +191,9 @@ header{
 }
 
 #openToggle:hover {
-    background: var(--mantel);
+    background: var(--surface2);
     box-shadow: var(--surface0) 0 0.1em 0.6em;
+    color: var(--text);
     height: 6vh;
     cursor: pointer;
 }

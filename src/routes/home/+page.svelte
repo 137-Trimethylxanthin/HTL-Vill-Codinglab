@@ -4,7 +4,7 @@ import {goto} from "$app/navigation";
 
 function switchLevel(level: number) {
     return () => {
-        goto(`/level_${level}`);
+        goto(`/level_${level}/exp1`);
     }
 }
 
