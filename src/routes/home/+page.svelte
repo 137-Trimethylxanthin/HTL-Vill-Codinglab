@@ -1,5 +1,10 @@
 <script lang="ts">
-import { nameStore } from "../../utils/stores";
+    import { nameStore } from "../../utils/stores";
+    import { goto } from "$app/navigation";
+
+    if ($nameStore === "") {
+        goto('/');
+    }
 </script>
 
 <div>
