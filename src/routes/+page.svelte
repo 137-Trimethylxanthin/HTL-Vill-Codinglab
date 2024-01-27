@@ -1,6 +1,8 @@
 <script lang="ts">
     import { invoke } from '@tauri-apps/api';
 	import { message } from '@tauri-apps/api/dialog';
+	import { nameStore } from '../utils/stores';
+	import { goto } from '$app/navigation';
 
     function openCodeWithFilename(fileName: string) {
         return function() {
@@ -9,13 +11,13 @@
     }
 
     function setupUser(e: SubmitEvent) {
-        const name = "Max";
+        const name = (e.target as any).vorname.value;
         invoke('setup_user', { name }).then((res) => {
-            console.log(res)
             if (res) {
-                message("User wurde erstellt")
+                nameStore.set(name);
+                goto('/home');
             } else {
-                message("User konnte nicht erstellt werden, bereits eingeloggt?")
+                message("User konnte nicht erstellt werden, bereits eingeloggt?");
             }
         })
     }
@@ -25,8 +27,8 @@
     <h1>Wilkommen in der Programmierwerkstatt!</h1>
     <p>Gebe bitte deinen Vornamen ein, damit wir dich ansprechen können.</p>
     <form on:submit|preventDefault={setupUser}>
-        <label for="name">Vorname:</label> <br />
-        <input type="text" id="name" name="name" required placeholder="Vorname"/> <br />
-        <button type="submit">Submit</button>
+        <label for="vorname">Vorname:</label><br />
+        <input type="text" id="name" name="vorname" required placeholder="Vorname"/><br />
+        <button type="submit">Starten</button>
     </form>
 </div>

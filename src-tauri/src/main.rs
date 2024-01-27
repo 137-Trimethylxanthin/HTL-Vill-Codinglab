@@ -87,7 +87,7 @@ impl VSCodeInstallation {
                 VSCodeInstallation::install_extension(extension);
             }
         }
-        // VSCodeInstallation::settings_disable_workspace_trust(); TODO: Fix this, it is broken
+        VSCodeInstallation::settings_disable_workspace_trust();
     }
 }
 
@@ -113,7 +113,7 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
 }
 
 #[tauri::command]
-async fn setup_user<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<R>, state: State<'_, ApplicationState>, name: &str) -> Result<bool, String> {
+fn setup_user<R: Runtime>(app: tauri::AppHandle<R>, state: State<'_, ApplicationState>, name: &str) -> Result<bool, String> {
     let mut state_name = state.name.lock().unwrap();
     if !state_name.is_empty() {
         return Ok(false);
@@ -126,13 +126,33 @@ async fn setup_user<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<
     let document_directory = document_dir().unwrap().join("Programmierwerkstatt").join(dirname.clone());
     *state_name = name.to_string();
     *state_dirname = dirname;
-    // println!("{}", document_directory.display());
     let resource_path = app.path_resolver()
         .resolve_resource("python/")
         .expect("failed to resolve resource");
     copy_dir_all(resource_path, document_directory).unwrap();
     VSCodeInstallation::prepare_open();
     Ok(true)
+}
+
+#[tauri::command]
+fn logout(state: State<'_, ApplicationState>) -> Result<bool, String> {
+    let mut state_name = state.name.lock().unwrap();
+    let mut state_dirname = state.dirname.lock().unwrap();
+    if state_name.is_empty() || state_dirname.is_empty() {
+        return Ok(false);
+    }
+    *state_name = String::new();
+    *state_dirname = String::new();
+    Ok(true)
+}
+
+#[tauri::command]
+async fn get_name(state: State<'_, ApplicationState>) -> Result<String, String> {
+    let state_name = state.name.lock().unwrap();
+    if state_name.is_empty() {
+        println!("No user logged in");
+    }
+    Ok(state_name.clone())
 }
 
 #[tauri::command]
@@ -166,6 +186,8 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             setup_user,
+            logout,
+            get_name,
             open_code_with_filename
         ])
         .run(tauri::generate_context!())
