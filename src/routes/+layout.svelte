@@ -11,7 +11,7 @@
             e.preventDefault();
         });
         document.addEventListener("keydown", (e) => {
-            if (e.key === "KeyR" && (e.ctrlKey || e.metaKey)) {
+            if (e.key === "r" && (e.ctrlKey || e.metaKey)) {
                 document.location.reload();
             }
         });
