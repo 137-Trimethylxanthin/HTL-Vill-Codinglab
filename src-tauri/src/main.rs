@@ -2,16 +2,50 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::process::Command;
-use tauri::api::path::document_dir;
-use tauri::{Runtime, State};
 use std::time::SystemTime;
 use std::{fs, io};
 use std::path::Path;
 use std::sync::Mutex;
+use tauri::api::path::document_dir;
+use tauri::{Runtime, State};
+use pyo3::prelude::*;
 
 struct ApplicationState {
     name: Mutex<String>,
     dirname: Mutex<String>,
+}
+
+struct PythonValidator {}
+
+impl PythonValidator {
+    fn check_python() -> bool {
+        let output = if cfg!(target_os = "windows") {
+            Command::new("cmd")
+                .args(["/C", "python --version"])
+                .output()
+                .expect("failed to execute process")
+        } else {
+            Command::new("sh")
+                .arg("-c")
+                .arg("python --version")
+                .output()
+                .expect("failed to execute process")
+        };
+
+        let output_string = String::from_utf8(output.stdout).unwrap();
+        output_string.contains("Python 3")
+    }
+
+    fn validate_python_syntax(code: &str) -> bool {
+        println!("{:?}", code);
+        pyo3::prepare_freethreaded_python();
+        Python::with_gil(|py| {
+            match py.eval(code, None, None) {
+                Ok(_) => return true,
+                Err(_) => return false,
+            };
+        })
+    }
 }
 
 struct VSCodeInstallation {}
@@ -131,6 +165,10 @@ fn setup_user<R: Runtime>(app: tauri::AppHandle<R>, state: State<'_, Application
         .expect("failed to resolve resource");
     copy_dir_all(resource_path, document_directory).unwrap();
     VSCodeInstallation::prepare_open();
+    if !PythonValidator::check_python() {
+        println!("No python installation found!");
+        return Ok(false);
+    }
     Ok(true)
 }
 
@@ -177,6 +215,10 @@ fn open_code_with_filename(handle: tauri::AppHandle, file_name: &str) {
     println!("{:?}", output.stdout);
 }
 
+#[tauri::command]
+fn check_python(code: String) -> Result<bool, String> {
+    Ok(PythonValidator::validate_python_syntax(&code))
+}
 
 fn main() {
     tauri::Builder::default()
@@ -188,7 +230,8 @@ fn main() {
             setup_user,
             logout,
             get_name,
-            open_code_with_filename
+            open_code_with_filename,
+            check_python
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
