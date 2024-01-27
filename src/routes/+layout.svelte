@@ -17,7 +17,6 @@
         });
     }
 
-    //TODO: temporär später in optionenen hab dafür schon a function geschreiben :)
     document.documentElement.dataset.theme = "dark";
 
     let icon = "";
@@ -38,7 +37,7 @@
 
     let isOpen = false;
 
-    // sollte die webview aus irgendeinem grund refreshen, wird der name aus dem backend geholt
+    // sollte die webview aus irgendeinem grund refreshen, wird der name aus dem backend geholt | ~maxi: cool :)
     invoke('get_name').then((res) => {
         if (res) {
             nameStore.set(res);
@@ -85,13 +84,13 @@
     {#if isOpen}
         <div id="open">
             <ul>
-                <li><button on:click={changeTheme}>Theme</button></li>
-                <li><button on:click={() =>  {goto("/info")}}>Info</button></li> <!-- TODO: info seite -->
+                <li><button on:click={changeTheme}><img class="icons" src="./media/{icon}.png" alt="Theme"></button></li>
+                <li><button on:click={() =>  {goto("/info")}}><img class="icons" src="./media/info-{theme}.png" alt="Info"></button></li> <!-- TODO: info seite -->
                 <li></li>
                 <li></li>
                 <li></li>
-                <li><button on:click={logOut}>Abmelden</button></li>
-                <li><button on:click={quit}>Close</button></li>
+                <li><button on:click={logOut}><img class="icons" src="./media/logout-{theme}.png" alt="Info"></button></li>
+                <li><button on:click={quit}><img class="icons" src="./media/close-{theme}.png" alt="Info"></button></li>
             </ul>
             <div on:click={toggleHeader} id="openToggle">Close</div>
         </div>

@@ -119,7 +119,7 @@ header{
     width: 100%;
     border-bottom-left-radius: 0.5em;
     border-bottom-right-radius: 0.5em;
-    height: 10vh;
+    height: 13vh;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -152,7 +152,7 @@ header{
     align-items: center;
     height: 100%;
     border-radius: 0.5em;
-    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    box-shadow: var(--mantel) 0 0 0.2em;
     background: var(--surface0);
     padding: 1vh 1vw;
 
@@ -172,6 +172,19 @@ header{
     transform: scale(.9);
 }
 
+#open ul li button:hover > .icons {
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+#open ul li button:active > .icons {
+    transform: scale(.9);
+}
+
+.icons {
+    width: 45px !important;
+    height: 45px !important;
+}
 
 
 
