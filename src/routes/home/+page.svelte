@@ -44,9 +44,7 @@ function switchLevel(level: number) {
         <button class="levelbtn" on:click={switchLevel(3)} >Level 3</button>
         <div class="tooltip">
             Ein Level für die Profis. <br>
-            Hier solltest du bereits die Grundlagen von Python kennen (oder die vorherigen Level gemacht haben). <br>
-            Hier gibts es nur noch die Aufgabenstellung und du musst dir selbst überlegen wie du sie löst. <br>
-            Viel Spaß!
+            Hier solltest du bereits die Grundlagen von Python kennen (oder die vorherigen Level gemacht haben).
         </div>
     </div>
 

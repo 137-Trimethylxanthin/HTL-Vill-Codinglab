@@ -195,7 +195,7 @@ header{
     align-items: center;
     flex-direction: column;
     border: none;
-    font-size: 2.6em;
+    font-size: 4.5vh;
     width: 17vw;
     margin: 0.7em;
     font-weight: 700;
@@ -203,12 +203,21 @@ header{
 }
 
 .levelSelect div:first-child button{
-    margin-top: 2em !important
+    margin-top: 8vh !important
+}
+
+.levelSelect div:first-child div{
+    margin-top: 2vh !important
 }
 
 .levelSelect div:last-child button{
-    margin-bottom: 2em !important
+    margin-bottom: 8vh !important
 }
+
+.levelSelect div:last-child div{
+    transform: translateY(-7vh);
+}
+
 
 .levelbtn:hover {
     background: var(--surface1);
@@ -226,7 +235,7 @@ header{
     border-radius: 0.5em;
     box-shadow: var(--mantel) 0 0.1em 0.6em;
     width: 35vw;
-    margin:  0.5em auto;
+    margin: 0.5em auto;
 
 }
 
@@ -245,13 +254,12 @@ header{
     border-radius: .25em;
     position: absolute;
     z-index: 1;
-    bottom: -50%;
-    left: 50%;
-    margin-left: 60px;
     opacity: 0;
     transition: opacity 0.3s;
     width: 30vw;
-
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .tooltip-container:hover .tooltip {
