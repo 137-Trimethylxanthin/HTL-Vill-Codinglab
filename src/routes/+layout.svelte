@@ -42,7 +42,7 @@
         if (res) {
             nameStore.set(res);
         } else {
-            goto('/', { replaceState: true });
+            goto('/');
         }
     })
 

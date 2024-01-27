@@ -1,6 +1,5 @@
 <script lang="ts">
     import { nameStore } from "../../utils/stores";
-
 </script>
 
 <div>
