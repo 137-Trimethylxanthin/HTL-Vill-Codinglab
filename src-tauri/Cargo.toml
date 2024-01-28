@@ -3,7 +3,6 @@ name = "programmier-trainer"
 version = "0.1.0"
 description = "Programmierwerkstatt 2024 Tag der offenen Tür HTL Villach"
 authors = ["Sitter Max", "Rechberger Simon"]
-license = "MIT"
 default-run = "programmier-trainer"
 edition = "2021"
 
