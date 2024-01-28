@@ -1,29 +1,27 @@
 <script lang="ts">
-import {nameStore} from "../../utils/stores";
-import {goto} from "$app/navigation";
+import { nameStore } from "../../utils/stores";
+import { goto } from "$app/navigation";
 
 function switchLevel(level: number) {
     return () => {
         goto(`/level_${level}/exp1`);
     }
 }
-
 </script>
 
 <div class="title">
     <h1>Willkommen {$nameStore}</h1>
-    <h2>zum tag der Offen türe bei der <b>HTL</b></h2>
+    <h2>zum Tag der offenen Tür der <b>HTL Villach</b></h2>
 </div>
 
 
 <div class="startText">
-    <p>Hier wirst du Heute probieren die Grundlagen des <b>Programmierens</b> in python zu lernen</p>
-    <p>Wähle eines der 3 verschiedenen Level aus um zu starten (du kannst Level überspringen)</p>
+    <p>Beim Coding Lab lernst du die Grundlagen der <b>Programmierung</b> in Python.</p>
+    <p>Wähle eines der drei verschiedenen Level aus, um zu beginnen. Du kannst jedes beliebige Level auswählen, aber Anfänger sollten mit Level 1 beginnen.</p>
 </div>
 
 
 <div class="levelSelect">
-
     <div class="tooltip-container">
         <button class="levelbtn" on:click={switchLevel(1)}>Level 1</button>
         <div class="tooltip">
