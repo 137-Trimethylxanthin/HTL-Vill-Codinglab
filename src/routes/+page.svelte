@@ -23,7 +23,7 @@
     }
 </script>
 
-<div >
+<div class="loginContainer" >
     <h1>Wilkommen in der Programmierwerkstatt!</h1>
     <p>Gebe bitte deinen Vornamen ein, damit wir dich ansprechen können.</p>
     <form on:submit|preventDefault={setupUser}>

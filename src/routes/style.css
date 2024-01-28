@@ -80,11 +80,11 @@ body{
     font-family: 'Fira Code', sans-serif;
     font-weight: 500;
     background-color: var(--base);
-    margin: auto 1em auto 1em;
+    margin: auto 2vw auto 2vw;
 }
 
 header{
-    margin-bottom: 1em;
+    margin-bottom: 2vh;
 }
 
 
@@ -144,7 +144,7 @@ header{
 #open ul li button {
     border: none;
     background: none;
-    font-size: 1.5em;
+    font-size: 2.5vh;
     font-weight: 700;
     color: var(--text);
     display: flex;
@@ -229,9 +229,9 @@ header{
     border: none;
     font-size: 4.5vh;
     width: 17vw;
-    margin: 0.7em;
+    margin: 3vh 0.7vw;
     font-weight: 700;
-    padding: .5em;
+    padding: .5vh 1vw;
 }
 
 .levelSelect div:first-child button{
@@ -267,7 +267,7 @@ header{
     border-radius: 0.5em;
     box-shadow: var(--mantel) 0 0.1em 0.6em;
     width: 35vw;
-    margin: 0.5em auto;
+    margin: 2.5vh auto;
 
 }
 
@@ -282,7 +282,7 @@ header{
     background-color: var(--overlay2);
     color: var(--crust);
     text-align: center;
-    padding: 1em .5em;
+    padding: 1.5vh 1.5vw;
     border-radius: .25em;
     position: absolute;
     z-index: 1;
@@ -292,6 +292,7 @@ header{
     left: 100%;
     top: 50%;
     transform: translateY(-50%);
+    margin-left: 1vw;
 }
 
 .tooltip-container:hover .tooltip {
@@ -300,30 +301,106 @@ header{
 }
 
 .title {
-    font-size: 1.5em;
+    font-size: 2.5vh;
     font-weight: 700;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    margin-bottom: 1em;
+    margin-bottom: 3vh;
 }
 
 .startText{
-    font-size: 1.5em;
+    font-size: 2.5vh;
     font-weight: 500;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    margin-bottom: 1em;
+    margin-bottom: 1vh;
     color: var(--text);
     text-align: center;
 
 }
 .startText p{
-    margin: 0.5em;
+    margin: 0.5vh 0 0.5vh 0;
 }
 
+.loginContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    width: 33vw;
+    background: var(--crust);
+    border-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    padding: 1vw 1vh;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.loginContainer h1{
+    font-size: 4vh;
+    font-weight: 700;
+    margin-bottom: 3vh;
+}
+
+.loginContainer p{
+    font-size: 2.2vh;
+    font-weight: 500;
+    margin-bottom: 3vh;
+}
+
+.loginContainer label {
+    font-size: 2.4vh;
+    font-weight: 700;
+}
+
+.loginContainer input{
+    margin-top: 1vh;
+    width: 100%;
+    height: 7vh;
+    border-radius: 0.5em;
+    border: none;
+    background: var(--surface1);
+    color: var(--text);
+    font-size: 2.5vh;
+    font-weight: 500;
+    padding: 0.5vw 0.5vh;
+    margin-bottom: 1.4vh;
+    text-align: center;
+}
+
+.loginContainer button{
+    width: 100%;
+    height: 8vh;
+    border-radius: 0.5em;
+    border: none;
+    background: var(--surface0);
+    color: var(--text);
+    font-size: 2.5vh;
+    font-weight: 800;
+    margin-top: 2vh;
+    margin-bottom: 4vh;
+}
+
+.loginContainer button:hover{
+    background: var(--surface1);
+    box-shadow: var(--surface0) 0 0.1em 0.6em;
+    cursor: pointer;
+    transform: scale(1.1);
+
+}
+
+.loginContainer button:active{
+    background: var(--surface0);
+    box-shadow: var(--surface1) 0 0.1em 0.6em;
+    transform: scale(.9);
+}
 
 
