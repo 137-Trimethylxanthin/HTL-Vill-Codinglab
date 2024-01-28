@@ -17,7 +17,7 @@ function switchLevel(level: number) {
 
 <div class="startText">
     <p>Beim Coding Lab lernst du die Grundlagen der <b>Programmierung</b> in Python.</p>
-    <p>Wähle eines der drei verschiedenen Level aus, um zu beginnen. Du kannst jedes beliebige Level auswählen, aber Anfänger sollten mit Level 1 beginnen.</p>
+    <p>Wähle eines der drei verschiedenen Level aus, um zu beginnen. Du kannst ein beliebiges Level auswählen, aber Anfänger sollten mit Level 1 beginnen.</p>
 </div>
 
 
