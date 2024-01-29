@@ -6,6 +6,7 @@ use std::time::SystemTime;
 use std::{fs, io};
 use std::path::Path;
 use std::sync::Mutex;
+use tauri::api::dialog::message;
 use tauri::api::path::document_dir;
 use tauri::{Runtime, State};
 use pyo3::prelude::*;
@@ -100,16 +101,22 @@ impl VSCodeInstallation {
         path
     }
 
-    fn settings_disable_workspace_trust() {
+    fn settings_disable_workspace_trust<R: Runtime>(window: &tauri::Window<R>) {
         let settings_path = VSCodeInstallation::get_settings_path();
         let settings_file = fs::read_to_string(settings_path.clone()).unwrap();
-        let mut settings_json: serde_json::Value = serde_json::from_str(&settings_file).unwrap();
-        settings_json["security.workspace.trust.enabled"] = serde_json::json!(false);
-        let new_settings_file = serde_json::to_string_pretty(&settings_json).unwrap();
-        fs::write(settings_path, new_settings_file).unwrap();
+        // if settings json cant be parsed, show a warning and continue
+        let settings_json = serde_json::from_str(&settings_file);
+        if settings_json.is_ok() {
+            let mut settings_json: serde_json::Value = settings_json.unwrap();
+            settings_json["security.workspace.trust.enabled"] = serde_json::json!(false);
+            let new_settings_file = serde_json::to_string_pretty(&settings_json).unwrap();
+            fs::write(settings_path, new_settings_file).unwrap();
+        } else {
+            message(Some(&window), "Coding Lab", "Beim Lesen der Einstellungen ist ein Fehler aufgetreten. Dies ist nicht kritisch, es wird aber ein Prompt kommen");
+        }
     }
 
-    fn prepare_open() {
+    fn prepare_open<R: Runtime>(window: &tauri::Window<R>) {
         let installed_extensions = VSCodeInstallation::get_installed_extensions();
         let required_extensions = vec![
             "ms-python.python",
@@ -121,7 +128,7 @@ impl VSCodeInstallation {
                 VSCodeInstallation::install_extension(extension);
             }
         }
-        VSCodeInstallation::settings_disable_workspace_trust();
+        VSCodeInstallation::settings_disable_workspace_trust(&window);
     }
 }
 
@@ -147,7 +154,7 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
 }
 
 #[tauri::command]
-fn setup_user<R: Runtime>(app: tauri::AppHandle<R>, state: State<'_, ApplicationState>, name: &str) -> Result<bool, String> {
+fn setup_user<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<R>, state: State<'_, ApplicationState>, name: &str) -> Result<bool, String> {
     let mut state_name = state.name.lock().unwrap();
     if !state_name.is_empty() {
         return Ok(false);
@@ -164,8 +171,9 @@ fn setup_user<R: Runtime>(app: tauri::AppHandle<R>, state: State<'_, Application
         .resolve_resource("python/")
         .expect("failed to resolve resource");
     copy_dir_all(resource_path, document_directory).unwrap();
-    VSCodeInstallation::prepare_open();
+    VSCodeInstallation::prepare_open(&window);
     if !PythonValidator::check_python() {
+        message(Some(&window), "Coding Lab", "Keine Python installation gefunden!");
         println!("No python installation found!");
         return Ok(false);
     }
@@ -187,9 +195,6 @@ fn logout(state: State<'_, ApplicationState>) -> Result<bool, String> {
 #[tauri::command]
 async fn get_name(state: State<'_, ApplicationState>) -> Result<String, String> {
     let state_name = state.name.lock().unwrap();
-    if state_name.is_empty() {
-        println!("No user logged in");
-    }
     Ok(state_name.clone())
 }
 
