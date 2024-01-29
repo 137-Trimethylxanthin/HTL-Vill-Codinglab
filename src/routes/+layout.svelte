@@ -93,8 +93,8 @@
                 <li></li>
                 <li></li>
                 <li></li>
-                <li><button on:click={logOut}><img class="icons" src="./media/logout-{theme}.png" alt="Info"></button></li>
-                <li><button on:click={quit}><img class="icons" src="./media/close-{theme}.png" alt="Info"></button></li>
+                <li><button on:click={logOut}><img class="icons" src="./media/logout-{theme}.png" alt="Logout"></button></li>
+                <li><button on:click={quit}><img class="icons" src="./media/close-{theme}.png" alt="Close"></button></li>
             </ul>
             <div on:click={toggleHeader} id="openToggle">Close</div>
         </div>
