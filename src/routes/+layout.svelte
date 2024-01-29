@@ -41,6 +41,10 @@
     invoke('get_name').then((res) => {
         if (res) {
             nameStore.set(res);
+            if (window.location.pathname === '/') {
+                goto('/home');
+                return;
+            }
         } else {
             goto('/');
         }
