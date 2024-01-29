@@ -1,0 +1,49 @@
+<script lang="ts">
+    import { onMount } from 'svelte';
+    import { nameStore } from '../../../utils/stores';
+    import { openVSCode } from '../../../utils/vscodeutils';
+
+    let time = 0;
+    let interval: any;
+
+    onMount(() => {
+        openVSCode("level3.py");
+        interval = setInterval(() => {
+            time++;
+        }, 1000);
+    });
+
+    let status = 'Am Arbeiten';
+
+    function checkAnswer() {
+        // TODO: Implement
+    }
+
+    function stopTimer() {
+        clearInterval(interval);
+    }
+</script>
+
+<main>
+    <h1>Viel Erfolg bei Level 3, {$nameStore}</h1>
+    <p>
+        <button on:click={() => status = 'Fehler'}>Fehler</button>
+        <button on:click={() => status = 'Erfolg'}>Erfolg</button>
+        <button on:click={() => status = 'Am Arbeiten'}>Am Arbeiten</button>
+    </p>
+    <div class="timer">
+        <p>{String(Math.floor(time / 60)).padStart(2, '0')}:{String(time % 60).padStart(2, '0')}</p>
+    </div>
+    <button on:click={checkAnswer}>Überprüfen</button>
+    <p class="status">Status: {status}</p>
+</main>
+
+<style>
+    main {
+        text-align: center;
+    }
+
+    .timer {
+        font-size: 2rem;
+    }
+</style>

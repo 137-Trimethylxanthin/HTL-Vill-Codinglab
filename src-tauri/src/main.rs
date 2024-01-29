@@ -199,25 +199,28 @@ async fn get_name(state: State<'_, ApplicationState>) -> Result<String, String> 
 }
 
 #[tauri::command]
-fn open_code_with_filename(handle: tauri::AppHandle, file_name: &str) {
-    let resource_path = handle.path_resolver()
-        .resolve_resource(format!("python/{}",file_name))
-        .expect("failed to resolve resource");
+fn open_code_with_filename(handle: tauri::AppHandle, state: State<'_, ApplicationState>, file_name: &str) -> Result<bool, String> {
+    if state.name.lock().unwrap().is_empty() {
+        return Ok(false);
+    }
+    let dirname = state.dirname.lock().unwrap();
+    let file_open = document_dir().unwrap().join("Programmierwerkstatt").join(dirname.clone()).join(file_name);
 
     let output = if cfg!(target_os = "windows") {
         Command::new("cmd")
-            .args(["/C", format!("code {}", resource_path.to_str().unwrap()).as_str()])
+            .args(["/C", format!("code {}", file_open.to_str().unwrap()).as_str()])
             .output()
             .expect("failed to execute process")
     } else {
         Command::new("sh")
             .arg("-c")
-            .arg(format!("code {}", resource_path.to_str().unwrap()).as_str())
+            .arg(format!("code {}", file_open.to_str().unwrap()).as_str())
             .output()
             .expect("failed to execute process")
     };
 
     println!("{:?}", output.stdout);
+    Ok(true)
 }
 
 #[tauri::command]

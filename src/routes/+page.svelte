@@ -4,12 +4,6 @@
 	import { nameStore } from '../utils/stores';
 	import { goto } from '$app/navigation';
 
-    function openCodeWithFilename(fileName: string) {
-        return function() {
-            invoke('open_code_with_filename', { fileName });
-        }
-    }
-
     function setupUser(e: SubmitEvent) {
         const name = (e.target as any).vorname.value;
         invoke('setup_user', { name }).then((res) => {
