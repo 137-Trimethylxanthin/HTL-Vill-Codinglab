@@ -28,7 +28,7 @@
     <p>Gebe bitte deinen Vornamen ein, damit wir dich ansprechen können.</p>
     <form on:submit|preventDefault={setupUser}>
         <label for="vorname">Vorname:</label><br />
-        <input type="text" id="name" name="vorname" required placeholder="Vorname"/><br />
+        <input type="text" id="name" name="vorname" required placeholder="Vorname" autocomplete="off"/><br />
         <button type="submit">Starten</button>
     </form>
 </div>
