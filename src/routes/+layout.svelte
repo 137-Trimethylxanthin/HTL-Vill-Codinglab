@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Sans">
 <script>
 	import { invoke } from "@tauri-apps/api";
     import { message } from "@tauri-apps/api/dialog";
@@ -88,13 +89,13 @@
     {#if isOpen}
         <div id="open">
             <ul>
-                <li><button on:click={changeTheme}><img class="icons" src="./media/{icon}.png" alt="Theme"></button></li>
-                <li><button on:click={() =>  {goto("/info")}}><img class="icons" src="./media/info-{theme}.png" alt="Info"></button></li> <!-- TODO: info seite -->
+                <li><button on:click={changeTheme}><img class="icons" src="/media/{icon}.png" alt="Theme"></button></li>
+                <li><button on:click={() =>  {goto("/info")}}><img class="icons" src="/media/info-{theme}.png" alt="Info"></button></li> <!-- TODO: info seite -->
                 <li></li>
                 <li></li>
                 <li></li>
-                <li><button on:click={logOut}><img class="icons" src="./media/logout-{theme}.png" alt="Logout"></button></li>
-                <li><button on:click={quit}><img class="icons" src="./media/close-{theme}.png" alt="Close"></button></li>
+                <li><button on:click={logOut}><img class="icons" src="/media/logout-{theme}.png" alt="Logout"></button></li>
+                <li><button on:click={quit}><img class="icons" src="/media/close-{theme}.png" alt="Close"></button></li>
             </ul>
             <div on:click={toggleHeader} id="openToggle">Close</div>
         </div>
