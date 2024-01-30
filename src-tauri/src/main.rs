@@ -105,7 +105,7 @@ impl VSCodeInstallation {
         let settings_path = VSCodeInstallation::get_settings_path();
         let settings_file = fs::read_to_string(settings_path.clone());
         if settings_file.is_err() {
-            message(Some(window), "Coding Lab", "VSCode Datei nicht gefunden");
+            message(Some(window), "Coding Lab", "VSCode Einstellungs-datei nicht gefunden");
             return;
         }
         let settings_file = settings_file.unwrap();
@@ -204,7 +204,7 @@ async fn get_name(state: State<'_, ApplicationState>) -> Result<String, String> 
 }
 
 #[tauri::command]
-fn open_code_with_filename(handle: tauri::AppHandle, state: State<'_, ApplicationState>, file_name: &str) -> Result<bool, String> {
+fn open_code_with_filename(_handle: tauri::AppHandle, state: State<'_, ApplicationState>, file_name: &str) -> Result<bool, String> {
     if state.name.lock().unwrap().is_empty() {
         return Ok(false);
     }
