@@ -2,6 +2,7 @@
     import { onMount } from 'svelte';
     import { nameStore } from '../../../utils/stores';
     import { openVSCode } from '../../../utils/vscodeutils';
+    import { invoke } from '@tauri-apps/api';
 
     let time = 0;
     let interval: any;
@@ -16,7 +17,14 @@
     let status = 'Am Arbeiten';
 
     function checkAnswer() {
-        // TODO: Implement
+        invoke('check_python', { level: 3 }).then((result: any) => {
+            if (result) {
+                status = 'Erfolg';
+                stopTimer();
+            } else {
+                status = 'Fehler';
+            }
+        });
     }
 
     function stopTimer() {
@@ -26,11 +34,6 @@
 
 <main>
     <h1>Viel Erfolg bei Level 3, {$nameStore}</h1>
-    <p>
-        <button on:click={() => status = 'Fehler'}>Fehler</button>
-        <button on:click={() => status = 'Erfolg'}>Erfolg</button>
-        <button on:click={() => status = 'Am Arbeiten'}>Am Arbeiten</button>
-    </p>
     <div class="timer">
         <p>{String(Math.floor(time / 60)).padStart(2, '0')}:{String(time % 60).padStart(2, '0')}</p>
     </div>
