@@ -1,5 +1,5 @@
 #Lösung
-print("Hello World")
+print("Hello World!")
 
 # Lösung
 name: str = ""
