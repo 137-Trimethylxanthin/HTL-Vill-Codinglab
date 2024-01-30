@@ -1,22 +1,37 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::api::process::Command as TCommand;
-use std::time::SystemTime;
-use std::{fs, io};
+use pyo3::prelude::*;
+use regex::Regex;
 use std::path::Path;
 use std::sync::Mutex;
+use std::time::SystemTime;
+use std::{fs, io};
 use tauri::api::dialog::message;
 use tauri::api::path::document_dir;
+use tauri::api::process::Command as TCommand;
 use tauri::{Runtime, State};
-use pyo3::prelude::*;
 
 struct ApplicationState {
     name: Mutex<String>,
     dirname: Mutex<String>,
 }
 
-struct PythonValidator {}
+// #[pyclass]
+// #[derive(Clone)]
+// struct CheckStdout {
+//     stdout_buffer: String,
+// }
+
+// #[pymethods]
+// impl CheckStdout {
+//     fn write(&mut self, data: &str) {
+//         // println!("{}", data);
+//         self.stdout_buffer.push_str(data);
+//     }
+// }
+
+struct PythonValidator;
 
 impl PythonValidator {
     fn check_python() -> bool {
@@ -35,12 +50,48 @@ impl PythonValidator {
         output.stdout.contains("Python 3")
     }
 
-    fn validate_python_syntax(code: &str) -> bool {
-        println!("{:?}", code);
+    fn replace_input_with_static(code: &str, level: usize) -> String {
+        let input_pattern = Regex::new(r"input\([^)]*\)").unwrap();
+        if level == 1 {
+            input_pattern.replace_all(code, "HTL").to_string()
+        } else if level == 2 {
+            let first_replaced = input_pattern.replace(code, "8");
+            input_pattern.replace_all(&first_replaced, "4").to_string()
+        } else {
+            input_pattern.replace_all(code, "7").to_string()
+        }
+    }
+
+    fn validate_python_syntax(file_path: &str, level: usize) -> bool {
+        let python_code = fs::read_to_string(file_path);
+        if python_code.is_err() {
+            return false;
+        }
+        let python_code = python_code.unwrap();
+        let python_code = PythonValidator::replace_input_with_static(&python_code, level);
+
+        // let stdout_checker = CheckStdout { stdout_buffer: String::new() };
+
         pyo3::prepare_freethreaded_python();
         Python::with_gil(|py| {
-            match py.eval(code, None, None) {
-                Ok(_) => return true,
+            // let sys = py.import("sys").unwrap();
+            // sys.setattr("stdout", stdout_checker.into_py(py)).unwrap();
+            match py.run(&python_code, None, None) {
+                Ok(_) => {
+                    return true;
+                    // println!("{}", stdout_checker.stdout_buffer);
+                    // let lvl1and2 =
+                    //     stdout_checker.stdout_buffer.contains("HTL")
+                    //     || (stdout_checker.stdout_buffer.contains("12")
+                    //     && stdout_checker.stdout_buffer.contains("4")
+                    //     && stdout_checker.stdout_buffer.contains("32")
+                    //     && stdout_checker.stdout_buffer.contains("2"));
+                    // if !lvl1and2 && !stdout_checker.stdout_buffer.contains("*") {
+                    //     return false;
+                    // } else {
+                    //     return true; // level 3 hat so viele Variationen, dass ich die checks nicht alle machen kann
+                    // }
+                }
                 Err(_) => return false,
             };
         })
@@ -68,12 +119,18 @@ impl VSCodeInstallation {
     fn install_extension(extension: &str) {
         let output = if cfg!(target_os = "windows") {
             TCommand::new("cmd")
-                .args(["/C", format!("code --install-extension {}", extension).as_str()])
+                .args([
+                    "/C",
+                    format!("code --install-extension {}", extension).as_str(),
+                ])
                 .output()
                 .expect("failed to execute process")
         } else {
             TCommand::new("sh")
-                .args(["-c", format!("code --install-extension {}", extension).as_str()])
+                .args([
+                    "-c",
+                    format!("code --install-extension {}", extension).as_str(),
+                ])
                 .output()
                 .expect("failed to execute process")
         };
@@ -87,7 +144,10 @@ impl VSCodeInstallation {
             format!("{}\\Code\\User\\settings.json", appdata)
         } else if cfg!(target_os = "macos") {
             let home = std::env::var("HOME").unwrap();
-            format!("{}/Library/Application Support/Code/User/settings.json", home)
+            format!(
+                "{}/Library/Application Support/Code/User/settings.json",
+                home
+            )
         } else {
             let home = std::env::var("HOME").unwrap();
             format!("{}/.config/Code/User/settings.json", home)
@@ -99,7 +159,11 @@ impl VSCodeInstallation {
         let settings_path = VSCodeInstallation::get_settings_path();
         let settings_file = fs::read_to_string(settings_path.clone());
         if settings_file.is_err() {
-            message(Some(window), "Coding Lab", "VSCode Einstellungs-datei nicht gefunden");
+            message(
+                Some(window),
+                "Coding Lab",
+                "VSCode Einstellungs-datei nicht gefunden",
+            );
             return;
         }
         let settings_file = settings_file.unwrap();
@@ -120,7 +184,7 @@ impl VSCodeInstallation {
         let required_extensions = vec![
             "ms-python.python",
             "ms-python.vscode-pylance",
-            "njpwerner.autodocstring"
+            "njpwerner.autodocstring",
         ];
         for extension in required_extensions {
             if !installed_extensions.contains(&extension.to_string()) {
@@ -153,7 +217,12 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
 }
 
 #[tauri::command]
-fn setup_user<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<R>, state: State<'_, ApplicationState>, name: &str) -> Result<bool, String> {
+fn setup_user<R: Runtime>(
+    app: tauri::AppHandle<R>,
+    window: tauri::Window<R>,
+    state: State<'_, ApplicationState>,
+    name: &str,
+) -> Result<bool, String> {
     let mut state_name = state.name.lock().unwrap();
     if !state_name.is_empty() {
         return Ok(false);
@@ -163,16 +232,24 @@ fn setup_user<R: Runtime>(app: tauri::AppHandle<R>, window: tauri::Window<R>, st
         return Ok(false);
     }
     let dirname = format!("{}_{}", name, get_sys_time_in_secs());
-    let document_directory = document_dir().unwrap().join("Programmierwerkstatt").join(dirname.clone());
+    let document_directory = document_dir()
+        .unwrap()
+        .join("Programmierwerkstatt")
+        .join(dirname.clone());
     *state_name = name.to_string();
     *state_dirname = dirname;
-    let resource_path = app.path_resolver()
+    let resource_path = app
+        .path_resolver()
         .resolve_resource("python/")
         .expect("failed to resolve resource");
     copy_dir_all(resource_path, document_directory).unwrap();
     VSCodeInstallation::prepare_open(&window);
     if !PythonValidator::check_python() {
-        message(Some(&window), "Coding Lab", "Keine Python installation gefunden!");
+        message(
+            Some(&window),
+            "Coding Lab",
+            "Keine Python installation gefunden!",
+        );
         println!("No python installation found!");
         return Ok(false);
     }
@@ -198,12 +275,20 @@ async fn get_name(state: State<'_, ApplicationState>) -> Result<String, String> 
 }
 
 #[tauri::command]
-fn open_code_with_filename(_handle: tauri::AppHandle, state: State<'_, ApplicationState>, file_name: &str) -> Result<bool, String> {
+fn open_code_with_filename(
+    _handle: tauri::AppHandle,
+    state: State<'_, ApplicationState>,
+    file_name: &str,
+) -> Result<bool, String> {
     if state.name.lock().unwrap().is_empty() {
         return Ok(false);
     }
     let dirname = state.dirname.lock().unwrap();
-    let file_open = document_dir().unwrap().join("Programmierwerkstatt").join(dirname.clone()).join(file_name);
+    let file_open = document_dir()
+        .unwrap()
+        .join("Programmierwerkstatt")
+        .join(dirname.clone())
+        .join(file_name);
 
     let output = if cfg!(target_os = "windows") {
         TCommand::new("cmd")
@@ -222,8 +307,23 @@ fn open_code_with_filename(_handle: tauri::AppHandle, state: State<'_, Applicati
 }
 
 #[tauri::command]
-fn check_python(code: String) -> Result<bool, String> {
-    Ok(PythonValidator::validate_python_syntax(&code))
+fn check_python(state: State<'_, ApplicationState>, level: usize) -> Result<bool, String> {
+    if state.name.lock().unwrap().is_empty() {
+        return Ok(false);
+    }
+    if level < 1 || level > 3 {
+        return Ok(false);
+    }
+    let dirname = state.dirname.lock().unwrap();
+    let py_file = document_dir()
+        .unwrap()
+        .join("Programmierwerkstatt")
+        .join(dirname.clone())
+        .join(format!("level{}.py", level));
+    Ok(PythonValidator::validate_python_syntax(
+        py_file.to_str().unwrap(),
+        level,
+    ))
 }
 
 fn main() {
