@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::process::Command;
+use tauri::api::process::Command as TCommand;
 use std::time::SystemTime;
 use std::{fs, io};
 use std::path::Path;
@@ -21,20 +21,18 @@ struct PythonValidator {}
 impl PythonValidator {
     fn check_python() -> bool {
         let output = if cfg!(target_os = "windows") {
-            Command::new("cmd")
+            TCommand::new("cmd")
                 .args(["/C", "python --version"])
                 .output()
                 .expect("failed to execute process")
         } else {
-            Command::new("sh")
-                .arg("-c")
-                .arg("python --version")
+            TCommand::new("sh")
+                .args(["-c", "python --version"])
                 .output()
                 .expect("failed to execute process")
         };
 
-        let output_string = String::from_utf8(output.stdout).unwrap();
-        output_string.contains("Python 3")
+        output.stdout.contains("Python 3")
     }
 
     fn validate_python_syntax(code: &str) -> bool {
@@ -54,32 +52,28 @@ struct VSCodeInstallation {}
 impl VSCodeInstallation {
     fn get_installed_extensions() -> Vec<String> {
         let output = if cfg!(target_os = "windows") {
-            Command::new("cmd")
+            TCommand::new("cmd")
                 .args(["/C", "code --list-extensions"])
                 .output()
                 .expect("failed to execute process")
         } else {
-            Command::new("sh")
-                .arg("-c")
-                .arg("code --list-extensions")
+            TCommand::new("sh")
+                .args(["-c", "code --list-extensions"])
                 .output()
                 .expect("failed to execute process")
         };
-
-        let output_string = String::from_utf8(output.stdout).unwrap();
-        output_string.split("\n").map(|s| s.to_string()).collect()
+        output.stdout.split("\n").map(|s| s.to_string()).collect()
     }
 
     fn install_extension(extension: &str) {
         let output = if cfg!(target_os = "windows") {
-            Command::new("cmd")
+            TCommand::new("cmd")
                 .args(["/C", format!("code --install-extension {}", extension).as_str()])
                 .output()
                 .expect("failed to execute process")
         } else {
-            Command::new("sh")
-                .arg("-c")
-                .arg(format!("code --install-extension {}", extension).as_str())
+            TCommand::new("sh")
+                .args(["-c", format!("code --install-extension {}", extension).as_str()])
                 .output()
                 .expect("failed to execute process")
         };
@@ -212,14 +206,13 @@ fn open_code_with_filename(_handle: tauri::AppHandle, state: State<'_, Applicati
     let file_open = document_dir().unwrap().join("Programmierwerkstatt").join(dirname.clone()).join(file_name);
 
     let output = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .args(["/C", format!("code {}", file_open.to_str().unwrap()).as_str()])
+        TCommand::new("cmd")
+            .args(["/C", "code", file_open.to_str().unwrap()])
             .output()
             .expect("failed to execute process")
     } else {
-        Command::new("sh")
-            .arg("-c")
-            .arg(format!("code {}", file_open.to_str().unwrap()).as_str())
+        TCommand::new("sh")
+            .args(["-c", "code", file_open.to_str().unwrap()])
             .output()
             .expect("failed to execute process")
     };
