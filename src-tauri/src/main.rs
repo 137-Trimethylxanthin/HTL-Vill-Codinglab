@@ -103,7 +103,12 @@ impl VSCodeInstallation {
 
     fn settings_disable_workspace_trust<R: Runtime>(window: &tauri::Window<R>) {
         let settings_path = VSCodeInstallation::get_settings_path();
-        let settings_file = fs::read_to_string(settings_path.clone()).unwrap();
+        let settings_file = fs::read_to_string(settings_path.clone());
+        if settings_file.is_err() {
+            message(Some(window), "Coding Lab", "VSCode Datei nicht gefunden");
+            return;
+        }
+        let settings_file = settings_file.unwrap();
         // if settings json cant be parsed, show a warning and continue
         let settings_json = serde_json::from_str(&settings_file);
         if settings_json.is_ok() {
