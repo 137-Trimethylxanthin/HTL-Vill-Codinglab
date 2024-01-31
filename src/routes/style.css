@@ -731,3 +731,22 @@ header{
 .hidden{
     display: none;
 }
+
+footer{
+    position: fixed;
+    bottom: 0;
+    opacity: 0.2;
+    padding: 0.5vh 1vw;
+}
+
+footer:hover{
+    opacity: 1;
+    background: var(--crust );
+    border-radius: 0.5em;
+    padding: 0.5vh 1vw;
+}
+
+footer:hover a{
+    color: var(--maroon) !important;
+}
+

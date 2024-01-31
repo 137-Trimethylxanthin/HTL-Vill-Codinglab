@@ -6,6 +6,7 @@
 	import { goto } from "$app/navigation";
     import { nameStore } from "../utils/stores";
     import { exit } from '@tauri-apps/api/process';
+    import { open } from '@tauri-apps/api/shell';
 
     if (process.env.NODE_ENV === "production") {
         document.addEventListener("contextmenu", (e) => {
@@ -137,7 +138,7 @@
 
 <footer>
     <p class="copyLeft">© 2024 Coding Lab</p>
-    <p class="middleLinks">Made By <a href="https://github.com/137-Trimethylxanthin">Max</a> und <a href="https://github.com/gamersi">Simon</a></p>
+    <p class="middleLinks">Made By <a on:click={() => {open("https://github.com/137-Trimethylxanthin")}} href="#">Max</a> und <a on:click={() => {open("https://github.com/gamersi")}} href="#">Simon</a></p>
 
 </footer>
 
