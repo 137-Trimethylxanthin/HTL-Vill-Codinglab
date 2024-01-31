@@ -372,6 +372,6 @@ else:
 
 </div>
 
-<button class="next" on:click={() =>{_next("../variable/expl")}}> Weiter </button>
+<button class="next" on:click={() =>{_next("../code_example")}}> Weiter </button>
 
 <div class="bothErr vergleichErr nameErr"></div>
