@@ -159,7 +159,7 @@
         let temp = [firstIf, secondIf, thirdIf, fourthIf, fifthIf, sixthIf];
         let otherTemp = [secondInputName,secondInputName,firstInputName,firstInputName,firstInputName,firstInputName];
         for (let i = 0; i < vergleich.length; i++){
-            if (temp[i].length < 0 || !temp[i].includes(vergleich[i])){
+            if (temp[i].length < 0){
                 error = true;
                 if (i == 0){
                     firstIfState = "bothErr";
