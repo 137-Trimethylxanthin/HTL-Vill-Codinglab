@@ -1,7 +1,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Sans">
 <script>
 	import { invoke } from "@tauri-apps/api";
-    import { message } from "@tauri-apps/api/dialog";
+    import { ask, message } from "@tauri-apps/api/dialog";
     import "./style.css"
 	import { goto } from "$app/navigation";
     import { nameStore } from "../utils/stores";
@@ -56,7 +56,6 @@
     }
 
     function logOut() {
-        //TODO: CLOSE VS code :)
         invoke('logout').then((res) => {
             if (res) {
                 goto('/');
@@ -67,7 +66,11 @@
     }
 
     async function quit() {
-        await exit(0);
+        if (await ask('Willst du wirklich das Coding Lab beenden?', { title: 'Beenden' }) === true) {
+            await exit(0);
+        } else {
+            return;
+        }
     }
     
     function changeTheme() {

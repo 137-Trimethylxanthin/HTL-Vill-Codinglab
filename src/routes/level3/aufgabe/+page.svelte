@@ -4,6 +4,7 @@
     import { openVSCode } from '../../../utils/vscodeutils';
     import { invoke } from '@tauri-apps/api';
     import { goto } from '$app/navigation';
+    import { message } from '@tauri-apps/api/dialog';
 
     let time = 0;
     let interval: any;
@@ -18,12 +19,21 @@
     let status = 'Am Arbeiten';
     let valid = false;
 
+    function levelCompleted() {
+        invoke('level_completed', { level: 3, time }).then((result: any) => {
+            if (!result) {
+                message('Level 3 konnte nicht gespeichert werden', { title: 'Fehler' })
+            }
+        });
+    }
+
     function checkAnswer() {
         invoke('check_python', { level: 3 }).then((result: any) => {
             if (result) {
                 status = 'Erfolg';
                 valid = true;
                 stopTimer();
+                levelCompleted();
             } else {
                 status = 'Fehler';
                 valid = false;

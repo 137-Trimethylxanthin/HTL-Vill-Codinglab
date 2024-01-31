@@ -15,6 +15,12 @@ use tauri::{Runtime, State};
 struct ApplicationState {
     name: Mutex<String>,
     dirname: Mutex<String>,
+    level1_completed: Mutex<bool>,
+    level2_completed: Mutex<bool>,
+    level3_completed: Mutex<bool>,
+    level1_time_completed: Mutex<usize>,
+    level2_time_completed: Mutex<usize>,
+    level3_time_completed: Mutex<usize>
 }
 
 struct PythonValidator;
@@ -297,18 +303,79 @@ fn check_python(state: State<'_, ApplicationState>, level: usize) -> Result<bool
     ))
 }
 
+#[tauri::command]
+fn level_completed(state: State<'_, ApplicationState>, level: usize, time: usize) -> Result<bool, String> {
+    if state.name.lock().unwrap().is_empty() {
+        return Ok(false);
+    }
+    if level < 1 || level > 3 {
+        return Ok(false);
+    }
+    if level == 1 {
+        let mut level1_completed = state.level1_completed.lock().unwrap();
+        if *level1_completed {
+            return Ok(false);
+        }
+        *level1_completed = true;
+        let mut level1_time_completed = state.level1_time_completed.lock().unwrap();
+        *level1_time_completed = time;
+    } else if level == 2 {
+        let mut level2_completed = state.level2_completed.lock().unwrap();
+        if *level2_completed {
+            return Ok(false);
+        }
+        *level2_completed = true;
+        let mut level2_time_completed = state.level2_time_completed.lock().unwrap();
+        *level2_time_completed = time;
+    } else {
+        let mut level3_completed = state.level3_completed.lock().unwrap();
+        if *level3_completed {
+            return Ok(false);
+        }
+        *level3_completed = true;
+        let mut level3_time_completed = state.level3_time_completed.lock().unwrap();
+        *level3_time_completed = time;
+    }
+    Ok(true)
+}
+
+#[tauri::command]
+fn get_levels(state: State<'_, ApplicationState>) -> Result<(Vec<bool>, Vec<usize>), String> {
+    if state.name.lock().unwrap().is_empty() {
+        return Ok((vec![false, false, false], vec![0, 0, 0]));
+    }
+    let level1_completed = *state.level1_completed.lock().unwrap();
+    let level2_completed = *state.level2_completed.lock().unwrap();
+    let level3_completed = *state.level3_completed.lock().unwrap();
+    let level1_time_completed = *state.level1_time_completed.lock().unwrap();
+    let level2_time_completed = *state.level2_time_completed.lock().unwrap();
+    let level3_time_completed = *state.level3_time_completed.lock().unwrap();
+    Ok((
+        vec![level1_completed, level2_completed, level3_completed],
+        vec![level1_time_completed, level2_time_completed, level3_time_completed],
+    ))
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(ApplicationState {
             name: Mutex::new(String::new()),
             dirname: Mutex::new(String::new()),
+            level1_completed: Mutex::new(false),
+            level2_completed: Mutex::new(false),
+            level3_completed: Mutex::new(false),
+            level1_time_completed: Mutex::new(0),
+            level2_time_completed: Mutex::new(0),
+            level3_time_completed: Mutex::new(0)
         })
         .invoke_handler(tauri::generate_handler![
             setup_user,
             logout,
             get_name,
             open_code_with_filename,
-            check_python
+            check_python,
+            level_completed,
+            get_levels,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

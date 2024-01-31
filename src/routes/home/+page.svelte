@@ -1,12 +1,24 @@
 <script lang="ts">
-import { nameStore } from "../../utils/stores";
-import { goto } from "$app/navigation";
+    import { nameStore } from "../../utils/stores";
+    import { goto } from "$app/navigation";
+    import { onMount } from "svelte";
+    import { invoke } from "@tauri-apps/api";
 
-function switchLevel(level: number) {
-    return () => {
-        goto(`/level${level}/aufgabe`);
+    function switchLevel(level: number) {
+        return () => {
+            goto(`/level${level}/aufgabe`);
+        }
     }
-}
+
+    let levels = [];
+
+    onMount(() => {
+        invoke("get_levels").then((res: any) => {
+            if (res) {
+                levels = res;
+            }
+        })
+    })
 </script>
 
 <div class="title">
