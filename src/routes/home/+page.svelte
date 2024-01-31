@@ -53,8 +53,8 @@
         {/if}
         </button>
         <div class="tooltip">
-            Dieses Level ist für Leute die schon ein mal Programmiert haben. <br>
-            Es gibt eine Erklärung zu den Funktionen die du brauchst.
+            Dieses Level ist für Leute, die schon einmal programmiert haben. <br>
+            Es gibt eine Erklärung zu den Funktionen, die du brauchst.
         </div>
     </div>
 
