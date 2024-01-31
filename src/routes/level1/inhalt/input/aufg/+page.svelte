@@ -4,9 +4,7 @@
 
 
 onMount(() => {
-
     _disableButton();
-
 });
    
 let outputColorClass = "";
@@ -113,12 +111,12 @@ function validate(){
 <div class="lernContainer">
     <h1>Input - Aufgabe</h1>
     <p>
-        Schreibe den input für den Namen und das Alter in die dafür vorgesehenen Variablen. <br>
-        frage auch nach dem geburtz datum des users und speichere es in einer Variable. <br>
+        Schreibe den Input für den Namen und das Alter in die dafür vorgesehenen Variablen. <br>
+        Frage auch nach dem Geburtsdatum des Users und speichere es in eine Variable. <br>
         <br>
-        danach führe den code aus und fülle die inputs und sehe dir den output an. <br>
+        Danach führe den Code aus und fülle die Inputs aus und sehe dir den Output an. <br>
         <br>
-        viel erfolg!
+        Viel Erfolg!
     </p>
 
 <pre class="codeBlock">
@@ -131,7 +129,7 @@ print("Hallo " + name + ", du bist " + alter + " Jahre alt")
 print("Und Hast am " + <input class="inline-input {datum_name_state}" type="text" style="width: 12vw" maxlength="23" bind:value={user_datum_name_in_print}> + " Geburtstag");)
 </pre>
 
-<button class="validate" on:click={() => {validate()}}> Ausführen </button>
+<button class="validate" on:click={() => {validate()}}>Ausführen</button>
 
 <pre class="cmd {outputColorClass}">
 {output}
@@ -141,5 +139,5 @@ print("Und Hast am " + <input class="inline-input {datum_name_state}" type="text
 <code class="{ende}">Hallo <code style="color: var(--teal);">{input_val_1}</code>, du bist <code style="color: var(--teal);">{input_val_2}</code> <br>Und Hast am <code style="color: var(--teal);">{input_val_3}</code> Geburtstag</code>
 </pre>
 </div>
-<button class="next" on:click={() => {_next("../if/expl")}}> Weiter </button>
+<button class="next" on:click={() => {_next("../if/expl")}}>Weiter</button>
 

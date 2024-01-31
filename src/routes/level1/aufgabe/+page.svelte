@@ -12,14 +12,14 @@
 <div id="level1Div">
     <h1>Level 1</h1>
 
-    <p>Hier wirst du über die Grundlagen zu python lernen:</p>
+    <p>Hier wirst du die Grundlagen von Python lernen:</p>
     <ul class="index">
-        <li>print (Text Ausgabe)</li>
-        <li>input (Text Eingabe)</li>
+        <li>print (Textausgabe)</li>
+        <li>input (Texteingabe)</li>
         <li>int (Einlesen von Nummern)</li>
-        <li>variable (Speichern von Daten)</li>
-        <li>if (Vergleichen von Variable)</li>
-        <li> = &gt; &lt; ! (Vergleich Operatoren)</li>
+        <li>variablen (Speichern von Daten)</li>
+        <li>if (Vergleichen von Variablen)</li>
+        <li> =, &gt;, &lt;, ! (Vergleichsoperatoren)</li>
     </ul>
 
     <p>Bist du Bereit?</p>

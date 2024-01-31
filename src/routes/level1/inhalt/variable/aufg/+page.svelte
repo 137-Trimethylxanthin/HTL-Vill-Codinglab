@@ -1,6 +1,6 @@
 <script lang="ts">
-    import {onMount} from "svelte";
-    import {_disableButton, _enableButton, _next} from "../../+layout";
+    import { onMount } from "svelte";
+    import { _disableButton, _enableButton, _next } from "../../+layout";
 
     let outputColorClass = "";
     let output = "> Hier ist dein Output";
@@ -127,12 +127,12 @@
             outputColorClass = "green";
             output = "> Jahr: " + user_jahr_value + " Monat: " + user_monat_nummer_value + " Tag: " + user_tag_value + "\n";
             output += "> " + user_begruessung_value + " " + user_name_value + " wie geht es dir? \n";
-            output += "> Hey ist dieser " + user_wochen_tag_value + " nicht ein schöner tag, " + user_name_value + "\n";
+            output += "> Hey, ist dieser " + user_wochen_tag_value + " nicht ein schöner Tag, " + user_name_value + "\n";
             _enableButton();
         } else {
             outputColorClass = "red";
             output = "> Leider nicht ganz richtig. \n";
-            output += "> Ich hab dir die Falschen felder Markiert \n";
+            output += "> Ich hab dir die falschen Felder markiert \n";
         }
 
 
@@ -144,9 +144,9 @@
     <h1>variablen - Aufgabe</h1>
 
     <p>
-        Ich hoffe du hast dir die Erklärung durchgelesen, denn nun kommt die Aufgabe. <br>
+        Ich hoffe, du hast dir die Erklärung durchgelesen, denn nun kommt die Aufgabe. <br>
         Fülle die Lücken passend aus und drücke auf "Ausführen". <br>
-        Du musst auch die variable beschriften mit <b>str</b> oder <b>int</b>. <br>
+        Du musst auch die Variablen beschriften(typisieren) mit <b>str</b> oder <b>int</b>. <br>
     </p>
 
 <pre class="codeBlock">
@@ -157,22 +157,22 @@ name:<input class="inline-input {stat[3]}" style="width: 2vw" maxlength="3" bind
 tag:<input class="inline-input {stat[4]}" style="width: 2vw" maxlength="3" bind:value={user_tag}> = <input class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_tag_value}> <br>
 wochen_tag:<input class="inline-input {stat[5]}" style="width: 2vw" maxlength="3" bind:value={user_wochen_tag}> = "<input class="inline-input" style="width: 12vw" maxlength="23" bind:value={user_wochen_tag_value}>" <br>
 
-<code class="comment">#Hier will ich das jahr, monat und den tag </code>
+<code class="comment"># Hier will ich das Jahr, den Monat und den Tag </code>
 print("Jahr:", <input class="inline-input {stat[6]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_1}>, "Monat:" <input class="inline-input {stat[7]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_2}>, "Tag:", <input class="inline-input {stat[8]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_3}>)
 
-<code class="comment">#Hier will ich die begrüssung und den namen</code>
+<code class="comment"># Hier will ich die Begrüssung und den Namen</code>
 print(<input class="inline-input {stat[9]}" style="width: 5.5vw" maxlength="10" bind:value={user_print2_1}> + " " + <input class="inline-input {stat[10]}" style="width: 5.5vw" maxlength="10" bind:value={user_print2_2}> + " wie geht es dir?")
 
-<code class="comment">#Hier will ich den wochen tag und namen</code>
-print(f"Hey ist dieser &#123;<input class="inline-input {stat[11]}" style="width: 5.5vw" maxlength="10" bind:value={user_print3_1}>} nicht ein schöner tag, &#123;<input class="inline-input {stat[12]}" style="width: 5.5vw" maxlength="10" bind:value={user_print3_2}>}
+<code class="comment"># Hier will ich den Wochentag und den Namen</code>
+print(f"Hey, ist dieser &#123;<input class="inline-input {stat[11]}" style="width: 5.5vw" maxlength="10" bind:value={user_print3_1}>} nicht ein schöner Tag, &#123;<input class="inline-input {stat[12]}" style="width: 5.5vw" maxlength="10" bind:value={user_print3_2}>}
 </pre>
 
-    <button class="validate" on:click={() => {validate()}}> Ausführen </button>
+<button class="validate" on:click={() => {validate()}}>Ausführen</button>
 
-<pre class="cmd {outputColorClass}" >
+<pre class="cmd {outputColorClass}">
 {output}
 </pre>
 
 </div>
 
-<button class="next" on:click={() =>{_next("../input/expl")}}> Weiter </button>
+<button class="next" on:click={() =>{_next("../input/expl")}}>Weiter</button>

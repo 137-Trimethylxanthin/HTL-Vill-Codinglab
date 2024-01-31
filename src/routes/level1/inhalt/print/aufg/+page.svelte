@@ -39,12 +39,12 @@
             outputColorClass = "valid-output";
             output = "Dein Text:";
             output += "\n> "+ middle.substring(1, middle.length - 1);
-            output += "\n\n> Gut gemacht! Du hast print() verwendet. du kannst nun auf weiter klicken.";
+            output += "\n\n> Gut gemacht! Du hast print() verwendet. Du kannst nun auf Weiter klicken.";
             _enableButton();
         } else {
             outputColorClass = "invalid-output";
             output = "Das ist nicht ganz richtig. Versuche es nochmal.";
-            if (!startHasValidStart) output += "\n> Du hast 'print' nicht richtig gechieben. (beachte dass es klein ist)";
+            if (!startHasValidStart) output += "\n> Du hast 'print' nicht richtig geschrieben. (Beachte, dass es klein ist)";
             if (!middleIsString) output += "\n> Du brauchst Anführungszeichen um den Text. print(\"Dein Text\")";
             if (!endHasValidEnd) output += "\n> Du hast noch etwas nach der ')' stehen. print(\"Dein Text\")";
         }
@@ -54,21 +54,21 @@
 
 
 <div class="lernContainer">
-    <h1>Print - Aufgabe</h1>
+    <h1>print - Aufgabe</h1>
 
     <p>
-        Nun versuche Es selbst <br>
-        Schreibe ein Print das Deinen Namen ausgibt (oder jeden anderen Text):
+        Nun versuche es selbst <br>
+        Schreibe ein print, welches deinen Namen ausgibt:
     </p>
 
     <code class="codeBlock">
-        print("Dein Text:") <br>
-        <code style="color: var(--green)">#Nun du, {$nameStore}</code> <br>
+        print("Dein Text") <br>
+        <code style="color: var(--green)"># Nun du, {$nameStore}</code> <br>
         <input bind:value={inputVal}>
 
     </code>
 
-    <button class="validate" on:click={() => {validate()}}> Ausführen </button>
+    <button class="validate" on:click={() => {validate()}}>Ausführen</button>
 
 <pre class="cmd {outputColorClass}" >
 > {output}
@@ -76,4 +76,4 @@
 
 </div>
 
-<button class="next" on:click={() =>{_next("../variable/expl")}}> Weiter </button>
+<button class="next" on:click={() =>{_next("../variable/expl")}}>Weiter</button>
