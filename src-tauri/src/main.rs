@@ -152,7 +152,6 @@ impl VSCodeInstallation {
 
     fn prepare_open<R: Runtime>(window: &tauri::Window<R>) {
         let installed_extensions = VSCodeInstallation::get_installed_extensions();
-        println!("{:?}", installed_extensions);
         let required_extensions = vec![
             "ms-python.python",
             "ms-python.vscode-pylance",
@@ -195,7 +194,6 @@ fn setup_user<R: Runtime>(
     state: State<'_, ApplicationState>,
     name: &str,
 ) -> Result<bool, String> {
-    println!("start");
     let mut state_name = state.name.lock().unwrap();
     if !state_name.is_empty() {
         return Ok(false);
@@ -211,15 +209,12 @@ fn setup_user<R: Runtime>(
         .join(dirname.clone());
     *state_name = name.to_string();
     *state_dirname = dirname;
-    println!("dir resolved");
     let resource_path = app
         .path_resolver()
         .resolve_resource("python/")
         .expect("failed to resolve resource");
     copy_dir_all(resource_path, document_directory).unwrap();
-    println!("data copied");
     VSCodeInstallation::prepare_open(&window);
-    println!("vscode initialized");
     if !PythonValidator::check_python() {
         message(
             Some(&window),
