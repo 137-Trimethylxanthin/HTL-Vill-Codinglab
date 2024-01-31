@@ -500,6 +500,7 @@ header{
     bottom: 5vh;
     right: -50%;
     transform: translateX(-50%);
+    border: none;
 }
 
 .next:hover{
@@ -558,6 +559,12 @@ header{
     margin-bottom: 5vh;
 }
 
+.lernContainer h2 {
+    font-size: 6vh;
+    font-weight: 700;
+    margin-bottom: 3vh;
+}
+
 .lernContainer p{
     font-size: 2.2vh;
     font-weight: 500;
@@ -578,7 +585,7 @@ header{
 
 }
 
-.codeBlock input {
+.codeBlock input, .cmd input {
     font-family: monospace;
     background: var(--surface1);
     border-radius: 0.5em;
@@ -593,27 +600,36 @@ header{
     border: none;
     transform: translateX(-1vh);
     cursor: default;
+    appearance: textfield; /* Firefox */
 }
 
-.codeBlock input.inline-input{
+.codeBlock input.inline-input, .cmd input.inline-input{
     margin: 0;
     padding: 0.5vh 0.1vw 0.5vh 0.2vw;
     transform: translateX(0);
     cursor: text;
 }
 
-.codeBlock input.inline-input:focus{
+.codeBlock input.inline-input:focus, .cmd input.inline-input:focus{
     outline: var(--pink) auto 0.2em;
 }
 
-.codeBlock input.inline-input.correct{
+.codeBlock input.inline-input.correct, .cmd input.inline-input.correct{
     background: var(--green);
     color: var(--crust);
 }
 
-.codeBlock input.inline-input.wrong{
+.codeBlock input.inline-input.wrong, .cmd input.inline-input.wrong{
     background: var(--red);
     color: var(--crust);
+}
+
+.codeBlock input[type="number"]::-webkit-inner-spin-button, 
+.codeBlock input[type="number"]::-webkit-outer-spin-button,
+.cmd input[type="number"]::-webkit-inner-spin-button, 
+.cmd input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none; /* Chrome, Safari, Edge */
+    margin: 0;
 }
 
 .cmd {
@@ -690,4 +706,8 @@ header{
 
 .comment {
     color: var(--green);
+}
+
+.hidden{
+    display: none;
 }

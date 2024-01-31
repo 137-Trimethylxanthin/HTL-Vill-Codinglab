@@ -27,8 +27,8 @@
 
     let user_jahr = "";
     let user_jahr_value = "";
-    let user_begruesung = "";
-    let user_begruesung_value = "";
+    let user_begruessung = "";
+    let user_begruessung_value = "";
     let user_monat_nummer = "";
     let user_monat_nummer_value = "";
     let user_name = "";
@@ -52,7 +52,7 @@
     function validate() {
         let user_answers = [
             {name: "jahr", answer: user_jahr},
-            {name: "begrüsung", answer: user_begruesung},
+            {name: "begrüsung", answer: user_begruessung},
             {name: "monat_nummer", answer: user_monat_nummer},
             {name: "name", answer: user_name},
             {name: "tag", answer: user_tag},
@@ -126,7 +126,7 @@
         if (correct) {
             outputColorClass = "green";
             output = "> Jahr: " + user_jahr_value + " Monat: " + user_monat_nummer_value + " Tag: " + user_tag_value + "\n";
-            output += "> " + user_begruesung_value + " " + user_name_value + " wie geht es dir? \n";
+            output += "> " + user_begruessung_value + " " + user_name_value + " wie geht es dir? \n";
             output += "> Hey ist dieser " + user_wochen_tag_value + " nicht ein schöner tag, " + user_name_value + "\n";
             _enableButton();
         } else {
@@ -151,7 +151,7 @@
 
 <pre class="codeBlock">
 jahr:<input class="inline-input {stat[0]}" style="width: 2vw" maxlength="3" bind:value={user_jahr}> = <input class="inline-input" style="width: 3vw" maxlength="5" bind:value={user_jahr_value}> <br>
-begrüsung:<input class="inline-input {stat[1]}" style="width: 2vw" maxlength="3" bind:value={user_begruesung}> = "<input class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_begruesung_value}>" <br>
+begrüssung:<input class="inline-input {stat[1]}" style="width: 2vw" maxlength="3" bind:value={user_begruessung}> = "<input class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_begruessung_value}>" <br>
 monat_nummer:<input class="inline-input {stat[2]}" style="width: 2vw" maxlength="3" bind:value={user_monat_nummer}> = <input class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_monat_nummer_value}> <br>
 name:<input class="inline-input {stat[3]}" style="width: 2vw" maxlength="3" bind:value={user_name}> = "<input class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_name_value}>" <br>
 tag:<input class="inline-input {stat[4]}" style="width: 2vw" maxlength="3" bind:value={user_tag}> = <input class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_tag_value}> <br>
