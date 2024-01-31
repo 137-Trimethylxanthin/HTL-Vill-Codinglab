@@ -2,7 +2,7 @@
     import { nameStore } from "../../utils/stores";
     import { goto } from "$app/navigation";
     import { invoke } from "@tauri-apps/api";
-  import { writable, type Writable } from "svelte/store";
+    import { writable, type Writable } from "svelte/store";
 
     function switchLevel(level: number) {
         return () => {
@@ -87,6 +87,5 @@
         position: absolute;
         right: 2vw;
         color: var(--green);
-        /* top: 0.5vh; */
     }
 </style>

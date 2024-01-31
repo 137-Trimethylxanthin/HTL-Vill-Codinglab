@@ -65,8 +65,6 @@ impl PythonValidator {
 
         pyo3::prepare_freethreaded_python();
         Python::with_gil(|py| {
-            // let sys = py.import("sys").unwrap();
-            // sys.setattr("stdout", stdout_checker.into_py(py)).unwrap();
             match py.run(&python_code, None, None) {
                 Ok(_) => return true,
                 Err(_) => return false,
