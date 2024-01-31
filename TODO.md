@@ -5,6 +5,3 @@
 
 # TODO Simon
 - Rechtschreibung checken
-- Schließbestätigung
-- logout-bestätigung
-- Home bestätigung
