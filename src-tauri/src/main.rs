@@ -235,11 +235,24 @@ fn setup_user<R: Runtime>(
 fn logout(state: State<'_, ApplicationState>) -> Result<bool, String> {
     let mut state_name = state.name.lock().unwrap();
     let mut state_dirname = state.dirname.lock().unwrap();
+    let mut state_level1_completed = state.level1_completed.lock().unwrap();
+    let mut state_level2_completed = state.level2_completed.lock().unwrap();
+    let mut state_level3_completed = state.level3_completed.lock().unwrap();
+    let mut state_level1_time_completed = state.level1_time_completed.lock().unwrap();
+    let mut state_level2_time_completed = state.level2_time_completed.lock().unwrap();
+    let mut state_level3_time_completed = state.level3_time_completed.lock().unwrap();
     if state_name.is_empty() || state_dirname.is_empty() {
         return Ok(false);
     }
     *state_name = String::new();
     *state_dirname = String::new();
+    *state_level1_completed = false;
+    *state_level2_completed = false;
+    *state_level3_completed = false;
+    *state_level1_time_completed = 0;
+    *state_level2_time_completed = 0;
+    *state_level3_time_completed = 0;
+
     Ok(true)
 }
 
