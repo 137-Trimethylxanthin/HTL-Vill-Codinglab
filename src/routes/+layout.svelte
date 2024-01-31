@@ -56,6 +56,7 @@
     }
 
     function logOut() {
+        //TODO: CLOSE VS code :)
         invoke('logout').then((res) => {
             if (res) {
                 goto('/');
@@ -82,6 +83,17 @@
         localStorage.setItem('setTheme', theme);
     }
 
+
+    function goHome(){
+        invoke('get_name').then((res) => {
+            if (res) {
+                goto('/home');
+            } else {
+                goto('/');
+            }
+        })
+    }
+
 </script>
 
 
@@ -90,7 +102,7 @@
         <div id="open">
             <ul>
                 <li><button on:click={changeTheme}><img class="icons" src="/media/{icon}.png" alt="Theme"></button></li>
-                <li><button on:click={() =>  {goto("/info")}}><img class="icons" src="/media/info-{theme}.png" alt="Info"></button></li> <!-- TODO: info seite -->
+                <li><button on:click={goHome}><img class="icons" src="/media/home-{theme}.png" alt="Info"></button></li>
                 <li></li>
                 <li></li>
                 <li></li>

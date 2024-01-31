@@ -72,8 +72,7 @@
     scroll-behavior: smooth ;
     transition: all 0.25s ease-in-out;
     color-scheme: dark;
-    color: var(--text)
-
+    color: var(--text);
 }
 
 body{
@@ -287,12 +286,13 @@ header{
     position: absolute;
     z-index: 1;
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity 0.25s;
     width: 30vw;
     left: 100%;
     top: 50%;
     transform: translateY(-50%);
     margin-left: 1vw;
+    font-size: 2vh;
 }
 
 .tooltip-container:hover .tooltip {
@@ -404,3 +404,290 @@ header{
 }
 
 
+#level1Div{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background: var(--crust);
+    border-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    width: 35vw;
+    margin: 2.5vh auto;
+    padding: 1vh 1vw;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+#level1Div h1{
+    font-size: 6vh;
+    font-weight: 700;
+    margin-bottom: 3vh;
+}
+
+#level1Div p{
+    font-size: 2.2vh;
+    font-weight: 500;
+    margin-bottom: 3vh;
+}
+
+
+#level1Div ul{
+    list-style: none;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-direction: column;
+    background: var(--surface0);
+    border-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    padding: 2vh 3vw;
+    margin-bottom: 3vh;
+}
+
+#level1Div ul li{
+    font-size: 2.5vh;
+    font-weight: 700;
+    margin-bottom: 1vh;
+    text-align: center;
+}
+
+#level1Div ul li:last-child{
+    margin-bottom: 0;
+}
+
+#level1Div button{
+    height: 7vh;
+    border-radius: 0.5em;
+    border: none;
+    background: var(--surface1);
+    color: var(--text);
+    font-size: 2.5vh;
+    font-weight: 800;
+    margin-top: 2vh;
+    margin-bottom: 1.4vh;
+    text-align: center;
+    padding: 1.5vh 5.5vw;
+}
+
+#level1Div button:hover{
+    background: var(--green);
+    box-shadow: var(--surface0) 0 0.1em 0.6em;
+    color: var(--crust);
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+#level1Div button:active{
+    background: var(--teal);
+    box-shadow: var(--surface1) 0 0.1em 0.6em;
+    color: var(--crust);
+    transform: scale(.9);
+}
+
+.next{
+    background: var(--green);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    font-size: 3.5vh;
+    font-weight: 700;
+    padding: 2vh 2.5vw;
+    border-radius: 0.5em;
+    position: relative;
+    bottom: 5vh;
+    right: -50%;
+    transform: translateX(-50%);
+}
+
+.next:hover{
+    background: var(--teal);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    cursor: pointer;
+    padding: 2.5vh 3vw;
+}
+
+.next:active{
+    background: var(--green);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    padding: 2vh 2.5vw;
+}
+
+.gray{
+    background: var(--overlay2);
+    color: var(--crust);
+}
+
+.gray:hover{
+    background: var(--overlay1);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    cursor: default;
+    padding: 2vh 2.5vw;
+}
+
+.gray:active{
+    background: var(--overlay2);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    padding: 2vh 2.5vw;
+}
+
+.lernContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    width: 50vw;
+    background: var(--crust);
+    border-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    padding: 1vw 1vh;
+    margin: 10vh auto 10vh auto
+
+}
+
+.lernContainer h1{
+    font-size: 8vh;
+    font-weight: 700;
+    margin-bottom: 5vh;
+}
+
+.lernContainer p{
+    font-size: 2.2vh;
+    font-weight: 500;
+    margin-bottom: 3vh;
+}
+
+.codeBlock {
+    background: var(--surface0);
+    border-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    padding: 2vh 1vw;
+    margin-bottom: 3vh;
+    width: 90%;
+    overflow: auto;
+    text-align: left;
+    font-size: 1.75vh;
+    font-weight: 500;
+
+}
+
+.codeBlock input {
+    font-family: monospace;
+    background: var(--surface1);
+    border-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    padding: 0.5vh 1vw 0.5vh 0.6vw;
+    margin-bottom: 3vh;
+    width: 90%;
+    overflow: auto;
+    text-align: left;
+    font-size: 1.75vh;
+    font-weight: 500;
+    border: none;
+    transform: translateX(-1vh);
+    cursor: default;
+}
+
+.codeBlock input.inline-input{
+    margin: 0;
+    padding: 0.5vh 0.1vw 0.5vh 0.2vw;
+    transform: translateX(0);
+    cursor: text;
+}
+
+.codeBlock input.inline-input:focus{
+    outline: var(--pink) auto 0.2em;
+}
+
+.codeBlock input.inline-input.correct{
+    background: var(--green);
+    color: var(--crust);
+}
+
+.codeBlock input.inline-input.wrong{
+    background: var(--red);
+    color: var(--crust);
+}
+
+.cmd {
+    background: var(--surface2);
+    border-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    padding: 2vh 1vw;
+    margin-bottom: 3vh;
+    width: 90%;
+    overflow: auto;
+    text-align: left;
+    font-size: 1.75vh;
+    font-weight: 500;
+    line-break: anywhere;
+
+}
+
+.noMargin{
+    margin: 0 !important;
+}
+
+.validate{
+    background: var(--yellow);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    font-size: 3vh;
+    font-weight: 700;
+    padding: 1.5vh 1.5vw;
+    border-radius: 0.5em;
+    border:none;
+    margin-bottom: 3vh;
+    margin-top: 2vh;
+}
+
+.validate:hover{
+    background: var(--peach);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    cursor: pointer;
+    padding: 1.5vh 1.5vw;
+    transform: scale(1.1);
+}
+
+.validate:active{
+    background: var(--yellow);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    padding: 1.5vh 1.5vw;
+    transform: scale(.9);
+}
+
+.valid-output {
+    color: var(--green) !important;
+}
+
+.invalid-output {
+    color: var(--red) !important;
+}
+
+.inline-code{
+    background: var(--surface1);
+    border-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    padding: 0.3vh 0.5vw;
+    width: 90%;
+    overflow: auto;
+    text-align: center;
+    font-size: 1.75vh;
+    font-weight: 500;
+    border: none;
+    cursor: default;
+
+}
+
+.comment {
+    color: var(--green);
+}
