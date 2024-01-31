@@ -151,7 +151,8 @@
         output1ValState = "hidden";
         output2ValState = "hidden";
         output3ValState = "hidden";
-
+        secondPartIDK = "hidden";
+        outputVal3 = "";
 
         legend = "hidden";
 
@@ -314,6 +315,8 @@
     let outputState1 = "";
     let outputVal2 = "";
     let outputState2 = "hidden";
+    let outputVal3 = "";
+
 
 
     let outputState3 = "hidden";
@@ -322,6 +325,7 @@
     let output2ValState = "hidden";
     let output3ValState = "hidden";
 
+    let secondPartIDK = "hidden";
 </script>
 
 
@@ -390,10 +394,12 @@ else:
 <code class="{succsess}"><code class="{outputState1}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <input style="width: 10vw;" type="text" bind:value={outputVal1} class="inline-input {outputState1}" on:keypress={(e) => { if (e.key === "Enter"){outputState1 = "hidden"; outputState2=""; output1ValState = ""}}}></code><code class="{output1ValState}"><code style="color: var(--peach);">{firstInputQuestion}</code> <code style="color: var(--teal);">{outputVal1}</code></code>
 <code class="{outputState2}">> <code style="color: var(--peach);">{secondInputQuestion}</code> <input style="width: 10vw;" type="number" bind:value={outputVal2} class="inline-input {outputState2}" on:keypress={(e) => { if (e.key === "Enter"){outputState2 = "hidden"; outputState3="";output2ValState = ""}}}></code><code class="{output2ValState}"><code style="color: var(--peach);">{secondInputQuestion}</code> <code style="color: var(--teal);">{outputVal2}</code></code>
 {#if parseInt(outputVal2) >= 18}<code class="{outputState3}">> Du bist volljährig</code>{:else}<code class="{outputState3}">> Du bist nicht volljährig</code>{/if}
-<code class="{outputState3}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <input style="width: 10vw;" type="number" bind:value={outputVal2} class="inline-input {outputState3}" on:keypress={(e) => { if (e.key === "Enter"){outputState3="hidden"; output3ValState="";_enableButton()}}}></code><code class="{output3ValState}"><code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <code style="color: var(--teal);">{outputVal2}</code></code>
-{#if parseInt(outputVal2) < 18}<code class="{outputState3}">> Du bist nicht volljährig</code>{:else}<code class="{outputState3}">> Du bist volljährig</code>{/if}
-<code class="{outputState3}">> <code style="color: var(--peach);">Hallo {$nameStore}</code></code>
-{#if firstInputName.length < 6}<code class="{outputState3}">> Dein Name ist echt kurz O.o</code>{:else if firstInputName.length > 6 || firstInputName.length < 13}<code class="{outputState3}">> Du hast einen normal langen Namen ._.</code>{:else}<code class="{outputState3}">> Dein Name ist echt lang (⊙ˍ⊙)</code>{/if}
+<code class="{outputState3}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <input style="width: 10vw;" type="number" bind:value={outputVal3} class="inline-input {outputState3}" on:keypress={(e) => { if (e.key === "Enter"){outputState3="hidden"; output3ValState=""; secondPartIDK = "";_enableButton()}}}></code><code class="{output3ValState}"><code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <code style="color: var(--teal);">{outputVal3}</code></code>
+<code class="{secondPartIDK}">
+
+    {#if parseInt(outputVal3) < 18}<code class="{outputState3}">> Du bist nicht volljährig</code>{:else}<code class="{outputState3}">> Du bist volljährig</code>{/if}
+    {#if firstInputName === $nameStore }  <code class="{outputState3}">> Hallo {$nameStore}</code>{:else}<code class="{outputState3}">> Du bist nicht {$nameStore} >:(</code> {/if}
+    {#if firstInputName.length < 6}<code class="{outputState3}">> Dein Name ist echt kurz O.o</code>{:else if firstInputName.length > 6 || firstInputName.length < 13}<code class="{outputState3}">> Du hast einen normal langen Namen ._.</code>{:else}<code class="{outputState3}">> Dein Name ist echt lang (⊙ˍ⊙)</code>{/if}</code>
 </code>
 </pre>
 
