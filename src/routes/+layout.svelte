@@ -55,14 +55,18 @@
         isOpen = !isOpen;
     }
 
-    function logOut() {
-        invoke('logout').then((res) => {
-            if (res) {
-                goto('/');
-            } else {
-                message("User konnte nicht abgemeldet werden, bereits abgemeldet?")
-            }
-        })
+    async function logOut() {
+        if (await ask('Willst du dich wirklich abmelden?', { title: 'Abmelden' })) {
+            invoke('logout').then((res) => {
+                if (res) {
+                    goto('/');
+                } else {
+                    message("User konnte nicht abgemeldet werden, bereits abgemeldet?")
+                }
+            })
+        } else {
+            return;
+        }
     }
 
     async function quit() {
@@ -87,14 +91,18 @@
     }
 
 
-    function goHome(){
-        invoke('get_name').then((res) => {
-            if (res) {
-                goto('/home');
-            } else {
-                goto('/');
-            }
-        })
+    async function goHome(){
+        if (await ask('Willst du wirklich zur Startseite wechseln?', { title: 'Startseite' })) {
+            invoke('get_name').then((res) => {
+                if (res) {
+                    goto('/home');
+                } else {
+                    goto('/');
+                }
+            })
+        } else {
+            return;
+        }
     }
 
 </script>
