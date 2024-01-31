@@ -10,7 +10,17 @@
         <li>Dann können wir die Zahlen ausrechnen mit +, -, *, /</li>
         <li>Und zuletzt mithilfe von <code class="inline-code">print(...)</code> ausgeben</li>
     </ul>
-    <p style="margin-top: 1vh;">Ich hoffe, du hattest Spaß beim Lösen dieses Beispiels, du kannst nun am Home ein anderes lösen oder dich über die Leiste oben abmelden.</p>
+    <p style="margin-top: 1vh;">Ich hoffe, du hattest Spaß beim Lösen dieses Beispiels, du kannst nun bei Home ein anderes lösen oder dich über die Leiste oben abmelden.</p>
 </div>
 
 <button class="next" on:click={() => goto("/home")}>Home</button>
+
+<style>
+    ul {
+        list-style-type: none;
+        font-size: 2vh;
+    }
+    li {
+        margin-bottom: 1.2vh;
+    }
+</style>
