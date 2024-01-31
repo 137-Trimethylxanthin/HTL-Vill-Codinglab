@@ -1,5 +1,12 @@
 <script>
-import {_next} from "../../+layout";
+    import {_disableButton, _enableButton, _next} from "../../+layout";
+import {onMount} from "svelte";
+
+    onMount(() => {
+
+        _disableButton();
+    });
+
 
 let output = "> Das ist dein Output";
 let outputColorClass = "";
