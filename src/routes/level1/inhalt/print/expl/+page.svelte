@@ -13,7 +13,7 @@
 <div class="lernContainer">
     <h1>print</h1>
     <p>
-        Print ist ein Befehl, der Text auf den Bildschirm anzeigen lasst <br>
+        Print ist ein Befehl, der Text auf den Bildschirm anzeigt. <br>
         PS: Kommentare werden mit # gemacht. Sie werden bei Ablauf des Programmes ignoriert.<br>
         <code class="inline-input comment"># Kommentar</code> <br>
         Hier ist ein Beispiel:

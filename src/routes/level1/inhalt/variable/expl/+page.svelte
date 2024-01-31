@@ -11,10 +11,10 @@
 <div class="lernContainer">
     <h1>Variablen</h1>
     <p>
-        In Variable können Werte gespeichert werden. Diese Werte können dann später wieder abgerufen werden. <br>
+        In Variablen können Werte gespeichert werden. Diese Werte können dann später wieder abgerufen werden. <br>
         In Python können wir Variablen mit dem <code class="inline-code">=</code> Zeichen erstellen. <br>
         <code class="inline-code">x = 5</code> erstellt zum Beispiel eine Variable mit dem Namen <code class="inline-code">x</code> und dem Wert <code class="inline-code">5</code>. <br>
-        Wir werden aber nach dem Namen der Variable einen ':' setzen, um den Typen der Variable angeben. <br>
+        Wir werden aber nach dem Namen der Variable einen ':' setzen, um den Typen der Variable anzugeben. <br>
         <code class="inline-code">x: int = x</code> Damit sagen wir Leuten, die den Code lesen, dass die Variable <code class="inline-code">x</code> eine Nummer (Integer) ist. <br>
         Hier sind ein paar Beispiele (mit Kurzform): <br>
         In Python werden Texte in Anführungszeichen gesetzt und 'String' genannt. (kurz: str) <br>
@@ -41,7 +41,7 @@ print(f"Hey <code style="color: var(--teal)">&#123;name}</code>! Wusstest du das
 
     <p>
         Wie du siehst, kannst du Variablen auch mit <code class="inline-code">print()</code> ausgeben. <br>
-        In print kannst du auch mehrere Sachen ausgeben, indem du sie aneinander reihst. Du kannst <b>drei</b> verschiedene Arten von Aneinanderreihungen verwenden:
+        Mit print kannst du auch mehrere Sachen ausgeben, indem du sie aneinander reihst. Du kannst <b>drei</b> verschiedene Arten von Aneinanderreihungen verwenden:
         <br>
         - <code class="inline-code">print("Hallo " + name + "!")</code> <br>
         - <code class="inline-code">print("Hallo", name, "!")</code> <br>

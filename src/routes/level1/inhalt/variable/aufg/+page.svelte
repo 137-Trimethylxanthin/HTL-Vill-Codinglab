@@ -146,7 +146,7 @@
     <p>
         Ich hoffe, du hast dir die Erklärung durchgelesen, denn nun kommt die Aufgabe. <br>
         Fülle die Lücken passend aus und drücke auf "Ausführen". <br>
-        Du musst auch die Variablen beschriften(typisieren) mit <b>str</b> oder <b>int</b>. <br>
+        Du musst auch die Variablen mit <b>str</b> oder <b>int</b> beschriften(typisieren). <br>
     </p>
 
 <pre class="codeBlock">
