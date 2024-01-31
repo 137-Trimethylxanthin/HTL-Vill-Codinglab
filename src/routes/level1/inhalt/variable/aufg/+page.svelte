@@ -124,13 +124,13 @@
         }
 
         if (correct) {
-            outputColorClass = "green";
+            outputColorClass = "valid-output";
             output = "> Jahr: " + user_jahr_value + " Monat: " + user_monat_nummer_value + " Tag: " + user_tag_value + "\n";
             output += "> " + user_begruessung_value + " " + user_name_value + " wie geht es dir? \n";
             output += "> Hey, ist dieser " + user_wochen_tag_value + " nicht ein schöner Tag, " + user_name_value + "\n";
             _enableButton();
         } else {
-            outputColorClass = "red";
+            outputColorClass = "invalid-output";
             output = "> Leider nicht ganz richtig. \n";
             output += "> Ich hab dir die falschen Felder markiert \n";
         }

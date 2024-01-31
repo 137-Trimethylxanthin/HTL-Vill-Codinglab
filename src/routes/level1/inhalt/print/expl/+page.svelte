@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { _enableButton, _next } from "../../+layout";
-    import { onMount } from "svelte";
+    import {_enableButton, _next} from "../../+layout";
+    import {onMount} from "svelte";
     onMount(() => {
         _enableButton();
     });
@@ -8,10 +8,13 @@
 
 
 <div class="lernContainer">
-    <h1>print</h1>
+    <h1>Print</h1>
     <p>
-        Print ist ein Befehl, welcher Text auf dem Bildschirm ausgibt. <br>
+        Print ist ein Befehl, Dieser Text auf den Bildschirm anzeigen lasst <br>
+        PS: kommentare werden mit # gemacht <br>
+        <code class="inline-input comment">#Kommentar</code> <br>
         Hier ist ein Beispiel:
+
     </p>
     <p class="noMargin">Code:</p>
 <pre class="codeBlock">
@@ -23,7 +26,6 @@ print("Hello World")
 > Hello World
 </pre>
 
-
 </div>
 
-<button class="next" on:click={() => {_next("aufg")}}>Weiter</button>
+<button class="next" on:click={() => {_next("aufg")}}> Weiter </button>

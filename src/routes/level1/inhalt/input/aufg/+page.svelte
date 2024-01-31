@@ -93,12 +93,12 @@ function validate(){
     }
 
     if (error){
-        outputColorClass = "error";
+        outputColorClass = "invalid-output";
         output = "> Es ist ein Fehler aufgetreten";
         output += "\n> Bitte überprüfe die falschen Felder";
     }
     else{
-        outputColorClass = "correct";
+        outputColorClass = "valid-output";
         output = "";
         firstInput = "";
 
