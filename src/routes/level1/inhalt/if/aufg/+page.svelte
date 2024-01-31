@@ -341,7 +341,7 @@
     </p>
 
     <pre class="codeBlock">
-<code class="comment"># Zwei inputs für Name und Alter. (Namen und Werte werden mit '=' getrennt)</code>
+<code class="comment"># Zwei Inputs für Name und Alter. (Namen und Werte werden mit '=' getrennt)</code>
 <code class="comment"># Der Name wird als String gespeichert, das Alter als Integer</code>
 <code class="comment"># Die Variable dürfen nicht den gleichen Namen besitzen</code>
 <input class="inline-input {firstInputState}" type="text" placeholder="Name Var + Input" bind:value={firstInput}>
@@ -355,44 +355,44 @@ else:
     print("Du bist nicht volljährig")
 
 <code class="comment"># Frage das Alter erneut ab
-# hier benötigst du keinen : mehr da du es in derselben Variable speicherst</code>
+# Hier benötigst du keinen ':' mehr, da du es in der selben Variable speicherst</code>
 <input class="inline-input {secondInputReaNewValState}" type="text" placeholder="Alter Var ohne :int oder :str + Input" bind:value={secondInputReaNew}>
 
-<code class="comment"># Überprüfe ob der User Jünger ist als 18 jahre</code>
+<code class="comment"># Überprüfe, ob der User jünger als 18 Jahre ist</code>
 if <input class="inline-input {secondIfState}" type="text" placeholder="Var + Vergleich" style="width: 15vw" bind:value={secondIf}> 18:
     print("Du bist nicht volljährig")
 else:
     print("Du bist volljährig")
 
-<code class="comment"># Überprüfe ob der name richtig ist. (Ob die Name Identisch sind.)</code>
+<code class="comment"># Überprüfe, ob der Name richtig ist. (Ob die Name identisch sind.)</code>
 if <input class="inline-input {thirdIfState}" type="text" placeholder="Var + Vergleich" style="width: 15vw" bind:value={thirdIf}> "{$nameStore}":
     print("Hallo {$nameStore}")
 else:
     print("Du bist nicht {$nameStore} >:(")
 
 
-<code class="comment"># Als letztes Setzte die richtigen Vergleichsoperatoren ein.</code>
-<code class="comment"># .len() nach einer Variable, gib die Anzahl der Buchstaben eines Strings zurück.</code>
-<code class="comment"># Die .len() wird am ende von den Eingabefeldern angehängt für dich</code>
+<code class="comment"># Als letztes setze die richtigen Vergleichsoperatoren ein.</code>
+<code class="comment"># .len() nach einer Variable gibt die Anzahl der Buchstaben eines Strings zurück.</code>
+<code class="comment"># Die .len() wird am Ende von den Eingabefeldern für dich angehängt.</code>
 
-<code class="comment"># Überprüfe ob der Name weniger als 6 Buchstaben ist.</code>
+<code class="comment"># Überprüfe, ob der Name weniger als 6 Buchstaben hat.</code>
 if 6 <input class="inline-input {fourthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={fourthIf}>.len():
     print("Dein Name ist echt kurz O.o")
-<code class="comment"># Überprüfe ob die anzahl zwischen 6 und 13 liegt</code>
+<code class="comment"># Überprüfe ob die Anzahl zwischen 6 und 13 liegt</code>
 else if 6 <input class="inline-input {fifthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={fifthIf}>.len() and 13 <input class="inline-input {sixthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={sixthIf}>.len():
     print("Du hast einen normal langen Namen ._.")
-<code class="comment"># Else wird ausgeführt wenn die anzahl der Buchstaben über 13 ist</code>
+<code class="comment"># else wird ausgeführt, wenn die Anzahl der Buchstaben über 13 ist</code>
 else:
     print("Dein Name ist echt lang (⊙ˍ⊙)")
 </pre>
 
-<button class="validate" on:click={() => {validate()}}> Ausführen </button>
+<button class="validate" on:click={() => {validate()}}>Ausführen</button>
 
 <pre class="cmd {outputColorClass}" >
 {output}
-<code class="{legend}"><code style="color: var(--yellow); font-weight:600; font-size: 2vh">> Wenn Du einen Namen von deinen Variablen Falsch geschrieben hast,<br>> wird dir in gelb angezeigt (:str und :int zählen hier dazu)</code>
-<code style="color: var(--red); font-weight:600; font-size: 2vh">> Wenn du einen Vergleichsoperator falsch eingesetzt hast,<br>> wird dir in rot angezeigt <br>> falls dein input falsch ist wird diese Rot angezeigt</code>
-<code style="color: var(--mauve); font-weight:600; font-size: 2vh">> Wenn du beides falsch gemacht hast,<br>> wird dir das Eingabe feld in lila angezeigt</code></code><code class="{succsess}"><code class="{outputState1}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <input style="width: 10vw;" type="text" bind:value={outputVal1} class="inline-input {outputState1}" on:keypress={(e) => { if (e.key === "Enter"){outputState1 = "hidden"; outputState2=""; output1ValState = ""}}}></code><code class="{output1ValState}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <code style="color: var(--teal);">{outputVal1}</code></code>
+<code class="{legend}"><code style="color: var(--yellow); font-weight:600; font-size: 2vh">> Wenn du einen Namen von deinen Variablen falsch geschrieben hast,<br>> wird dir in gelb angezeigt (:str und :int zählen hier dazu)</code>
+<code style="color: var(--red); font-weight:600; font-size: 2vh">> Wenn du einen Vergleichsoperator falsch eingesetzt hast,<br>> wird er dir in rot angezeigt <br>> falls dein input falsch ist wird diese Rot angezeigt</code>
+<code style="color: var(--mauve); font-weight:600; font-size: 2vh">> Wenn du beides falsch gemacht hast,<br>> wird dir das Eingabefeld in lila angezeigt</code></code><code class="{succsess}"><code class="{outputState1}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <input style="width: 10vw;" type="text" bind:value={outputVal1} class="inline-input {outputState1}" on:keypress={(e) => { if (e.key === "Enter"){outputState1 = "hidden"; outputState2=""; output1ValState = ""}}}></code><code class="{output1ValState}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <code style="color: var(--teal);">{outputVal1}</code></code>
 <code class="{outputState2}">> <code style="color: var(--peach);">{secondInputQuestion}</code> <input style="width: 10vw;" type="number" bind:value={outputVal2} class="inline-input {outputState2}" on:keypress={(e) => { if (e.key === "Enter"){outputState2 = "hidden"; outputState3="";output2ValState = ""; firstPartIDK = "";}}}></code><code class="{output2ValState}">> <code style="color: var(--peach);">{secondInputQuestion}</code> <code style="color: var(--teal);">{outputVal2}</code></code>
 {#if parseInt(outputVal2) >= 18}<code class="{firstPartIDK}">> Du bist volljährig</code>{:else}<code class="{firstPartIDK}">> Du bist nicht volljährig</code>{/if}
 <code class="{outputState3}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <input style="width: 10vw;" type="number" bind:value={outputVal3} class="inline-input {outputState3}" on:keypress={(e) => { if (e.key === "Enter"){outputState3="hidden"; output3ValState=""; secondPartIDK = "";_enableButton()}}}></code><code class="{output3ValState}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <code style="color: var(--teal);">{outputVal3}</code></code>
@@ -404,6 +404,6 @@ else:
 
 </div>
 
-<button class="next" on:click={() =>{_next("../code_example")}}> Weiter </button>
+<button class="next" on:click={() =>{_next("../code_example")}}>Weiter</button>
 
 <div class="bothErr vergleichErr nameErr"></div>
