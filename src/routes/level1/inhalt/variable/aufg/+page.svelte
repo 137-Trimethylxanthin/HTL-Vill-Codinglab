@@ -175,4 +175,4 @@ print(f"Hey ist dieser &#123;<input class="inline-input {stat[11]}" style="width
 
 </div>
 
-<button class="next" on:click={() =>{_next("../variable/expl")}}> Weiter </button>
+<button class="next" on:click={() =>{_next("../input/expl")}}> Weiter </button>
