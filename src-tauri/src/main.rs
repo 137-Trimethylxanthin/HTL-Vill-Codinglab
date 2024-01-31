@@ -17,20 +17,6 @@ struct ApplicationState {
     dirname: Mutex<String>,
 }
 
-// #[pyclass]
-// #[derive(Clone)]
-// struct CheckStdout {
-//     stdout_buffer: String,
-// }
-
-// #[pymethods]
-// impl CheckStdout {
-//     fn write(&mut self, data: &str) {
-//         // println!("{}", data);
-//         self.stdout_buffer.push_str(data);
-//     }
-// }
-
 struct PythonValidator;
 
 impl PythonValidator {
@@ -70,28 +56,13 @@ impl PythonValidator {
         let python_code = python_code.unwrap();
         let python_code = PythonValidator::replace_input_with_static(&python_code, level);
 
-        // let stdout_checker = CheckStdout { stdout_buffer: String::new() };
 
         pyo3::prepare_freethreaded_python();
         Python::with_gil(|py| {
             // let sys = py.import("sys").unwrap();
             // sys.setattr("stdout", stdout_checker.into_py(py)).unwrap();
             match py.run(&python_code, None, None) {
-                Ok(_) => {
-                    return true;
-                    // println!("{}", stdout_checker.stdout_buffer);
-                    // let lvl1and2 =
-                    //     stdout_checker.stdout_buffer.contains("HTL")
-                    //     || (stdout_checker.stdout_buffer.contains("12")
-                    //     && stdout_checker.stdout_buffer.contains("4")
-                    //     && stdout_checker.stdout_buffer.contains("32")
-                    //     && stdout_checker.stdout_buffer.contains("2"));
-                    // if !lvl1and2 && !stdout_checker.stdout_buffer.contains("*") {
-                    //     return false;
-                    // } else {
-                    //     return true; // level 3 hat so viele Variationen, dass ich die checks nicht alle machen kann
-                    // }
-                }
+                Ok(_) => return true,
                 Err(_) => return false,
             };
         })
@@ -234,7 +205,7 @@ fn setup_user<R: Runtime>(
     let dirname = format!("{}_{}", name, get_sys_time_in_secs());
     let document_directory = document_dir()
         .unwrap()
-        .join("Programmierwerkstatt")
+        .join("CodingLab")
         .join(dirname.clone());
     *state_name = name.to_string();
     *state_dirname = dirname;
@@ -286,7 +257,7 @@ fn open_code_with_filename(
     let dirname = state.dirname.lock().unwrap();
     let file_open = document_dir()
         .unwrap()
-        .join("Programmierwerkstatt")
+        .join("CodingLab")
         .join(dirname.clone())
         .join(file_name);
 
@@ -317,7 +288,7 @@ fn check_python(state: State<'_, ApplicationState>, level: usize) -> Result<bool
     let dirname = state.dirname.lock().unwrap();
     let py_file = document_dir()
         .unwrap()
-        .join("Programmierwerkstatt")
+        .join("CodingLab")
         .join(dirname.clone())
         .join(format!("level{}.py", level));
     Ok(PythonValidator::validate_python_syntax(

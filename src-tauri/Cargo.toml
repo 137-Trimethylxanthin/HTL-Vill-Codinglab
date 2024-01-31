@@ -1,9 +1,9 @@
 [package]
-name = "programmier-trainer"
+name = "codinglab"
 version = "0.0.5"
-description = "Programmierwerkstatt 2024 Tag der offenen Tür HTL Villach"
+description = "Coding Lab 2024 Tag der offenen Tür HTL Villach"
 authors = ["Sitter Max", "Rechberger Simon"]
-default-run = "programmier-trainer"
+default-run = "codinglab"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
