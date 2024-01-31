@@ -306,7 +306,6 @@
             output = "> Das ist dein Output";
             legend = "hidden";
             succsess = "";
-            _enableButton();
         }
 
     }
@@ -396,10 +395,9 @@ else:
 {#if parseInt(outputVal2) >= 18}<code class="{outputState3}">> Du bist volljährig</code>{:else}<code class="{outputState3}">> Du bist nicht volljährig</code>{/if}
 <code class="{outputState3}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <input style="width: 10vw;" type="number" bind:value={outputVal3} class="inline-input {outputState3}" on:keypress={(e) => { if (e.key === "Enter"){outputState3="hidden"; output3ValState=""; secondPartIDK = "";_enableButton()}}}></code><code class="{output3ValState}"><code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <code style="color: var(--teal);">{outputVal3}</code></code>
 <code class="{secondPartIDK}">
-
-    {#if parseInt(outputVal3) < 18}<code class="{outputState3}">> Du bist nicht volljährig</code>{:else}<code class="{outputState3}">> Du bist volljährig</code>{/if}
-    {#if firstInputName === $nameStore }  <code class="{outputState3}">> Hallo {$nameStore}</code>{:else}<code class="{outputState3}">> Du bist nicht {$nameStore} >:(</code> {/if}
-    {#if firstInputName.length < 6}<code class="{outputState3}">> Dein Name ist echt kurz O.o</code>{:else if firstInputName.length > 6 || firstInputName.length < 13}<code class="{outputState3}">> Du hast einen normal langen Namen ._.</code>{:else}<code class="{outputState3}">> Dein Name ist echt lang (⊙ˍ⊙)</code>{/if}</code>
+{#if parseInt(outputVal3) < 18}<code class="{outputState3}">> Du bist nicht volljährig</code>{:else}<code class="{outputState3}">> Du bist volljährig</code>{/if}
+{#if firstInputName === $nameStore }  <code class="{outputState3}">> Hallo {$nameStore}</code>{:else}<code class="{outputState3}">> Du bist nicht {$nameStore} >:(</code>{/if}
+{#if firstInputName.length < 6}<code class="{outputState3}">> Dein Name ist echt kurz O.o</code>{:else if firstInputName.length > 6 || firstInputName.length < 13}<code class="{outputState3}">> Du hast einen normal langen Namen ._.</code>{:else}<code class="{outputState3}">> Dein Name ist echt lang (⊙ˍ⊙)</code>{/if}</code>
 </code>
 </pre>
 
