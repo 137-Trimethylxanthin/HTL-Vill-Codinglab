@@ -8,7 +8,7 @@
     });
 
     let legend = "hidden";
-
+    let succsess = "hidden";
 
     let output = "> Das ist dein Output";
     let outputColorClass = "";
@@ -50,7 +50,7 @@
         {type: "int", input: "int(input(", end : "))"},
     ]
 
-    let vergleich = [">=", "<", "==", "<", ">", "<="];
+    let vergleich = [">=", "<", "==", ">", "<", ">="];
 
     function inputCheck(input: string, index: number){
         let currentError = "correct";
@@ -277,13 +277,8 @@
                             }
                         }
                     }
-
-
-
-
                 }
             }
-
         }
 
 
@@ -291,10 +286,12 @@
             outputColorClass = "invalid-output";
             output = "> Da ist etwas schief gelaufen, schau dir die Fehler an und versuche es erneut.";
             legend = "";
+            succsess = "hidden";
         } else{
             outputColorClass = "valid-output";
             output = "> Das ist dein Output";
             legend = "hidden";
+            succsess = "";
             _enableButton();
         }
 
@@ -364,6 +361,9 @@ else:
 <code class="{legend}"><code style="color: var(--yellow); font-weight:600; font-size: 2vh">> Wenn Du einen Namen von deinen Variablen Falsch geschrieben hast,<br>> wird dir in gelb angezeigt (:str und :int zählen hier dazu)</code>
 <code style="color: var(--red); font-weight:600; font-size: 2vh">> Wenn du einen Vergleichsoperator falsch eingesetzt hast,<br>> wird dir in rot angezeigt <br>> falls dein input falsch ist wird diese Rot angezeigt</code>
 <code style="color: var(--mauve); font-weight:600; font-size: 2vh">> Wenn du beides falsch gemacht hast,<br>> wird dir das Eingabe feld in lila angezeigt</code></code>
+<code class="{succsess}">
+
+</code>
 </pre>
 
 </div>
