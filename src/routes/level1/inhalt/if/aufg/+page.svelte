@@ -389,19 +389,19 @@ else:
 <code style="color: var(--mauve); font-weight:600; font-size: 2vh">> Wenn du beides falsch gemacht hast,<br>> wird dir das Eingabe feld in lila angezeigt</code></code>
 <code class="{succsess}"><code class="{outputState1}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <input style="width: 10vw;" type="text" bind:value={outputVal1} class="inline-input {outputState1}" on:keypress={(e) => { if (e.key === "Enter"){outputState1 = "hidden"; outputState2="";}}}></code><code class="{output1ValState}"><code style="color: var(--peach);">{firstInputQuestion}</code> <code style="color: var(--teal);">{outputVal1}</code></code>
 <code class="{outputState2}">> <code style="color: var(--peach);">{secondInputQuestion}</code> <input style="width: 10vw;" type="number" bind:value={outputVal2} class="inline-input {outputState2}" on:keypress={(e) => { if (e.key === "Enter"){outputState2 = "hidden"; outputState3="";}}}></code><code class="{output2ValState}"><code style="color: var(--peach);">{secondInputQuestion}</code> <code style="color: var(--teal);">{outputVal2}</code></code>
-{#if parseInt(outputVal2) >= 18}}
+{#if parseInt(outputVal2) >= 18}
 <code class="{outputState3}">> Du bist volljährig</code>
 {:else}
 <code class="{outputState3}">> Du bist nicht volljährig</code>
 {/if}
 <code class="{outputState2}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <input style="width: 10vw;" type="number" bind:value={outputVal2} class="inline-input {outputState3}" on:keypress={(e) => { if (e.key === "Enter"){outputState3="hidden"; output3ValState="";_enableButton()}}}></code><code class="{output3ValState}"><code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <code style="color: var(--teal);">{outputVal2}</code></code>
-{#if parseInt(outputVal2) < 18}}
+{#if parseInt(outputVal2) < 18}
 <code class="{outputState3}">> Du bist nicht volljährig</code>
 {:else}
 <code class="{outputState3}">> Du bist volljährig</code>
 {/if}
 <code class="{outputState3}">> <code style="color: var(--peach);">Hallo {$nameStore}</code></code>
-{#if firstInputName.length < 6}}
+{#if firstInputName.length < 6}
 <code class="{outputState3}">> Dein Name ist echt kurz O.o</code>
 {:else if firstInputName.length > 6 || firstInputName.length < 13}
 <code class="{outputState3}">> Du hast einen normal langen Namen ._.</code>

@@ -135,3 +135,9 @@
 <slot />
 
 
+<footer>
+    <p class="copyLeft">© 2024 Coding Lab</p>
+    <p class="middleLinks">Made By <a href="https://github.com/137-Trimethylxanthin">Max</a> und <a href="https://github.com/gamersi">Simon</a></p>
+
+</footer>
+
