@@ -33,7 +33,3 @@
  *   *
 *     *
 '''
-
-""" WICHTIG: Achte darauf, dass die Zeichen genau in der oben beschriebenen Reihenfolge erscheinen.
-Mache keine Leerzeilen oder Texte zwischen den Übungen (wichtig für die Validation)
-"""

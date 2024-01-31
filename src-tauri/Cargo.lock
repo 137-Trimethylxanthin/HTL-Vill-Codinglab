@@ -333,6 +333,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "codinglab"
+version = "0.0.5"
+dependencies = [
+ "pyo3",
+ "regex",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+]
+
+[[package]]
 name = "color_quant"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2167,18 +2179,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2422ad645d89c99f8f3e6b88a9fdeca7fabeac836b1002371c4367c8f984aae"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "programmier-trainer"
-version = "0.0.5"
-dependencies = [
- "pyo3",
- "regex",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
 ]
 
 [[package]]
