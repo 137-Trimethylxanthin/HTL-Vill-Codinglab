@@ -70,6 +70,9 @@
             Hier solltest du bereits die Grundlagen von Python kennen (oder die vorherigen Level gemacht haben).
         </div>
     </div>
+    {#if $levels[0] !== undefined && $levels[0][0] && $levels[0][1] && $levels[0][2]}
+        <p class="congrats">Gratulation! Du hast alle Level geschafft!</p>
+    {/if}
 </div>
 
 <style>
@@ -83,9 +86,15 @@
     }
 
     .icon {
-        font-size: 2vh;
+        font-size: 3vh;
         position: absolute;
         right: 2vw;
         color: var(--green);
+    }
+
+    .congrats {
+        font-size: 2vh;
+        margin-bottom: 2vh;
+        color: var(--text);
     }
 </style>
