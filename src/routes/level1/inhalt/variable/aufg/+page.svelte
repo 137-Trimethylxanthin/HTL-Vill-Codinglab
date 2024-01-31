@@ -21,7 +21,7 @@
         {name: "tag", answer: "int"},
         {name: "wochen_tag", answer: "str"},
         {name: "print1" , answer: ["jahr", "monat_nummer", "tag"]},
-        {name: "print2" , answer: ["begrüsung", "name"] },
+        {name: "print2" , answer: ["begrüssung", "name"] },
         {name: "print3" , answer: ["wochen_tag", "name"] },
     ];
 

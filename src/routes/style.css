@@ -598,7 +598,7 @@ header{
     font-size: 1.75vh;
     font-weight: 500;
     border: none;
-    transform: translateX(-1vh);
+
     cursor: default;
     appearance: textfield; /* Firefox */
 }
