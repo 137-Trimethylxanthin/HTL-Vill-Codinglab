@@ -50,7 +50,7 @@
         {type: "int", input: "int(input(", end : "))"},
     ]
 
-    let vergleich = [">=", "<", "==", ">", "<", ">="];
+    let vergleich = [">=", "<", "==", ">", "<", "<="];
 
     function inputCheck(input: string, index: number){
         let currentError = "correct";
@@ -140,6 +140,10 @@
 
 
     function validate(){
+        firstInputName = "";
+        secondInputName = "";
+
+
         legend = "hidden";
 
         let error = false;

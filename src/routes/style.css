@@ -600,6 +600,7 @@ header{
     border: none;
     cursor: text;
     appearance: textfield; /* Firefox */
+
 }
 
 .codeBlock input.inline-input, .cmd input.inline-input{
