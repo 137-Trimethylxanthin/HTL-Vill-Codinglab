@@ -120,9 +120,13 @@
                 <li><button on:click={logOut}><img class="icons" src="/media/logout-{theme}.png" alt="Logout"></button></li>
                 <li><button on:click={quit}><img class="icons" src="/media/close-{theme}.png" alt="Close"></button></li>
             </ul>
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div on:click={toggleHeader} id="openToggle">Close</div>
         </div>
     {:else}
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div on:click={toggleHeader} id="close" ></div>
     {/if}
 </header>

@@ -22,7 +22,7 @@
         <li> =, &gt;, &lt;, ! (Vergleichsoperatoren)</li>
     </ul>
 
-    <p>Bist du Bereit?</p>
+    <p>Bist du bereit?</p>
     <button on:click={startLvl}>Start</button>
 
 

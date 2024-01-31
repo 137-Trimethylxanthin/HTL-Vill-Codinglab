@@ -14,7 +14,7 @@
     });
 
     let inputVal = "";
-    let output = "hier ist der Output.";
+    let output = "Hier ist der Output.";
     function validate(){
         if (inputVal.length <= 0) {
             outputColorClass = "invalid-output";
@@ -57,7 +57,7 @@
     <h1>print - Aufgabe</h1>
 
     <p>
-        Nun versuche es selbst <br>
+        Nun versuche es selbst. <br>
         Schreibe ein print, welches deinen Namen ausgibt:
     </p>
 

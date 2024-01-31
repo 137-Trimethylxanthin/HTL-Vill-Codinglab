@@ -8,13 +8,12 @@
 
 
 <div class="lernContainer">
-    <h1>Print</h1>
+    <h1>print</h1>
     <p>
-        Print ist ein Befehl, Dieser Text auf den Bildschirm anzeigen lasst <br>
-        PS: kommentare werden mit # gemacht <br>
-        <code class="inline-input comment">#Kommentar</code> <br>
+        Print ist ein Befehl, der Text auf den Bildschirm anzeigen lasst <br>
+        PS: Kommentare werden mit # gemacht <br>
+        <code class="inline-input comment"># Kommentar</code> <br>
         Hier ist ein Beispiel:
-
     </p>
     <p class="noMargin">Code:</p>
 <pre class="codeBlock">

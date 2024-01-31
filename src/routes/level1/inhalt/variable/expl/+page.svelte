@@ -14,7 +14,7 @@
         In Variable können Werte gespeichert werden. Diese Werte können dann später wieder abgerufen werden. <br>
         In Python können wir Variablen mit dem <code class="inline-code">=</code> Zeichen erstellen. <br>
         <code class="inline-code">x = 5</code> erstellt zum Beispiel eine Variable mit dem Namen <code class="inline-code">x</code> und dem Wert <code class="inline-code">5</code>. <br>
-        Wir werden aber nach dem Namen der Variable einen ':' setzen und den Typen der Variable angeben. <br>
+        Wir werden aber nach dem Namen der Variable einen ':' setzen, um den Typen der Variable angeben. <br>
         <code class="inline-code">x: int = x</code> Damit sagen wir Leuten, die den Code lesen, dass die Variable <code class="inline-code">x</code> eine Nummer (Integer) ist. <br>
         Hier sind ein paar Beispiele (mit Kurzform): <br>
         In Python werden Texte in Anführungszeichen gesetzt und 'String' genannt. (kurz: str) <br>
