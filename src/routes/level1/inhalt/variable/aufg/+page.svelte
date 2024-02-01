@@ -150,21 +150,21 @@
     </p>
 
 <pre class="codeBlock">
-jahr:<input class="inline-input {stat[0]}" style="width: 2vw" maxlength="3" bind:value={user_jahr}> = <input class="inline-input" style="width: 3vw" maxlength="5" bind:value={user_jahr_value}> <br>
-begrüssung:<input class="inline-input {stat[1]}" style="width: 2vw" maxlength="3" bind:value={user_begruessung}> = "<input class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_begruessung_value}>" <br>
-monat_nummer:<input class="inline-input {stat[2]}" style="width: 2vw" maxlength="3" bind:value={user_monat_nummer}> = <input class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_monat_nummer_value}> <br>
-name:<input class="inline-input {stat[3]}" style="width: 2vw" maxlength="3" bind:value={user_name}> = "<input class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_name_value}>" <br>
-tag:<input class="inline-input {stat[4]}" style="width: 2vw" maxlength="3" bind:value={user_tag}> = <input class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_tag_value}> <br>
-wochen_tag:<input class="inline-input {stat[5]}" style="width: 2vw" maxlength="3" bind:value={user_wochen_tag}> = "<input class="inline-input" style="width: 12vw" maxlength="23" bind:value={user_wochen_tag_value}>" <br>
+jahr:<input autocomplete="off"  class="inline-input {stat[0]}" style="width: 2vw" maxlength="3" bind:value={user_jahr}> = <input autocomplete="off"  class="inline-input" style="width: 3vw" maxlength="5" bind:value={user_jahr_value}> <br>
+begrüssung:<input autocomplete="off"  class="inline-input {stat[1]}" style="width: 2vw" maxlength="3" bind:value={user_begruessung}> = "<input autocomplete="off"  class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_begruessung_value}>" <br>
+monat_nummer:<input autocomplete="off"  class="inline-input {stat[2]}" style="width: 2vw" maxlength="3" bind:value={user_monat_nummer}> = <input autocomplete="off"  class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_monat_nummer_value}> <br>
+name:<input autocomplete="off"  class="inline-input {stat[3]}" style="width: 2vw" maxlength="3" bind:value={user_name}> = "<input autocomplete="off"  class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_name_value}>" <br>
+tag:<input autocomplete="off"  class="inline-input {stat[4]}" style="width: 2vw" maxlength="3" bind:value={user_tag}> = <input autocomplete="off"  class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_tag_value}> <br>
+wochen_tag:<input autocomplete="off"  class="inline-input {stat[5]}" style="width: 2vw" maxlength="3" bind:value={user_wochen_tag}> = "<input autocomplete="off"  class="inline-input" style="width: 12vw" maxlength="23" bind:value={user_wochen_tag_value}>" <br>
 
 <code class="comment"># Hier will ich das Jahr, den Monat und den Tag </code>
-print("Jahr:", <input class="inline-input {stat[6]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_1}>, "Monat:" <input class="inline-input {stat[7]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_2}>, "Tag:", <input class="inline-input {stat[8]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_3}>)
+print("Jahr:", <input autocomplete="off"  class="inline-input {stat[6]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_1}>, "Monat:" <input autocomplete="off"  class="inline-input {stat[7]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_2}>, "Tag:", <input autocomplete="off"  class="inline-input {stat[8]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_3}>)
 
 <code class="comment"># Hier will ich die Begrüssung und den Namen</code>
-print(<input class="inline-input {stat[9]}" style="width: 5.5vw" maxlength="10" bind:value={user_print2_1}> + " " + <input class="inline-input {stat[10]}" style="width: 5.5vw" maxlength="10" bind:value={user_print2_2}> + " wie geht es dir?")
+print(<input autocomplete="off"  class="inline-input {stat[9]}" style="width: 5.5vw" maxlength="10" bind:value={user_print2_1}> + " " + <input autocomplete="off"  class="inline-input {stat[10]}" style="width: 5.5vw" maxlength="10" bind:value={user_print2_2}> + " wie geht es dir?")
 
 <code class="comment"># Hier will ich den Wochentag und den Namen</code>
-print(f"Hey, ist dieser &#123;<input class="inline-input {stat[11]}" style="width: 5.5vw" maxlength="10" bind:value={user_print3_1}>} nicht ein schöner Tag, &#123;<input class="inline-input {stat[12]}" style="width: 5.5vw" maxlength="10" bind:value={user_print3_2}>}
+print(f"Hey, ist dieser &#123;<input autocomplete="off"  class="inline-input {stat[11]}" style="width: 5.5vw" maxlength="10" bind:value={user_print3_1}>} nicht ein schöner Tag, &#123;<input autocomplete="off"  class="inline-input {stat[12]}" style="width: 5.5vw" maxlength="10" bind:value={user_print3_2}>}
 </pre>
 
 <button class="validate" on:click={() => {validate()}}>Ausführen</button>

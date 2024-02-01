@@ -120,22 +120,22 @@ function validate(){
     </p>
 
 <pre class="codeBlock">
-name: <input class="inline-input {name_type_state}" style="width: 2vw" maxlength="3" bind:value={user_name_type}> = input("<input type="text" style="width: 30vw" maxlength="58" bind:value={user_name}>")
-alter: <input class="inline-input {alter_type_state}" style="width: 2vw" maxlength="3" bind:value={user_alter_type}> = int(input("<input type="text" style="width: 12vw" maxlength="23" bind:value={user_alter}>"))
+name: <input autocomplete="off"  class="inline-input {name_type_state}" style="width: 2vw" maxlength="3" bind:value={user_name_type}> = input("<input autocomplete="off"  type="text" style="width: 30vw" maxlength="58" bind:value={user_name}>")
+alter: <input autocomplete="off"  class="inline-input {alter_type_state}" style="width: 2vw" maxlength="3" bind:value={user_alter_type}> = int(input("<input autocomplete="off"  type="text" style="width: 12vw" maxlength="23" bind:value={user_alter}>"))
 <code class="comment"># Hier musst du dir einen Variablenamen ausdenken</code>
-<input class="inline-input {datum_name_state}" type="text" style="width: 12vw" maxlength="23" bind:value={user_datum_name}>: <input class="inline-input {datum_type_state}" style="width: 2vw" maxlength="3" bind:value={user_datum_type}> = input("<input type="text" style="width: 12vw" maxlength="23" bind:value={user_datum}>")
+<input autocomplete="off"  class="inline-input {datum_name_state}" type="text" style="width: 12vw" maxlength="23" bind:value={user_datum_name}>: <input autocomplete="off"  class="inline-input {datum_type_state}" style="width: 2vw" maxlength="3" bind:value={user_datum_type}> = input("<input autocomplete="off"  type="text" style="width: 12vw" maxlength="23" bind:value={user_datum}>")
 
 print("Hallo " + name + ", du bist " + alter + " Jahre alt")
-print("Und hast am " + <input class="inline-input {datum_name_state}" type="text" style="width: 12vw" maxlength="23" bind:value={user_datum_name_in_print}> + " Geburtstag");)
+print("Und hast am " + <input autocomplete="off"  class="inline-input {datum_name_state}" type="text" style="width: 12vw" maxlength="23" bind:value={user_datum_name_in_print}> + " Geburtstag");)
 </pre>
 
 <button class="validate" on:click={() => {validate()}}>Ausführen</button>
 
 <pre class="cmd {outputColorClass}">
 {output}
-<code class="{firstInput}">> <code style="color: var(--peach);">{user_name}</code> <input style="width: 10vw;" type="text" bind:value={input_val_1} class="inline-input {firstInput}" on:keypress={(e) => { if (e.key === "Enter"){ secondInput = ""; input1Output = ""; firstInput="hidden"; }}}></code><code class="{input1Output}"><code style="color: var(--peach);">{user_name}</code> <code style="color: var(--teal);">{input_val_1}</code></code>
-<code class="{secondInput}">> <code style="color: var(--peach);">{user_alter}</code> <input style="width: 10vw;" type="number" bind:value={input_val_2} class="inline-input {secondInput}" on:keypress={(e) => { if (e.key === "Enter"){ thirdInput = ""; input2Output = ""; secondInput="hidden";}}}></code><code class="{input2Output}"><code style="color: var(--peach);">{user_alter}</code> <code style="color: var(--teal);">{input_val_2}</code></code>
-<code class="{thirdInput}">> <code style="color: var(--peach);">{user_datum}</code> <input style="width: 10vw;" type="text" bind:value={input_val_3} class="inline-input {thirdInput}" on:keypress={(e) => { if (e.key === "Enter"){ ende=""; input3Output = ""; thirdInput="hidden"; _enableButton()}}}></code><code class="{input3Output}"><code style="color: var(--peach);">{user_datum}</code> <code style="color: var(--teal);">{input_val_3}</code></code>
+<code class="{firstInput}">> <code style="color: var(--peach);">{user_name}</code> <input autocomplete="off"  style="width: 10vw;" type="text" bind:value={input_val_1} class="inline-input {firstInput}" on:keypress={(e) => { if (e.key === "Enter"){ secondInput = ""; input1Output = ""; firstInput="hidden"; }}}></code><code class="{input1Output}"><code style="color: var(--peach);">{user_name}</code> <code style="color: var(--teal);">{input_val_1}</code></code>
+<code class="{secondInput}">> <code style="color: var(--peach);">{user_alter}</code> <input autocomplete="off"  style="width: 10vw;" type="number" bind:value={input_val_2} class="inline-input {secondInput}" on:keypress={(e) => { if (e.key === "Enter"){ thirdInput = ""; input2Output = ""; secondInput="hidden";}}}></code><code class="{input2Output}"><code style="color: var(--peach);">{user_alter}</code> <code style="color: var(--teal);">{input_val_2}</code></code>
+<code class="{thirdInput}">> <code style="color: var(--peach);">{user_datum}</code> <input autocomplete="off"  style="width: 10vw;" type="text" bind:value={input_val_3} class="inline-input {thirdInput}" on:keypress={(e) => { if (e.key === "Enter"){ ende=""; input3Output = ""; thirdInput="hidden"; _enableButton()}}}></code><code class="{input3Output}"><code style="color: var(--peach);">{user_datum}</code> <code style="color: var(--teal);">{input_val_3}</code></code>
 <code class="{ende}">Hallo <code style="color: var(--teal);">{input_val_1}</code>, du bist <code style="color: var(--teal);">{input_val_2}</code> Jahre alt <br>Und hast am <code style="color: var(--teal);">{input_val_3}</code> Geburtstag</code>
 </pre>
 </div>

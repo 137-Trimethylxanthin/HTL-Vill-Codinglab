@@ -31,10 +31,6 @@
         <code class="inline-code">&lt;</code> kleiner <br>
         <code class="inline-code">&gt;=</code> grösser oder gleich <br>
         <code class="inline-code">&lt;=</code> kleiner oder gleich <br>
-
-
-        
-    
     </p>
     <p class="noMargin">Code:</p>
 <pre class="codeBlock">
