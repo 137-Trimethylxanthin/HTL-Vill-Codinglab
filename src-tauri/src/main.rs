@@ -43,7 +43,7 @@ impl PythonValidator {
     }
 
     fn replace_input_with_static(code: &str, level: usize) -> String {
-        let input_pattern = Regex::new(r"input\([^)]*\)").unwrap();
+        let input_pattern = Regex::new(r#"input\(".*?"\)"#).unwrap();
         if level == 1 {
             input_pattern.replace_all(code, "HTL").to_string()
         } else if level == 2 {
@@ -61,7 +61,6 @@ impl PythonValidator {
         }
         let python_code = python_code.unwrap();
         let python_code = PythonValidator::replace_input_with_static(&python_code, level);
-
 
         pyo3::prepare_freethreaded_python();
         Python::with_gil(|py| {
