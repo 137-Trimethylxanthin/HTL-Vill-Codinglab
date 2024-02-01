@@ -1,10 +1,10 @@
 {
     "version": "0.1.3",
-    "notes": "I did something dumb -_-",
+    "notes": "Hotfixes for input types",
     "pub_date": "2024-02-01T20:47:00+00:00",
     "platforms": {
       "windows-x86_64": {
-        "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSNUVkZFdyYUI1elZoMmVtV2I0VGpoYzh0TGtrMWpEUkI0V3JGMGxKV25tVG9tYnJXdmdRdTN5dng5MWlVTngyYW4xc3o4c3lpNEYvZHhpeUpaRFBwVGZHcDJ4QTEzTmdBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzA2ODE4MDM5CWZpbGU6Y29kaW5nbGFiXzAuMS4zX3g2NC1zZXR1cC5uc2lzLnppcAp1MTlXN0pieFdvR3ZBcFVSRXpIS1ZKZGwwYnVQbmhzdm05OTJHb2JkTHhuYmczVFFwVVBsV2FwODFCdHo3aFhXV2c2Y0labWVVK0tFWjdRS0NVbkpBQT09Cg==",
+        "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSNUVkZFdyYUI1emRLcDFTRU15S09Tc2Qxb2xBYkhYT2JRNThRQ3FtWElzTklZdm1rbzl2UW5Ba3VWd09tTG5uYzJiNy9ZREtNU2hFa2l3Q1RnU2Vla3Q4QU84cWhVdGdZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzA2ODE4OTQ5CWZpbGU6Y29kaW5nbGFiXzAuMS4zX3g2NC1zZXR1cC5uc2lzLnppcApsSVNaUnJUbXN4Mm9FRDdmdEd4UEErVkw2RHBEdVF4MWs0ajZaZDNxcDQzaWx1ZFN0ZG1XSkJDS3FyUWoyeWVKQml1VGVNVXJwaFVIL2FQZXJ6eGpCUT09Cg==",
         "url": "https://github.com/137-Trimethylxanthin/HTL-Vill-Codinglab/releases/download/0.1.3/codinglab_0.1.3_x64-setup.nsis.zip"
       }
     }
