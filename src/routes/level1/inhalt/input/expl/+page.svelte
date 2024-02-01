@@ -43,8 +43,8 @@ print("Alter: " + <code style="color: var(--teal);">alter</code>)
 
 <p class="noMargin">Output:</p>
 <pre class="cmd">
-> <code style="color: var(--peach);">"Wie heißt du? "</code> <input style="width: 10vw;" type="text" bind:value={name} class="inline-input {input1}" on:keypress={(e) => { if (e.key === "Enter"){ input1 = "hidden";second = "";output = "hidden"; input1Output = ""; input2Output = "hidden";}}}><code class="{input1Output}" style="color: var(--teal)">{name}</code>
-<code class="{second}">> <code style="color: var(--peach);">"Wie alt bist du?"</code> <input style="width: 10vw;" type="number" bind:value={alter} class="inline-input {input2}" on:keypress={(e) => { if (e.key === "Enter"){ input2 = "hidden"; second = "";output = ""; input2Output = ""; input2Output = ""; _enableButton()}}}></code><code style="color: var(--teal)" class="{input2Output}">{alter}</code>
+> <code style="color: var(--peach);">> Wie heißt du? </code> <input style="width: 10vw;" type="text" bind:value={name} class="inline-input {input1}" on:keypress={(e) => { if (e.key === "Enter"){ input1 = "hidden";second = "";output = "hidden"; input1Output = ""; input2Output = "hidden";}}}><code class="{input1Output}" style="color: var(--teal)">{name}</code>
+<code class="{second}"><code style="color: var(--peach);">> Wie alt bist du?</code> <input style="width: 10vw;" type="number" bind:value={alter} class="inline-input {input2}" on:keypress={(e) => { if (e.key === "Enter"){ input2 = "hidden"; second = "";output = ""; input2Output = ""; input2Output = ""; _enableButton()}}}></code><code style="color: var(--teal)" class="{input2Output}">{alter}</code>
 <code class="{output}">
 > Person:
 > Name: <code style="color: var(--teal)">{name}</code>

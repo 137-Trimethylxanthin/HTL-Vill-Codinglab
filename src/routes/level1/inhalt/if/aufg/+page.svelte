@@ -50,7 +50,7 @@
         {type: "int", input: "int(input(", end : "))"},
     ]
 
-    let vergleich = [">=", "<", "==", ">", "<", "<="];
+    let vergleich = [">=", "<", "==", ">", "<=", ">="];
 
     function inputCheck(input: string, index: number){
         let currentError = "correct";
@@ -397,8 +397,8 @@ else:
 {#if parseInt(outputVal2) >= 18}<code class="{firstPartIDK}">> Du bist volljährig</code>{:else}<code class="{firstPartIDK}">> Du bist nicht volljährig</code>{/if}
 <code class="{outputState3}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <input style="width: 10vw;" type="number" bind:value={outputVal3} class="inline-input {outputState3}" on:keypress={(e) => { if (e.key === "Enter"){outputState3="hidden"; output3ValState=""; secondPartIDK = "";_enableButton()}}}></code><code class="{output3ValState}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <code style="color: var(--teal);">{outputVal3}</code></code>
 <code class="{secondPartIDK}">{#if parseInt(outputVal3) < 18}<code>> Du bist nicht volljährig</code>{:else}<code>> Du bist volljährig</code>{/if}
-{#if firstInputName === $nameStore }  <code>> Hallo {$nameStore}</code>{:else}<code>> Du bist nicht {$nameStore} >:(</code>{/if}
-{#if firstInputName.length < 6}<code>> Dein Name ist echt kurz O.o</code>{:else if firstInputName.length > 6 || firstInputName.length < 13}<code>> Du hast einen normal langen Namen ._.</code>{:else}<code>> Dein Name ist echt lang (⊙ˍ⊙)</code>{/if}</code>
+{#if outputVal1 === $nameStore }  <code>> Hallo {$nameStore}</code>{:else}<code>> Du bist nicht {$nameStore} >:(</code>{/if}
+{#if outputVal1.length < 6}<code>> Dein Name ist echt kurz O.o</code>{:else if outputVal1.length >= 6 || outputVal1.length <= 13}<code>> Du hast einen normal langen Namen ._.</code>{:else}<code>> Dein Name ist echt lang (⊙ˍ⊙)</code>{/if}</code>
 </code>
 </pre>
 
