@@ -150,11 +150,11 @@
     </p>
 
 <pre class="codeBlock">
-jahr:<input autocomplete="off" type="number" class="inline-input {stat[0]}" style="width: 2vw" maxlength="3" bind:value={user_jahr}> = <input autocomplete="off"  class="inline-input" style="width: 3vw" maxlength="5" bind:value={user_jahr_value}> <br>
+jahr:<input autocomplete="off"  class="inline-input {stat[0]}" style="width: 2vw" maxlength="3" bind:value={user_jahr}> = <input autocomplete="off" type="number" class="inline-input" style="width: 3vw" maxlength="5" bind:value={user_jahr_value}> <br>
 begrüssung:<input autocomplete="off"  class="inline-input {stat[1]}" style="width: 2vw" maxlength="3" bind:value={user_begruessung}> = "<input autocomplete="off"  class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_begruessung_value}>" <br>
-monat_nummer:<input autocomplete="off" type="number" class="inline-input {stat[2]}" style="width: 2vw" maxlength="3" bind:value={user_monat_nummer}> = <input autocomplete="off"  class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_monat_nummer_value}> <br>
-name:<input autocomplete="off"  class="inline-input {stat[3]}" style="width: 2vw" maxlength="3" bind:value={user_name}> = "<input autocomplete="off"  class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_name_value}>" <br>
-tag:<input autocomplete="off" type="number" class="inline-input {stat[4]}" style="width: 2vw" maxlength="3" bind:value={user_tag}> = <input autocomplete="off"  class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_tag_value}> <br>
+monat_nummer:<input autocomplete="off"  class="inline-input {stat[2]}" style="width: 2vw" maxlength="3" bind:value={user_monat_nummer}> = <input autocomplete="off" type="number" class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_monat_nummer_value}> <br>
+name:<input autocomplete="off"  class="inline-input {stat[3]}" style="width: 2vw" maxlength="3" bind:value={user_name}> = "<input autocomplete="off" type="number" class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_name_value}>" <br>
+tag:<input autocomplete="off"  class="inline-input {stat[4]}" style="width: 2vw" maxlength="3" bind:value={user_tag}> = <input autocomplete="off"  class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_tag_value}> <br>
 wochen_tag:<input autocomplete="off"  class="inline-input {stat[5]}" style="width: 2vw" maxlength="3" bind:value={user_wochen_tag}> = "<input autocomplete="off"  class="inline-input" style="width: 12vw" maxlength="23" bind:value={user_wochen_tag_value}>" <br>
 
 <code class="comment"># Hier will ich das Jahr, den Monat und den Tag </code>

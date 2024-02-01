@@ -1,11 +1,11 @@
 {
-    "version": "0.1.2",
-    "notes": "Hotfixes for inputs",
-    "pub_date": "2024-02-01T20:27:00+00:00",
+    "version": "0.1.3",
+    "notes": "I did something dumb -_-",
+    "pub_date": "2024-02-01T20:47:00+00:00",
     "platforms": {
       "windows-x86_64": {
         "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSNUVkZFdyYUI1eldrWk0xSzJiekRGSUY4d1lGMlB1eWtQYlJ5WGV2QVFYMlRpOGh0REg2SVZQeXRlSmozWnZ0cmlQcVltbVV0bEVuZS9FaWt2ZmREdDNZZkJ3ZVBuU0FnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzA2ODE1Njg1CWZpbGU6Y29kaW5nbGFiXzAuMS4yX3g2NC1zZXR1cC5uc2lzLnppcApiemRPU2pnVjM1UjdMR1hoSVlQR1BZRUZzUlk4azVVVHBka2tLMy9sTDQxcUVPSWdwV0pBS0ZzUkZMUGxUT05VQ2dvVTZBWjBiSGoxNS9VQTZUcDhBQT09Cg==",
-        "url": "https://github.com/137-Trimethylxanthin/HTL-Vill-Codinglab/releases/download/0.1.2/codinglab_0.1.2_x64-setup.nsis.zip"
+        "url": "https://github.com/137-Trimethylxanthin/HTL-Vill-Codinglab/releases/download/0.1.3/codinglab_0.1.3_x64-setup.nsis.zip"
       }
     }
   }
