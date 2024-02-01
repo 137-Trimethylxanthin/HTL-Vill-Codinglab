@@ -344,28 +344,28 @@
 <code class="comment"># Zwei Inputs für Name und Alter. (Namen und Werte werden mit '=' getrennt)</code>
 <code class="comment"># Der Name wird als String gespeichert, das Alter als Integer</code>
 <code class="comment"># Die Variable dürfen nicht den gleichen Namen besitzen</code>
-<input class="inline-input {firstInputState}" type="text" placeholder="Name Var + Input" bind:value={firstInput}>
+<input autocomplete="off"  class="inline-input {firstInputState}" type="text" placeholder="Name Var + Input" bind:value={firstInput}>
 
-<input class="inline-input {secondInputState}" type="text" placeholder="Alter Var + Input" bind:value={secondInput}>
+<input autocomplete="off"  class="inline-input {secondInputState}" type="text" placeholder="Alter Var + Input" bind:value={secondInput}>
 
 <code class="comment"># Überprüfe ob der User volljährig ist (18 Jahre oder älter)</code>
-if <input class="inline-input {firstIfState}" type="text" placeholder="Var + Vergleich" style="width: 15vw" bind:value={firstIf}> 18:
+if <input autocomplete="off"  class="inline-input {firstIfState}" type="text" placeholder="Var + Vergleich" style="width: 15vw" bind:value={firstIf}> 18:
     print("Du bist volljährig")
 else:
     print("Du bist nicht volljährig")
 
 <code class="comment"># Frage das Alter erneut ab
 # Hier benötigst du keinen ':' mehr, da du es in der selben Variable speicherst</code>
-<input class="inline-input {secondInputReaNewValState}" type="text" placeholder="Alter Var ohne :int oder :str + Input" bind:value={secondInputReaNew}>
+<input autocomplete="off"  class="inline-input {secondInputReaNewValState}" type="text" placeholder="Alter Var ohne :int oder :str + Input" bind:value={secondInputReaNew}>
 
 <code class="comment"># Überprüfe, ob der User jünger als 18 Jahre ist</code>
-if <input class="inline-input {secondIfState}" type="text" placeholder="Var + Vergleich" style="width: 15vw" bind:value={secondIf}> 18:
+if <input autocomplete="off"  class="inline-input {secondIfState}" type="text" placeholder="Var + Vergleich" style="width: 15vw" bind:value={secondIf}> 18:
     print("Du bist nicht volljährig")
 else:
     print("Du bist volljährig")
 
 <code class="comment"># Überprüfe, ob der Name richtig ist. (Ob die Name identisch sind.)</code>
-if <input class="inline-input {thirdIfState}" type="text" placeholder="Var + Vergleich" style="width: 15vw" bind:value={thirdIf}> "{$nameStore}":
+if <input autocomplete="off"  class="inline-input {thirdIfState}" type="text" placeholder="Var + Vergleich" style="width: 15vw" bind:value={thirdIf}> "{$nameStore}":
     print("Hallo {$nameStore}")
 else:
     print("Du bist nicht {$nameStore} >:(")
@@ -376,10 +376,10 @@ else:
 <code class="comment"># Die .len() wird am Ende von den Eingabefeldern für dich angehängt.</code>
 
 <code class="comment"># Überprüfe, ob der Name weniger als 6 Buchstaben hat.</code>
-if 6 <input class="inline-input {fourthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={fourthIf}>.len():
+if 6 <input autocomplete="off"  class="inline-input {fourthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={fourthIf}>.len():
     print("Dein Name ist echt kurz O.o")
 <code class="comment"># Überprüfe ob die Anzahl zwischen 6 und 13 liegt</code>
-else if 6 <input class="inline-input {fifthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={fifthIf}>.len() and 13 <input class="inline-input {sixthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={sixthIf}>.len():
+else if 6 <input autocomplete="off"  class="inline-input {fifthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={fifthIf}>.len() and 13 <input autocomplete="off"  class="inline-input {sixthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={sixthIf}>.len():
     print("Du hast einen normal langen Namen ._.")
 <code class="comment"># else wird ausgeführt, wenn die Anzahl der Buchstaben über 13 ist</code>
 else:
@@ -392,10 +392,10 @@ else:
 {output}
 <code class="{legend}"><code style="color: var(--yellow); font-weight:600; font-size: 2vh">> Wenn du einen Namen von deinen Variablen falsch geschrieben hast,<br>> wird dir in gelb angezeigt (:str und :int zählen hier dazu)</code>
 <code style="color: var(--red); font-weight:600; font-size: 2vh">> Wenn du einen Vergleichsoperator falsch eingesetzt hast,<br>> wird er dir in rot angezeigt <br>> falls dein input falsch ist wird diese Rot angezeigt</code>
-<code style="color: var(--mauve); font-weight:600; font-size: 2vh">> Wenn du beides falsch gemacht hast,<br>> wird dir das Eingabefeld in lila angezeigt</code></code><code class="{succsess}"><code class="{outputState1}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <input style="width: 10vw;" type="text" bind:value={outputVal1} class="inline-input {outputState1}" on:keypress={(e) => { if (e.key === "Enter"){outputState1 = "hidden"; outputState2=""; output1ValState = ""}}}></code><code class="{output1ValState}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <code style="color: var(--teal);">{outputVal1}</code></code>
-<code class="{outputState2}">> <code style="color: var(--peach);">{secondInputQuestion}</code> <input style="width: 10vw;" type="number" bind:value={outputVal2} class="inline-input {outputState2}" on:keypress={(e) => { if (e.key === "Enter"){outputState2 = "hidden"; outputState3="";output2ValState = ""; firstPartIDK = "";}}}></code><code class="{output2ValState}">> <code style="color: var(--peach);">{secondInputQuestion}</code> <code style="color: var(--teal);">{outputVal2}</code></code>
+<code style="color: var(--mauve); font-weight:600; font-size: 2vh">> Wenn du beides falsch gemacht hast,<br>> wird dir das Eingabefeld in lila angezeigt</code></code><code class="{succsess}"><code class="{outputState1}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <input autocomplete="off"  style="width: 10vw;" type="text" bind:value={outputVal1} class="inline-input {outputState1}" on:keypress={(e) => { if (e.key === "Enter"){outputState1 = "hidden"; outputState2=""; output1ValState = ""}}}></code><code class="{output1ValState}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <code style="color: var(--teal);">{outputVal1}</code></code>
+<code class="{outputState2}">> <code style="color: var(--peach);">{secondInputQuestion}</code> <input autocomplete="off"  style="width: 10vw;" type="number" bind:value={outputVal2} class="inline-input {outputState2}" on:keypress={(e) => { if (e.key === "Enter"){outputState2 = "hidden"; outputState3="";output2ValState = ""; firstPartIDK = "";}}}></code><code class="{output2ValState}">> <code style="color: var(--peach);">{secondInputQuestion}</code> <code style="color: var(--teal);">{outputVal2}</code></code>
 {#if parseInt(outputVal2) >= 18}<code class="{firstPartIDK}">> Du bist volljährig</code>{:else}<code class="{firstPartIDK}">> Du bist nicht volljährig</code>{/if}
-<code class="{outputState3}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <input style="width: 10vw;" type="number" bind:value={outputVal3} class="inline-input {outputState3}" on:keypress={(e) => { if (e.key === "Enter"){outputState3="hidden"; output3ValState=""; secondPartIDK = "";_enableButton()}}}></code><code class="{output3ValState}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <code style="color: var(--teal);">{outputVal3}</code></code>
+<code class="{outputState3}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <input autocomplete="off"  style="width: 10vw;" type="number" bind:value={outputVal3} class="inline-input {outputState3}" on:keypress={(e) => { if (e.key === "Enter"){outputState3="hidden"; output3ValState=""; secondPartIDK = "";_enableButton()}}}></code><code class="{output3ValState}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <code style="color: var(--teal);">{outputVal3}</code></code>
 <code class="{secondPartIDK}">{#if parseInt(outputVal3) < 18}<code>> Du bist nicht volljährig</code>{:else}<code>> Du bist volljährig</code>{/if}
 {#if outputVal1 === $nameStore }  <code>> Hallo {$nameStore}</code>{:else}<code>> Du bist nicht {$nameStore} >:(</code>{/if}
 {#if outputVal1.length < 6}<code>> Dein Name ist echt kurz O.o</code>{:else if outputVal1.length >= 6 || outputVal1.length <= 13}<code>> Du hast einen normal langen Namen ._.</code>{:else}<code>> Dein Name ist echt lang (⊙ˍ⊙)</code>{/if}</code>

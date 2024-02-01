@@ -64,7 +64,7 @@
     <code class="codeBlock">
         print("Dein Text") <br>
         <code style="color: var(--green)"># Nun du, {$nameStore}</code> <br>
-        <input bind:value={inputVal}>
+        <input autocomplete="off"  bind:value={inputVal}>
 
     </code>
 
