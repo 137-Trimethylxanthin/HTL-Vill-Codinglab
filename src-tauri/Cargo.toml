@@ -1,6 +1,6 @@
 [package]
 name = "codinglab"
-version = "0.1.1"
+version = "0.1.2"
 description = "Coding Lab 2024 Tag der offenen Tür HTL Villach"
 authors = ["Sitter Max", "Rechberger Simon"]
 default-run = "codinglab"
