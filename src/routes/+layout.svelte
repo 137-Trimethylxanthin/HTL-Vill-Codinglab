@@ -1,12 +1,12 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Sans">
 <script>
-	import { invoke } from "@tauri-apps/api";
-    import { ask, message } from "@tauri-apps/api/dialog";
+	import { invoke } from "@tauri-apps/api/core";
+    import { ask, message } from "@tauri-apps/plugin-dialog";
     import "./style.css"
 	import { goto } from "$app/navigation";
     import { nameStore } from "../utils/stores";
-    import { exit } from '@tauri-apps/api/process';
-    import { open } from '@tauri-apps/api/shell';
+    import { exit } from '@tauri-apps/plugin-process';
+    import { open } from '@tauri-apps/plugin-shell';
 
     if (process.env.NODE_ENV === "production") {
         document.addEventListener("contextmenu", (e) => {

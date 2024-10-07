@@ -5,10 +5,10 @@ use std::path::Path;
 use std::sync::Mutex;
 use std::time::SystemTime;
 use std::{fs, io};
-use tauri::api::dialog::message;
-use tauri::api::path::document_dir;
-use tauri::api::process::Command as TCommand;
-use tauri::{Runtime, State};
+use tauri_plugin_dialog::DialogExt;
+use tauri::path::BaseDirectory;
+use tauri::{Manager, Runtime, State};
+use tauri_plugin_shell::ShellExt;
 
 struct ApplicationState {
     name: Mutex<String>,
@@ -18,43 +18,47 @@ struct ApplicationState {
     level3_completed: Mutex<bool>,
     level1_time_completed: Mutex<usize>,
     level2_time_completed: Mutex<usize>,
-    level3_time_completed: Mutex<usize>
+    level3_time_completed: Mutex<usize>,
 }
 
 struct VSCodeInstallation {}
 
 impl VSCodeInstallation {
-    fn get_installed_extensions() -> Vec<String> {
+    async fn get_installed_extensions<R: Runtime>(app: &tauri::AppHandle<R>) -> Vec<String> {
         let output = if cfg!(target_os = "windows") {
-            TCommand::new("cmd")
+            app.shell().command("cmd")
                 .args(["/C", "code --list-extensions"])
                 .output()
+                .await
                 .expect("failed to execute process")
         } else {
-            TCommand::new("sh")
+            app.shell().command("sh")
                 .args(["-c", "code --list-extensions"])
                 .output()
+                .await
                 .expect("failed to execute process")
         };
-        output.stdout.split("\n").map(|s| s.to_string()).collect()
+        output.stdout.split(|&x| x == 0x0A).map(|x| String::from_utf8(x.to_vec()).unwrap()).collect()
     }
 
-    fn install_extension(extension: &str) {
+    async fn install_extension<R: Runtime>(extension: &str, app: &tauri::AppHandle<R>) {
         let output = if cfg!(target_os = "windows") {
-            TCommand::new("cmd")
+            app.shell().command("cmd")
                 .args([
                     "/C",
                     format!("C: && code --install-extension {}", extension).as_str(),
                 ])
                 .output()
+                .await
                 .expect("failed to execute process")
         } else {
-            TCommand::new("sh")
+            app.shell().command("sh")
                 .args([
                     "-c",
                     format!("code --install-extension {}", extension).as_str(),
                 ])
                 .output()
+                .await
                 .expect("failed to execute process")
         };
 
@@ -78,13 +82,11 @@ impl VSCodeInstallation {
         path
     }
 
-    fn settings_disable_workspace_trust<R: Runtime>(window: &tauri::Window<R>) {
+    fn settings_disable_workspace_trust<R: Runtime>(app: &tauri::AppHandle<R>) {
         let settings_path = VSCodeInstallation::get_settings_path();
         let settings_file = fs::read_to_string(settings_path.clone());
-        if settings_file.is_err() {
-            message(
-                Some(window),
-                "Coding Lab",
+        if !settings_file.is_err() {
+            app.dialog().message(
                 "VSCode Einstellungs-datei nicht gefunden",
             );
             return;
@@ -98,12 +100,12 @@ impl VSCodeInstallation {
             let new_settings_file = serde_json::to_string_pretty(&settings_json).unwrap();
             fs::write(settings_path, new_settings_file).unwrap();
         } else {
-            message(Some(&window), "Coding Lab", "Beim Lesen der Einstellungen ist ein Fehler aufgetreten. Dies ist nicht kritisch, es wird aber ein Prompt kommen");
+            app.dialog().message("Beim Lesen der Einstellungen ist ein Fehler aufgetreten. Dies ist nicht kritisch, es wird aber ein Prompt kommen");
         }
     }
 
-    fn prepare_open<R: Runtime>(window: &tauri::Window<R>) {
-        let installed_extensions = VSCodeInstallation::get_installed_extensions();
+    async fn prepare_open<R: Runtime>(app: tauri::AppHandle<R>) {
+        let installed_extensions = VSCodeInstallation::get_installed_extensions(&app).await;
         let required_extensions = vec![
             "ms-python.python",
             "ms-python.vscode-pylance",
@@ -111,10 +113,10 @@ impl VSCodeInstallation {
         ];
         for extension in required_extensions {
             if !installed_extensions.contains(&extension.to_string()) {
-                VSCodeInstallation::install_extension(extension);
+                VSCodeInstallation::install_extension(extension, &app).await;
             }
         }
-        VSCodeInstallation::settings_disable_workspace_trust(&window);
+        VSCodeInstallation::settings_disable_workspace_trust(&app);
     }
 }
 
@@ -142,7 +144,6 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
 #[tauri::command]
 fn setup_user<R: Runtime>(
     app: tauri::AppHandle<R>,
-    window: tauri::Window<R>,
     state: State<'_, ApplicationState>,
     name: &str,
 ) -> Result<bool, String> {
@@ -155,18 +156,20 @@ fn setup_user<R: Runtime>(
         return Ok(false);
     }
     let dirname = format!("{}_{}", name, get_sys_time_in_secs());
-    let document_directory = document_dir()
+    let document_directory = app.path().document_dir()
         .unwrap()
         .join("CodingLab")
         .join(dirname.clone());
     *state_name = name.to_string();
     *state_dirname = dirname;
     let resource_path = app
-        .path_resolver()
-        .resolve_resource("python/")
+        .path()
+        .resolve("python/", BaseDirectory::Resource)
         .expect("failed to resolve resource");
     copy_dir_all(resource_path, document_directory).unwrap();
-    VSCodeInstallation::prepare_open(&window);
+    tauri::async_runtime::block_on(async {
+        VSCodeInstallation::prepare_open(app).await;
+    });
     // if !PythonValidator::check_python() {
     //     message(
     //         Some(&window),
@@ -212,7 +215,7 @@ async fn get_name(state: State<'_, ApplicationState>) -> Result<String, String> 
 
 #[tauri::command]
 fn open_code_with_filename(
-    _handle: tauri::AppHandle,
+    app: tauri::AppHandle,
     state: State<'_, ApplicationState>,
     file_name: &str,
 ) -> Result<bool, String> {
@@ -220,22 +223,28 @@ fn open_code_with_filename(
         return Ok(false);
     }
     let dirname = state.dirname.lock().unwrap();
-    let file_open = document_dir()
+    let file_open = app.path().document_dir()
         .unwrap()
         .join("CodingLab")
         .join(dirname.clone())
         .join(file_name);
 
     let output = if cfg!(target_os = "windows") {
-        TCommand::new("cmd")
-            .args(["/C", "code", file_open.to_str().unwrap()])
-            .output()
-            .expect("failed to execute process")
+        tauri::async_runtime::block_on(async move {
+            app.shell().command("cmd")
+                .args(["/C", &format!("code {}", file_open.to_str().unwrap())])
+                .output()
+                .await
+                .expect("failed to execute process")
+        })
     } else {
-        TCommand::new("sh")
-            .args(["-c", "code", file_open.to_str().unwrap()])
-            .output()
-            .expect("failed to execute process")
+        tauri::async_runtime::block_on(async move {
+            app.shell().command("sh")
+                .args(["-c", &format!("code {}", file_open.to_str().unwrap())])
+                .output()
+                .await
+                .expect("failed to execute process")
+        })
     };
 
     println!("{:?}", output.stdout);
@@ -260,7 +269,11 @@ fn check_python(state: State<'_, ApplicationState>, level: usize) -> Result<bool
 }
 
 #[tauri::command]
-fn level_completed(state: State<'_, ApplicationState>, level: usize, time: usize) -> Result<bool, String> {
+fn level_completed(
+    state: State<'_, ApplicationState>,
+    level: usize,
+    time: usize,
+) -> Result<bool, String> {
     if state.name.lock().unwrap().is_empty() {
         return Ok(false);
     }
@@ -308,12 +321,21 @@ fn get_levels(state: State<'_, ApplicationState>) -> Result<(Vec<bool>, Vec<usiz
     let level3_time_completed = *state.level3_time_completed.lock().unwrap();
     Ok((
         vec![level1_completed, level2_completed, level3_completed],
-        vec![level1_time_completed, level2_time_completed, level3_time_completed],
+        vec![
+            level1_time_completed,
+            level2_time_completed,
+            level3_time_completed,
+        ],
     ))
 }
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_process::init())
         .manage(ApplicationState {
             name: Mutex::new(String::new()),
             dirname: Mutex::new(String::new()),
@@ -322,7 +344,7 @@ fn main() {
             level3_completed: Mutex::new(false),
             level1_time_completed: Mutex::new(0),
             level2_time_completed: Mutex::new(0),
-            level3_time_completed: Mutex::new(0)
+            level3_time_completed: Mutex::new(0),
         })
         .invoke_handler(tauri::generate_handler![
             setup_user,

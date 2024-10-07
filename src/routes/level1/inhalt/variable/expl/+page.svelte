@@ -42,10 +42,10 @@ print(f"Hey <code style="color: var(--teal)">&#123;name}</code>! Wusstest du das
     <p>
         Wie du siehst, kannst du Variablen auch mit <code class="inline-code">print()</code> ausgeben. <br>
         Mit print kannst du auch mehrere Sachen ausgeben, indem du sie aneinander reihst. Du kannst <b>drei</b> verschiedene Arten von Aneinanderreihungen verwenden:
-        <br>
-        - <code class="inline-code">print("Hallo " + name + "!")</code> <br>
-        - <code class="inline-code">print("Hallo", name, "!")</code> <br>
-        - <code class="inline-code">print(f"Hallo &#123;name}!")</code> <br>
+        <br><br>
+        - <code class="inline-code">print("Hallo " + name + "!")</code> <br><br>
+        - <code class="inline-code">print("Hallo", name, "!")</code> <br><br>
+        - <code class="inline-code">print(f"Hallo &#123;name}!")</code> <br><br>
 
         Bei <code class="inline-code">,</code> kannst du bestimmen, was zwischen den Bestandteilen, die du ausgeben willst, stehen soll. (Standard: ein Leerzeichen) <br>
         Bei <code class="inline-code">+</code> verkettest du die Bestandteile ohne jegliche (Leer-)zeichen<br>

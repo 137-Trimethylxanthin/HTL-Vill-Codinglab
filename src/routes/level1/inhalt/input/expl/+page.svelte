@@ -23,11 +23,11 @@
         Fragen wird über eine Variable gestellt oder direkt in der Funktion <code class="inline-code">input()</code> via "" angegeben: <br>
         <code class="inline-code">input(<code style="color: var(--peach);">frage</code>)</code> <br>
         Diese Antwort kannst du dann in einer Variable speichern. <br>
-        <code class="inline-code"><code style="color: var(--peach);">variable:str</code> = input(<code style="color: var(--peach);">frage</code>)</code> <br>
+        <code class="inline-code"><code style="color: var(--peach);">variable: str</code> = input(<code style="color: var(--peach);">frage</code>)</code> <br>
         Der User kann nun eine Antwort eingeben und muss diese mit <b>Enter</b> bestätigen. <br>
         Die Inputs sind immer 'Strings' (text) auch wenn nur Zahlen eingegeben werden. <br>
         Damit du die Zahl als Zahl verwenden kannst, musst du sie mit <code class="inline-code">int()</code> in eine Zahl umwandeln. <br>
-        <code class="inline-code"><code style="color: var(--peach);">variable:int</code> = int(input(<code style="color: var(--peach);">frage</code>))</code> <br>
+        <code class="inline-code"><code style="color: var(--peach);">variable: int</code> = int(input(<code style="color: var(--peach);">frage</code>))</code> <br>
         Nun kannst du die Zahl in einer Variable speichern und mit ihr rechnen oder sie vergleichen. <br>
         Hier ein Beispiel für input() und int():
     </p>

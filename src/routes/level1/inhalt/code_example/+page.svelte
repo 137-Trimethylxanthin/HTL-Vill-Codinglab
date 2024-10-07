@@ -2,9 +2,9 @@
     import { onMount } from 'svelte';
     import { nameStore } from '../../../../utils/stores';
     import { openVSCode } from '../../../../utils/vscodeutils';
-    import { invoke } from '@tauri-apps/api';
+    import { invoke } from '@tauri-apps/api/core';
     import { goto } from '$app/navigation';
-    import { message } from '@tauri-apps/api/dialog';
+    import { message } from '@tauri-apps/plugin-dialog';
 
     let time = 0;
     let interval: any;
@@ -63,7 +63,6 @@
 </div>
 
 {#if valid}
-    <button class="next" style="transform: translateX(-150%);" on:click={checkAnswer}>Überprüfen</button>
     <button class="next" on:click={() => goto("/home")}>Home</button>
 {:else}
     <button class="next" on:click={checkAnswer}>Überprüfen</button>

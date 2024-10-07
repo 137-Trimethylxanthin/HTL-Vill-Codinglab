@@ -1,14 +1,18 @@
 <script lang="ts">
     import { _disableButton, _enableButton, _next } from "../../+layout";
     import { onMount } from "svelte";
-    import {nameStore} from "../../../../../utils/stores";
+    import { nameStore } from "../../../../../utils/stores";
+
+
+    // TODO: REWRITE THIS HELL OF A CODE
+    // For real this is some of the most disgusting and unmaintainable code I have ever seen
 
     onMount(() => {
         _disableButton();
     });
 
     let legend = "hidden";
-    let succsess = "hidden";
+    let success = "hidden";
 
     let output = "> Das ist dein Output";
     let outputColorClass = "";
@@ -248,7 +252,7 @@
                                 }
                             }
                         }
-                    } else{
+                    } else {
                         let value = temp[i].split(operator)[0].trim();
                         if (value != ""){
                             error = true;
@@ -302,12 +306,12 @@
             outputColorClass = "invalid-output";
             output = "> Da ist etwas schief gelaufen, schau dir die Fehler an und versuche es erneut.";
             legend = "";
-            succsess = "hidden";
+            success = "hidden";
         } else{
             outputColorClass = "valid-output";
             output = "";
             legend = "hidden";
-            succsess = "";
+            success = "";
         }
 
     }
@@ -318,16 +322,14 @@
     let outputState2 = "hidden";
     let outputVal3 = "";
 
-
-
     let outputState3 = "hidden";
 
     let output1ValState = "hidden";
     let output2ValState = "hidden";
     let output3ValState = "hidden";
 
-    let secondPartIDK = "hidden";
     let firstPartIDK = "hidden";
+    let secondPartIDK = "hidden";
 </script>
 
 
@@ -376,7 +378,7 @@ else:
 <code class="comment"># Hier steht es für dich schon.</code>
 
 <code class="comment"># Überprüfe, ob der Name weniger als 6 Buchstaben hat.</code>
-<code class="comment"># Hier ist .len() aber in Realität wäre es len()
+<code class="comment"># Hier ist .len() aber in Realität wäre es len()</code>
 if 6 <input autocomplete="off"  class="inline-input {fourthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={fourthIf}>.len():
     print("Dein Name ist echt kurz O.o")
 <code class="comment"># Überprüfe ob die Anzahl zwischen 6 und 13 liegt</code>
@@ -393,7 +395,7 @@ else:
 {output}
 <code class="{legend}"><code style="color: var(--yellow); font-weight:600; font-size: 2vh">> Wenn du einen Namen von deinen Variablen falsch geschrieben hast,<br>> wird dir in gelb angezeigt (:str und :int zählen hier dazu)</code>
 <code style="color: var(--red); font-weight:600; font-size: 2vh">> Wenn du einen Vergleichsoperator falsch eingesetzt hast,<br>> wird er dir in rot angezeigt <br>> falls dein input falsch ist wird diese Rot angezeigt</code>
-<code style="color: var(--mauve); font-weight:600; font-size: 2vh">> Wenn du beides falsch gemacht hast,<br>> wird dir das Eingabefeld in lila angezeigt</code></code><code class="{succsess}"><code class="{outputState1}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <input autocomplete="off"  style="width: 10vw;" type="text" bind:value={outputVal1} class="inline-input {outputState1}" on:keypress={(e) => { if (e.key === "Enter"){outputState1 = "hidden"; outputState2=""; output1ValState = ""}}}></code><code class="{output1ValState}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <code style="color: var(--teal);">{outputVal1}</code></code>
+<code style="color: var(--mauve); font-weight:600; font-size: 2vh">> Wenn du beides falsch gemacht hast,<br>> wird dir das Eingabefeld in lila angezeigt</code></code><code class="{success}"><code class="{outputState1}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <input autocomplete="off"  style="width: 10vw;" type="text" bind:value={outputVal1} class="inline-input {outputState1}" on:keypress={(e) => { if (e.key === "Enter"){outputState1 = "hidden"; outputState2=""; output1ValState = ""}}}></code><code class="{output1ValState}">> <code style="color: var(--peach);">{firstInputQuestion}</code> <code style="color: var(--teal);">{outputVal1}</code></code>
 <code class="{outputState2}">> <code style="color: var(--peach);">{secondInputQuestion}</code> <input autocomplete="off"  style="width: 10vw;" type="number" bind:value={outputVal2} class="inline-input {outputState2}" on:keypress={(e) => { if (e.key === "Enter"){outputState2 = "hidden"; outputState3="";output2ValState = ""; firstPartIDK = "";}}}></code><code class="{output2ValState}">> <code style="color: var(--peach);">{secondInputQuestion}</code> <code style="color: var(--teal);">{outputVal2}</code></code>
 {#if parseInt(outputVal2) >= 18}<code class="{firstPartIDK}">> Du bist volljährig</code>{:else}<code class="{firstPartIDK}">> Du bist nicht volljährig</code>{/if}
 <code class="{outputState3}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <input autocomplete="off"  style="width: 10vw;" type="number" bind:value={outputVal3} class="inline-input {outputState3}" on:keypress={(e) => { if (e.key === "Enter"){outputState3="hidden"; output3ValState=""; secondPartIDK = "";_enableButton()}}}></code><code class="{output3ValState}">> <code style="color: var(--peach);">{secondInputReaNewQuestion}</code> <code style="color: var(--teal);">{outputVal3}</code></code>

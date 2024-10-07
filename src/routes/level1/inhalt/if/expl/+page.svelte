@@ -24,12 +24,12 @@
         <br>
         Eine <code style="color: var(--peach);">Bedingung</code> besteht aus einem Vergleich von Variablen. <br>
         Bsp: <code class="inline-code">if <code style="color: var(--peach);">variable1</code> <code style="color: var(--red);">==</code> <code style="color: var(--peach);">variable2</code>:</code> (var1 muss genau gleich sein wie var2) <br>
-        Diese sind: <br>
-        <code class="inline-code">==</code> gleich <br>
-        <code class="inline-code">!=</code> ungleich <br>
-        <code class="inline-code">&gt;</code> grösser <br>
-        <code class="inline-code">&lt;</code> kleiner <br>
-        <code class="inline-code">&gt;=</code> grösser oder gleich <br>
+        Diese sind: <br><br>
+        <code class="inline-code">==</code> gleich <br><br>
+        <code class="inline-code">!=</code> ungleich <br><br>
+        <code class="inline-code">&gt;</code> grösser <br><br>
+        <code class="inline-code">&lt;</code> kleiner <br><br>
+        <code class="inline-code">&gt;=</code> grösser oder gleich <br><br>
         <code class="inline-code">&lt;=</code> kleiner oder gleich <br>
     </p>
     <p class="noMargin">Code:</p>

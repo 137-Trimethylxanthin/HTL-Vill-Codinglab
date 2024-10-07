@@ -1,7 +1,7 @@
 <script lang="ts">
     import { nameStore } from "../../utils/stores";
     import { goto } from "$app/navigation";
-    import { invoke } from "@tauri-apps/api";
+    import { invoke } from "@tauri-apps/api/core";
     import { writable, type Writable } from "svelte/store";
 
     function switchLevel(level: number) {

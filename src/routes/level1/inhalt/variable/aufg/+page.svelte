@@ -15,20 +15,20 @@
 
     let correct_answers = [
         {name: "jahr", answer: "int"},
-        {name: "begruessung", answer: "str"},
-        {name: "monat_nummer", answer: "int"},
+        {name: "greeting", answer: "str"},
+        {name: "monat", answer: "int"},
         {name: "name", answer: "str"},
         {name: "tag", answer: "int"},
-        {name: "wochen_tag", answer: "str"},
-        {name: "print1" , answer: ["jahr", "monat_nummer", "tag"]},
-        {name: "print2" , answer: ["begruessung", "name"] },
-        {name: "print3" , answer: ["wochen_tag", "name"] },
+        {name: "wochentag", answer: "str"},
+        {name: "print1" , answer: ["jahr", "monat", "tag"]},
+        {name: "print2" , answer: ["greeting", "name"] },
+        {name: "print3" , answer: ["wochentag", "name"] },
     ];
 
     let user_jahr = "";
     let user_jahr_value = "";
-    let user_begruessung = "";
-    let user_begruessung_value = "";
+    let user_greeting = "";
+    let user_greeting_value = "";
     let user_monat_nummer = "";
     let user_monat_nummer_value = "";
     let user_name = "";
@@ -52,11 +52,11 @@
     function validate() {
         let user_answers = [
             {name: "jahr", answer: user_jahr},
-            {name: "begrüsung", answer: user_begruessung},
+            {name: "begrüsung", answer: user_greeting},
             {name: "monat_nummer", answer: user_monat_nummer},
             {name: "name", answer: user_name},
             {name: "tag", answer: user_tag},
-            {name: "wochen_tag", answer: user_wochen_tag},
+            {name: "wochentag", answer: user_wochen_tag},
             {name: "print1" , answer: [user_print1_1, user_print1_2, user_print1_3]},
             {name: "print2" , answer: [user_print2_1, user_print2_2] },
             {name: "print3" , answer: [user_print3_1, user_print3_2] },
@@ -126,7 +126,7 @@
         if (correct) {
             outputColorClass = "valid-output";
             output = "> Jahr: " + user_jahr_value + " Monat: " + user_monat_nummer_value + " Tag: " + user_tag_value + "\n";
-            output += "> " + user_begruessung_value + " " + user_name_value + " wie geht es dir? \n";
+            output += "> " + user_greeting_value + " " + user_name_value + " wie geht es dir? \n";
             output += "> Hey, ist dieser " + user_wochen_tag_value + " nicht ein schöner Tag, " + user_name_value + "\n";
             _enableButton();
         } else {
@@ -151,17 +151,17 @@
 
 <pre class="codeBlock">
 jahr:<input autocomplete="off" class="inline-input {stat[0]}" style="width: 2vw" maxlength="3" bind:value={user_jahr}> = <input autocomplete="off" type="number" class="inline-input" style="width: 3vw" maxlength="5" bind:value={user_jahr_value}> <br>
-begruessung:<input autocomplete="off" class="inline-input {stat[1]}" style="width: 2vw" maxlength="3" bind:value={user_begruessung}> = "<input autocomplete="off"  class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_begruessung_value}>" <br>
-monat_nummer:<input autocomplete="off" class="inline-input {stat[2]}" style="width: 2vw" maxlength="3" bind:value={user_monat_nummer}> = <input autocomplete="off" type="number" class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_monat_nummer_value}> <br>
+greeting:<input autocomplete="off" class="inline-input {stat[1]}" style="width: 2vw" maxlength="3" bind:value={user_greeting}> = "<input autocomplete="off"  class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_greeting_value}>" <br>
+monat:<input autocomplete="off" class="inline-input {stat[2]}" style="width: 2vw" maxlength="3" bind:value={user_monat_nummer}> = <input autocomplete="off" type="number" class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_monat_nummer_value}> <br>
 name:<input autocomplete="off" class="inline-input {stat[3]}" style="width: 2vw" maxlength="3" bind:value={user_name}> = "<input autocomplete="off" class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_name_value}>" <br>
 tag:<input autocomplete="off" class="inline-input {stat[4]}" style="width: 2vw" maxlength="3" bind:value={user_tag}> = <input autocomplete="off" type="number" class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_tag_value}> <br>
-wochen_tag:<input autocomplete="off"  class="inline-input {stat[5]}" style="width: 2vw" maxlength="3" bind:value={user_wochen_tag}> = "<input autocomplete="off"  class="inline-input" style="width: 12vw" maxlength="23" bind:value={user_wochen_tag_value}>" <br>
+wochentag:<input autocomplete="off"  class="inline-input {stat[5]}" style="width: 2vw" maxlength="3" bind:value={user_wochen_tag}> = "<input autocomplete="off"  class="inline-input" style="width: 12vw" maxlength="23" bind:value={user_wochen_tag_value}>" <br>
 
 <code class="comment"># Hier will ich das Jahr, den Monat und den Tag </code>
 print("Jahr:", <input autocomplete="off"  class="inline-input {stat[6]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_1}>, "Monat:" <input autocomplete="off"  class="inline-input {stat[7]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_2}>, "Tag:", <input autocomplete="off"  class="inline-input {stat[8]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_3}>)
 
 <code class="comment"># Hier will ich die Begrüssung und den Namen</code>
-print(<input autocomplete="off"  class="inline-input {stat[9]}" style="width: 5.5vw" maxlength="10" bind:value={user_print2_1}> + " " + <input autocomplete="off"  class="inline-input {stat[10]}" style="width: 5.5vw" maxlength="10" bind:value={user_print2_2}> + " wie geht es dir?")
+print(<input autocomplete="off"  class="inline-input {stat[9]}" style="width: 5.5vw" maxlength="8" bind:value={user_print2_1}> + " " + <input autocomplete="off"  class="inline-input {stat[10]}" style="width: 5.5vw" maxlength="10" bind:value={user_print2_2}> + " wie geht es dir?")
 
 <code class="comment"># Hier will ich den Wochentag und den Namen</code>
 print(f"Hey, ist dieser &#123;<input autocomplete="off"  class="inline-input {stat[11]}" style="width: 5.5vw" maxlength="10" bind:value={user_print3_1}>} nicht ein schöner Tag, &#123;<input autocomplete="off"  class="inline-input {stat[12]}" style="width: 5.5vw" maxlength="10" bind:value={user_print3_2}>}
