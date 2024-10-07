@@ -372,14 +372,15 @@ else:
 
 
 <code class="comment"># Als letztes setze die richtigen Vergleichsoperatoren ein.</code>
-<code class="comment"># .len() nach einer Variable gibt die Anzahl der Buchstaben eines Strings zurück.</code>
-<code class="comment"># Die .len() wird am Ende von den Eingabefeldern für dich angehängt.</code>
+<code class="comment"># len(var) einer Variable gibt die Anzahl der Buchstaben eines Strings zurück.</code>
+<code class="comment"># Hier steht es für dich schon.</code>
 
 <code class="comment"># Überprüfe, ob der Name weniger als 6 Buchstaben hat.</code>
+<code class="comment"># Hier ist .len() aber in Realität wäre es len()
 if 6 <input autocomplete="off"  class="inline-input {fourthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={fourthIf}>.len():
     print("Dein Name ist echt kurz O.o")
 <code class="comment"># Überprüfe ob die Anzahl zwischen 6 und 13 liegt</code>
-else if 6 <input autocomplete="off"  class="inline-input {fifthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={fifthIf}>.len() and 13 <input autocomplete="off"  class="inline-input {sixthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={sixthIf}>.len():
+elif 6 <input autocomplete="off"  class="inline-input {fifthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={fifthIf}>.len() and 13 <input autocomplete="off"  class="inline-input {sixthIfState}" type="text" placeholder="Vergleich + Var" style="width: 10vw" bind:value={sixthIf}>.len():
     print("Du hast einen normal langen Namen ._.")
 <code class="comment"># else wird ausgeführt, wenn die Anzahl der Buchstaben über 13 ist</code>
 else:

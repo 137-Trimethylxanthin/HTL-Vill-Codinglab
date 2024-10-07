@@ -15,13 +15,13 @@
 
     let correct_answers = [
         {name: "jahr", answer: "int"},
-        {name: "begrüsung", answer: "str"},
+        {name: "begruessung", answer: "str"},
         {name: "monat_nummer", answer: "int"},
         {name: "name", answer: "str"},
         {name: "tag", answer: "int"},
         {name: "wochen_tag", answer: "str"},
         {name: "print1" , answer: ["jahr", "monat_nummer", "tag"]},
-        {name: "print2" , answer: ["begrüssung", "name"] },
+        {name: "print2" , answer: ["begruessung", "name"] },
         {name: "print3" , answer: ["wochen_tag", "name"] },
     ];
 
@@ -151,7 +151,7 @@
 
 <pre class="codeBlock">
 jahr:<input autocomplete="off" class="inline-input {stat[0]}" style="width: 2vw" maxlength="3" bind:value={user_jahr}> = <input autocomplete="off" type="number" class="inline-input" style="width: 3vw" maxlength="5" bind:value={user_jahr_value}> <br>
-begrüssung:<input autocomplete="off" class="inline-input {stat[1]}" style="width: 2vw" maxlength="3" bind:value={user_begruessung}> = "<input autocomplete="off"  class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_begruessung_value}>" <br>
+begruessung:<input autocomplete="off" class="inline-input {stat[1]}" style="width: 2vw" maxlength="3" bind:value={user_begruessung}> = "<input autocomplete="off"  class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_begruessung_value}>" <br>
 monat_nummer:<input autocomplete="off" class="inline-input {stat[2]}" style="width: 2vw" maxlength="3" bind:value={user_monat_nummer}> = <input autocomplete="off" type="number" class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_monat_nummer_value}> <br>
 name:<input autocomplete="off" class="inline-input {stat[3]}" style="width: 2vw" maxlength="3" bind:value={user_name}> = "<input autocomplete="off" class="inline-input" style="width: 30vw" maxlength="58" bind:value={user_name_value}>" <br>
 tag:<input autocomplete="off" class="inline-input {stat[4]}" style="width: 2vw" maxlength="3" bind:value={user_tag}> = <input autocomplete="off" type="number" class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_tag_value}> <br>

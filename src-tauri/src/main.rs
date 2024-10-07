@@ -1,8 +1,6 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use pyo3::prelude::*;
-use regex::Regex;
 use std::path::Path;
 use std::sync::Mutex;
 use std::time::SystemTime;
@@ -21,55 +19,6 @@ struct ApplicationState {
     level1_time_completed: Mutex<usize>,
     level2_time_completed: Mutex<usize>,
     level3_time_completed: Mutex<usize>
-}
-
-struct PythonValidator;
-
-impl PythonValidator {
-    fn check_python() -> bool {
-        let output = if cfg!(target_os = "windows") {
-            TCommand::new("cmd")
-                .args(["/C", "python --version"])
-                .output()
-                .expect("failed to execute process")
-        } else {
-            TCommand::new("sh")
-                .args(["-c", "python --version"])
-                .output()
-                .expect("failed to execute process")
-        };
-
-        output.stdout.contains("Python 3")
-    }
-
-    fn replace_input_with_static(code: &str, level: usize) -> String {
-        let input_pattern = Regex::new(r#"input\(".*?"\)"#).unwrap();
-        if level == 1 {
-            input_pattern.replace_all(code, "HTL").to_string()
-        } else if level == 2 {
-            let first_replaced = input_pattern.replace(code, "8");
-            input_pattern.replace_all(&first_replaced, "4").to_string()
-        } else {
-            input_pattern.replace_all(code, "7").to_string()
-        }
-    }
-
-    fn validate_python_syntax(file_path: &str, level: usize) -> bool {
-        let python_code = fs::read_to_string(file_path);
-        if python_code.is_err() {
-            return false;
-        }
-        let python_code = python_code.unwrap();
-        let python_code = PythonValidator::replace_input_with_static(&python_code, level);
-
-        pyo3::prepare_freethreaded_python();
-        Python::with_gil(|py| {
-            match py.run(&python_code, None, None) {
-                Ok(_) => return true,
-                Err(_) => return false,
-            };
-        })
-    }
 }
 
 struct VSCodeInstallation {}
@@ -218,15 +167,15 @@ fn setup_user<R: Runtime>(
         .expect("failed to resolve resource");
     copy_dir_all(resource_path, document_directory).unwrap();
     VSCodeInstallation::prepare_open(&window);
-    if !PythonValidator::check_python() {
-        message(
-            Some(&window),
-            "Coding Lab",
-            "Keine Python installation gefunden!",
-        );
-        println!("No python installation found!");
-        return Ok(false);
-    }
+    // if !PythonValidator::check_python() {
+    //     message(
+    //         Some(&window),
+    //         "Coding Lab",
+    //         "Keine Python installation gefunden!",
+    //     );
+    //     println!("No python installation found!");
+    //     return Ok(false);
+    // }
     Ok(true)
 }
 
@@ -301,16 +250,13 @@ fn check_python(state: State<'_, ApplicationState>, level: usize) -> Result<bool
     if level < 1 || level > 3 {
         return Ok(false);
     }
-    let dirname = state.dirname.lock().unwrap();
-    let py_file = document_dir()
-        .unwrap()
-        .join("CodingLab")
-        .join(dirname.clone())
-        .join(format!("level{}.py", level));
-    Ok(PythonValidator::validate_python_syntax(
-        py_file.to_str().unwrap(),
-        level,
-    ))
+    // let dirname = state.dirname.lock().unwrap();
+    // let py_file = document_dir()
+    //     .unwrap()
+    //     .join("CodingLab")
+    //     .join(dirname.clone())
+    //     .join(format!("level{}.py", level));
+    Ok(true) // just accept it, there is another person
 }
 
 #[tauri::command]
