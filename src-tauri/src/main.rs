@@ -85,7 +85,7 @@ impl VSCodeInstallation {
     fn settings_disable_workspace_trust<R: Runtime>(app: &tauri::AppHandle<R>) {
         let settings_path = VSCodeInstallation::get_settings_path();
         let settings_file = fs::read_to_string(settings_path.clone());
-        if !settings_file.is_err() {
+        if settings_file.is_err() {
             app.dialog().message(
                 "VSCode Einstellungs-datei nicht gefunden",
             );
