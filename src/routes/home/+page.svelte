@@ -21,7 +21,7 @@
 
 <div class="title">
     <h1>Willkommen {$nameStore}</h1>
-    <h2>zum Tag der offenen Tür der <b>HTL Villach</b></h2>
+    <h2><b>HTL Villach</b> - Abteilung Informatik</h2>
 </div>
 
 
