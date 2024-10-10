@@ -21,6 +21,33 @@ struct ApplicationState {
     level3_time_completed: Mutex<usize>,
 }
 
+/*
+    Scoring System:
+    - max 100 points, min 0 points
+    - 45% is the ratio of completed / total excercises
+    - 15% is error penalty
+    - 40% is time penalty
+*/
+struct ScoreCalculator {}
+
+impl ScoreCalculator {
+    fn calculate_score(
+        time: usize,
+        max_time: usize,
+        errors: usize,
+        max_error_penalty: usize,
+        levels_completed: usize,
+        total_levels: usize,
+    ) -> usize {
+        let time_ratio = time as f64 / max_time as f64;
+        let error_ratio = errors as f64 / max_error_penalty as f64;
+        let time_score = 40.0 * (1.0 - time_ratio).max(0.0);
+        let error_score = 15.0 * (1.0 - error_ratio).max(0.0);
+        let completion_score = 45.0 * (levels_completed as f64 / total_levels as f64);
+        (time_score + error_score + completion_score).round() as usize
+    }
+}
+
 struct VSCodeInstallation {}
 
 impl VSCodeInstallation {
@@ -272,18 +299,18 @@ fn check_python(state: State<'_, ApplicationState>, level: usize) -> Result<bool
 fn level_completed(
     state: State<'_, ApplicationState>,
     level: usize,
-    time: usize,
-) -> Result<bool, String> {
+    time: usize
+) -> Result<(bool, usize), String> {
     if state.name.lock().unwrap().is_empty() {
-        return Ok(false);
+        return Ok((false, 0));
     }
     if level < 1 || level > 3 {
-        return Ok(false);
+        return Ok((false, 0));
     }
     if level == 1 {
         let mut level1_completed = state.level1_completed.lock().unwrap();
         if *level1_completed {
-            return Ok(false);
+            return Ok((false, 0));
         }
         *level1_completed = true;
         let mut level1_time_completed = state.level1_time_completed.lock().unwrap();
@@ -291,7 +318,7 @@ fn level_completed(
     } else if level == 2 {
         let mut level2_completed = state.level2_completed.lock().unwrap();
         if *level2_completed {
-            return Ok(false);
+            return Ok((false, 0));
         }
         *level2_completed = true;
         let mut level2_time_completed = state.level2_time_completed.lock().unwrap();
@@ -299,13 +326,22 @@ fn level_completed(
     } else {
         let mut level3_completed = state.level3_completed.lock().unwrap();
         if *level3_completed {
-            return Ok(false);
+            return Ok((false, 0));
         }
         *level3_completed = true;
         let mut level3_time_completed = state.level3_time_completed.lock().unwrap();
         *level3_time_completed = time;
     }
-    Ok(true)
+    // TODO: Use real values (@max add these vars to the state) and find balanced max values
+    let score = ScoreCalculator::calculate_score(
+        time,
+        30, // max time, 300 seconds
+        0,
+        5,
+        3,
+        3,
+    );
+    Ok((true, score))
 }
 
 #[tauri::command]

@@ -21,9 +21,10 @@
 
     function levelCompleted() {
         invoke('level_completed', { level: 1, time }).then((result: any) => {
-            if (!result) {
+            if (!result[0]) {
                 message('Level 1 konnte nicht gespeichert werden', { title: 'Fehler' })
             }
+            alert('Level 1 erfolgreich abgeschlossen. Score: ' + result[1]);
         });
     }
 
