@@ -5,10 +5,17 @@ use std::path::Path;
 use std::sync::Mutex;
 use std::time::SystemTime;
 use std::{fs, io};
+use lettre::message::{MultiPart, SinglePart};
+use lettre::transport::smtp::authentication::Credentials;
+use lettre::{Message, SmtpTransport, Transport};
 use tauri_plugin_dialog::DialogExt;
 use tauri::path::BaseDirectory;
 use tauri::{Manager, Runtime, State};
 use tauri_plugin_shell::ShellExt;
+
+const SMTP_SERVER: &str = "smtp.gmail.com";
+const SMTP_USERNAME: &str = "sigamer805@gmail.com";
+const SMTP_PASSWORD: &str = "passwd";
 
 struct ApplicationState {
     name: Mutex<String>,
@@ -45,6 +52,34 @@ impl ScoreCalculator {
         let error_score = 15.0 * (1.0 - error_ratio).max(0.0);
         let completion_score = 45.0 * (levels_completed as f64 / total_levels as f64);
         (time_score + error_score + completion_score).round() as usize
+    }
+}
+
+struct Mailer {}
+
+impl Mailer {
+    fn send_mail(from: &str, to: &str, subject: &str, html: &str) {
+        let email = Message::builder()
+            .from(from.parse().unwrap())
+            .to(to.parse().unwrap())
+            .subject(subject)
+            .multipart(
+                MultiPart::alternative()
+                    .singlepart(
+                        SinglePart::html(html.to_string())
+                    )
+            )
+            .unwrap();
+        let creds = Credentials::new(SMTP_USERNAME.to_string(), SMTP_PASSWORD.to_string());
+        let mailer = SmtpTransport::relay(SMTP_SERVER)
+            .unwrap()
+            .credentials(creds)
+            .build();
+
+        match mailer.send(&email) {
+            Ok(_) => println!("Email sent successfully"),
+            Err(e) => eprintln!("Email could not be sent: {:?}", e),
+        }
     }
 }
 
@@ -211,25 +246,123 @@ fn setup_user<R: Runtime>(
 
 #[tauri::command]
 fn logout(state: State<'_, ApplicationState>) -> Result<bool, String> {
-    let mut state_name = state.name.lock().unwrap();
-    let mut state_dirname = state.dirname.lock().unwrap();
-    let mut state_level1_completed = state.level1_completed.lock().unwrap();
-    let mut state_level2_completed = state.level2_completed.lock().unwrap();
-    let mut state_level3_completed = state.level3_completed.lock().unwrap();
-    let mut state_level1_time_completed = state.level1_time_completed.lock().unwrap();
-    let mut state_level2_time_completed = state.level2_time_completed.lock().unwrap();
-    let mut state_level3_time_completed = state.level3_time_completed.lock().unwrap();
-    if state_name.is_empty() || state_dirname.is_empty() {
-        return Ok(false);
+    let name: String;
+    // let dirname: String;
+    let level1_completed: bool;
+    let level2_completed: bool;
+    let level3_completed: bool;
+    let level1_time_completed: usize;
+    let level2_time_completed: usize;
+    let level3_time_completed: usize;
+    let score = 0; // TODO: add score to state
+
+    {
+        let state_name = state.name.lock().unwrap();
+        let state_dirname = state.dirname.lock().unwrap();
+        
+        if state_name.is_empty() || state_dirname.is_empty() {
+            return Ok(false);
+        }
+
+        name = state_name.clone();
+        // dirname = state_dirname.clone();
+        level1_completed = *state.level1_completed.lock().unwrap();
+        level2_completed = *state.level2_completed.lock().unwrap();
+        level3_completed = *state.level3_completed.lock().unwrap();
+        level1_time_completed = *state.level1_time_completed.lock().unwrap();
+        level2_time_completed = *state.level2_time_completed.lock().unwrap();
+        level3_time_completed = *state.level3_time_completed.lock().unwrap();
     }
-    *state_name = String::new();
-    *state_dirname = String::new();
-    *state_level1_completed = false;
-    *state_level2_completed = false;
-    *state_level3_completed = false;
-    *state_level1_time_completed = 0;
-    *state_level2_time_completed = 0;
-    *state_level3_time_completed = 0;
+
+    // TODO: Write more appropriate message
+    // TODO: Better error handling for mailer
+    std::thread::spawn(move || {
+        Mailer::send_mail(
+            "Coding Lab <sigamer805@gmail.com>",
+            format!("{} <{}>", name, "rechbers@edu.htl-villach.at").as_str(),
+            "Coding Lab - Ergebnisse",
+            format!(r#"
+                <html>
+                    <head>
+                        <style>
+                            body {{
+                                font-family: Arial, sans-serif;
+                            }}
+                            .container {{
+                                width: 80%;
+                                margin: 0 auto;
+                            }}
+                            .header {{
+                                background-color: #f1f1f1;
+                                padding: 10px;
+                                text-align: center;
+                            }}
+                            .content {{
+                                padding: 10px;
+                            }}
+                            .footer {{
+                                background-color: #f1f1f1;
+                                padding: 10px;
+                                text-align: center;
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <img src="https://yt3.googleusercontent.com/tK-wIyMHMWu-Sbi4Y0pdsrUGvvo7WtSK75wvumRKWZfxL0rw2FrclnNiSBBT54pFIroxpenAl9Y=s160-c-k-c0x00ffffff-no-rj" alt="HTL Logo" width="100" height="100">
+                                <h1>Coding Lab - Ergebnisse</h1>
+                            </div>
+                            <div class="content">
+                                <p>Liebe/r {name},</p>
+                                <p>Vielen Dank dass du beim Coding Lab der HTL Villach teilgenommen hast. Hier sind deine Ergebnisse:</p>
+                                <ul>
+                                    <li>Level 1: {level1_completed} ({level1_time_completed} Sekunden)</li>
+                                    <li>Level 2: {level2_completed} ({level2_time_completed} Sekunden)</li>
+                                    <li>Level 3: {level3_completed} ({level3_time_completed} Sekunden)</li>
+                                </ul>
+                                <p>Dein Gesamtpunktestand beträgt {score} / 300 Punkten.</p>
+                                <p>Vielen Dank für deine Teilnahme!</p>
+                            </div>
+                            <div class="footer">
+                                <p>Coding Lab - HTL Villach Informatik</p>
+                            </div>
+                        </div>
+                    </body>
+                </html>
+            "#,
+                name = name,
+                level1_completed = if level1_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
+                level1_time_completed = level1_time_completed,
+                level2_completed = if level2_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
+                level2_time_completed = level2_time_completed,
+                level3_completed = if level3_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
+                level3_time_completed = level3_time_completed,
+                score = score,
+            ).as_str(),
+        );
+    });
+    
+    {
+        let mut state_name = state.name.lock().unwrap();
+        let mut state_dirname = state.dirname.lock().unwrap();
+        let mut state_level1_completed = state.level1_completed.lock().unwrap();
+        let mut state_level2_completed = state.level2_completed.lock().unwrap();
+        let mut state_level3_completed = state.level3_completed.lock().unwrap();
+        let mut state_level1_time_completed = state.level1_time_completed.lock().unwrap();
+        let mut state_level2_time_completed = state.level2_time_completed.lock().unwrap();
+        let mut state_level3_time_completed = state.level3_time_completed.lock().unwrap();
+
+        *state_name = String::new();
+        *state_dirname = String::new();
+        *state_level1_completed = false;
+        *state_level2_completed = false;
+        *state_level3_completed = false;
+        *state_level1_time_completed = 0;
+        *state_level2_time_completed = 0;
+        *state_level3_time_completed = 0;
+    }
+
 
     Ok(true)
 }
