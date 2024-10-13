@@ -175,4 +175,5 @@ print(f"Hey, ist dieser &#123;<input autocomplete="off"  class="inline-input {st
 
 </div>
 
-<button class="next" on:click={() =>{_next("../input/expl")}}>Weiter</button>
+<button class="next" on:click={() =>{_next("../input/expl")}}>Weiter</button><br>
+<button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>

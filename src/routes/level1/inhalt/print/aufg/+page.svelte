@@ -76,4 +76,5 @@
 
 </div>
 
-<button class="next" on:click={() =>{_next("../variable/expl")}}>Weiter</button>
+<button class="next" on:click={() =>{_next("../variable/expl")}}>Weiter</button><br>
+<button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>

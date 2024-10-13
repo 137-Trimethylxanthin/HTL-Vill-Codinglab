@@ -20,7 +20,7 @@
 </script>
 
 <div class="title">
-    <h1>Willkommen {$nameStore}</h1>
+    <h1>Willkommen {$nameStore === undefined ? "" : $nameStore}</h1>
     <h2><b>HTL Villach</b> - Abteilung Informatik</h2>
 </div>
 

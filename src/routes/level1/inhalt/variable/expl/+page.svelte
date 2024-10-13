@@ -57,4 +57,5 @@ print(f"Hey <code style="color: var(--teal)">&#123;name}</code>! Wusstest du das
 
 </div>
 
-<button class="next" on:click={() => {_next("aufg")}}> Weiter </button>
+<button class="next" on:click={() => {_next("aufg")}}> Weiter </button><br>
+<button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>

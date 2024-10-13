@@ -139,5 +139,6 @@ print("Und hast am " + <input autocomplete="off"  class="inline-input {datum_nam
 <code class="{ende}">Hallo <code style="color: var(--teal);">{input_val_1}</code>, du bist <code style="color: var(--teal);">{input_val_2}</code> Jahre alt <br>Und hast am <code style="color: var(--teal);">{input_val_3}</code> Geburtstag</code>
 </pre>
 </div>
-<button class="next" on:click={() => {_next("../if/expl")}}>Weiter</button>
+<button class="next" on:click={() => {_next("../if/expl")}}>Weiter</button><br>
+<button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>
 

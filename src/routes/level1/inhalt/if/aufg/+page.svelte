@@ -407,6 +407,7 @@ else:
 
 </div>
 
-<button class="next" on:click={() =>{_next("../code_example")}}>Weiter</button>
+<button class="next" on:click={() =>{_next("../code_example")}}>Weiter</button> <br>
+<button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>
 
 <div class="bothErr vergleichErr nameErr"></div>

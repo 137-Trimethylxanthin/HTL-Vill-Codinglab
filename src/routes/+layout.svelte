@@ -57,16 +57,8 @@
     }
 
     async function logOut() {
-        if (await ask('Willst du dich wirklich abmelden?', { title: 'Abmelden' })) {
-            invoke('logout').then((res) => {
-                if (res) {
-                    goto('/');
-                } else {
-                    message("User konnte nicht abgemeldet werden, bereits abgemeldet?")
-                }
-            })
-        } else {
-            return;
+        if (window.location.pathname !== '/') {
+            goto('/end');
         }
     }
 
@@ -93,18 +85,15 @@
 
 
     async function goHome(){
-        if (await ask('Willst du wirklich zur Startseite wechseln?', { title: 'Startseite' })) {
-            invoke('get_name').then((res) => {
-                if (res) {
-                    goto('/home');
-                } else {
-                    goto('/');
-                }
-            })
-        } else {
-            return;
-        }
-    }
+        invoke('get_name').then((res) => {
+            if (res) {
+                goto('/home');
+            } else {
+                goto('/');
+            }
+        })
+    } 
+    
 
 </script>
 
@@ -114,13 +103,12 @@
         <div id="open">
             <ul>
                 <li><button on:click={changeTheme}><img class="icons" src="/media/{icon}.png" alt="Theme"></button></li>
+                <li></li>
+                <li></li>
                 <li><button on:click={goHome}><img class="icons" src="/media/home-{theme}.png" alt="Info"></button></li>
                 <li></li>
                 <li></li>
-                <li></li>
-                <li><button on:click={logOut}><img class="icons" src="/media/logout-{theme}.png" alt="Logout"></button></li>
-                <li><button on:click={quit}><img class="icons" src="/media/close-{theme}.png" alt="Close"></button></li>
-            </ul>
+                <li><button on:click={logOut}><img class="icons" src="/media/logout-{theme}.png" alt="Logout"></button></li>            </ul>
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div on:click={toggleHeader} id="openToggle">Close</div>

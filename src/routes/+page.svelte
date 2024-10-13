@@ -5,6 +5,7 @@
 	import { nameStore } from '../utils/stores';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+    import { randomName } from '../utils/lib';
 
     let showSMTPCredentialsModal = false;
 
@@ -20,10 +21,13 @@
     }
 
     function setupUser(e: SubmitEvent) {
-        const name = (e.target as any).vorname.value;
+        let name = (e.target as any).vorname.value;
+        if (!name) {
+            name = `NoUser_${randomName()}`;
+        }
         invoke('setup_user', { name }).then((res) => {
             if (res) {
-                nameStore.set(name);
+                nameStore.set(name.startsWith('NoUser_') ? undefined : name);
                 goto('/home');
             } else {
                 message("User konnte nicht erstellt werden, bereits eingeloggt?");
@@ -37,10 +41,12 @@
     <p>Gebe bitte deinen Vornamen ein, damit wir dich ansprechen können.</p>
     <form on:submit|preventDefault={setupUser}>
         <label for="vorname">Vorname:</label><br />
-        <input type="text" id="name" name="vorname" required placeholder="Vorname" autocomplete="off"/><br />
-        <button type="submit">Starten</button>
+        <input type="text" id="name" name="vorname" placeholder="Vorname (optional)" autocomplete="off"/><br />
+        <button class="loginButton" type="submit">Starten</button>
     </form>
     {#if showSMTPCredentialsModal}
         <SMTPCredentialsModal on:close={handleCloseModal} />
     {/if}
 </div>
+
+

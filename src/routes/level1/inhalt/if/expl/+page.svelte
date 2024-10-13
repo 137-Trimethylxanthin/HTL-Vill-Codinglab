@@ -63,4 +63,5 @@
 
 </div>
 
-<button class="next" on:click={() => {_next("aufg")}}> Weiter </button>
+<button class="next" on:click={() => {_next("aufg")}}> Weiter </button> <br>
+<button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>

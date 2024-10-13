@@ -336,11 +336,7 @@ header {
     border-radius: 0.5em;
     box-shadow: var(--mantel) 0 0.1em 0.6em;
     padding: 1vw 1vh;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    -ms-transform: translate(-50%, -50%);
-    transform: translate(-50%, -50%);
+    margin: 15vh auto auto auto
 }
 
 .loginContainer h1{
@@ -375,7 +371,7 @@ header {
     text-align: center;
 }
 
-.loginContainer button{
+.loginContainer .loginButton{
     width: 100%;
     height: 8vh;
     border-radius: 0.5em;
@@ -388,7 +384,7 @@ header {
     margin-bottom: 4vh;
 }
 
-.loginContainer button:hover{
+.loginContainer .loginButton:hover{
     background: var(--surface1);
     box-shadow: var(--surface0) 0 0.1em 0.6em;
     cursor: pointer;
@@ -396,7 +392,7 @@ header {
 
 }
 
-.loginContainer button:active{
+.loginContainer .loginButton:active{
     background: var(--surface0);
     box-shadow: var(--surface1) 0 0.1em 0.6em;
     transform: scale(.9);
@@ -511,6 +507,36 @@ header {
 }
 
 .next:active{
+    background: var(--green);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    padding: 2vh 2.5vw;
+}
+
+.back{
+    background: var(--red);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    font-size: 3.5vh;
+    font-weight: 700;
+    padding: 2vh 2.5vw;
+    border-radius: 0.5em;
+    position: relative;
+    bottom: 2vh;
+    right: -50%;
+    transform: translateX(-50%);
+    border: none;
+}
+
+.back:hover{
+    background: var(--teal);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    cursor: pointer;
+    padding: 2.5vh 3vw;
+}
+
+.back:active{
     background: var(--green);
     box-shadow: var(--crust) 0 0.1em 0.6em;
     color: var(--crust);
@@ -749,3 +775,208 @@ footer:hover a{
     color: var(--maroon) !important;
 }
 
+
+.timer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    background: var(--overlay2);
+    color: var(--text);
+    border-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    padding: 0.5vh 1vw;
+    margin: 2.5vh 1vw;
+    font-size: 2.5vh;
+    font-weight: 700;
+    opacity: 0.7;
+}
+
+.timer:hover {
+    opacity: 1;
+    background: var(--overlay1);
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    cursor: pointer;
+    color: var(--text);
+}
+
+.timer h2 {
+    font-size: 2vh;
+    font-weight: 700;
+    margin-bottom: 1vh;
+}
+
+.timer h3 {
+    font-size: 2vh;
+    font-weight: 700;
+    margin-bottom: 1vh;
+}
+
+.timer p {
+    font-size: 2vh;
+    font-weight: 500;
+    margin-bottom: 1vh;
+}
+#sendMail{
+    width: 100%;
+    height: 8vh;
+    border-radius: 0.5em;
+    border: none;
+    background: var(--surface0);
+    color: var(--test);
+    font-size: 3.5vh;
+    font-weight: 800;
+    margin-top: 2vh;
+    margin-bottom: 4vh;
+}
+
+.isOk{
+    background: var(--green) !important;
+    color: var(--crust) !important;
+}
+
+.isOk:hover{
+    background: var(--surface1) ;
+    box-shadow: var(--surface0) 0 0.1em 0.6em;
+    cursor: pointer;
+    transform: scale(1.1);
+
+}
+
+#sendMail:active{
+    background: var(--surface0) !important;
+    box-shadow: var(--surface1) 0 0.1em 0.6em;
+    transform: scale(.9);
+}
+
+
+.ende{
+    background: var(--yellow);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    font-size: 3.5vh;
+    font-weight: 700;
+    padding: 2vh 2.5vw;
+    margin: 3vh 0;
+    border-radius: 0.5em;
+    position: relative;
+    bottom: 0;
+    right: -50%;
+    transform: translateX(-50%);
+    border: none;
+}
+
+.ende:hover{
+    background: var(--teal);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    cursor: pointer;
+    padding: 2.5vh 3vw;
+}
+
+.ende:active{
+    background: var(--green);
+    box-shadow: var(--crust) 0 0.1em 0.6em;
+    color: var(--crust);
+    padding: 2vh 2.5vw;
+}
+
+
+.timeContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    width: 50vw;
+    background: var(--crust);
+    border-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    padding: 1vw 1vh;
+    margin: 10vh auto -8vh auto
+}
+
+.timeContainer h2 {
+    font-size: 6vh;
+    font-weight: 700;
+    margin-bottom: 2vh;
+}
+
+.timeContainer h3 {
+    font-size: 4vh;
+    font-weight: 700;
+    margin-bottom: 1vh;
+}
+
+.timeContainer p {
+    font-size: 5vh;
+    font-weight: 500;
+    margin-bottom: 3vh;
+}
+
+.timeContainer ul {
+    list-style: none;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-direction: column;
+    background: var(--surface0);
+    border-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    padding: 2vh 3vw;
+    margin-bottom: 3vh;
+}
+
+.timeContainer ul li {
+    font-size: 3vh;
+    font-weight: 700;
+    margin-bottom: 1vh;
+    text-align: center;
+}
+
+
+
+.logoutContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    width: 33vw;
+    background: var(--crust);
+    border-radius: 0.5em;
+    box-shadow: var(--mantel) 0 0.1em 0.6em;
+    padding: 1vw 1vh;
+    margin: 15vh auto auto auto
+}
+
+.logoutContainer h1{
+    font-size: 5vh;
+    font-weight: 700;
+    margin-bottom: 3vh;
+}
+
+.logoutContainer p{
+    font-size: 3.2vh;
+    font-weight: 500;
+    margin-bottom: 3vh;
+}
+
+.logoutContainer label {
+    font-size: 3.4vh;
+    font-weight: 700;
+}
+
+.logoutContainer input{
+    margin-top: 1vh;
+    width: 100%;
+    height: 8vh;
+    border-radius: 0.5em;
+    border: none;
+    background: var(--surface1);
+    color: var(--text);
+    font-size: 3vh;
+    font-weight: 500;
+    padding: 1vw 1vh;
+    margin-bottom: 1.4vh;
+    text-align: center;
+}
