@@ -51,9 +51,13 @@ impl ScoreCalculator {
         sublevels_completed: usize,
         total_sublevels: usize,
     ) -> usize {
-        let time_ratio = time as f64 / max_time as f64;
+        let time_ratio = (time as f64 / max_time as f64).min(2.0); // cap at 2x time penalty
         let error_ratio = errors as f64 / max_error_penalty as f64;
-        let time_score = 40.0 * (1.0 - time_ratio).max(0.0);
+        let time_score = if time_ratio > 1.0 {
+            40.0 * (1.0 - (time_ratio - 1.0))
+        } else {
+            40.0
+        };
         let error_score = 15.0 * (1.0 - error_ratio).max(0.0);
         let completion_score = 45.0 * (sublevels_completed as f64 / total_sublevels as f64);
         (time_score + error_score + completion_score).round() as usize
@@ -544,7 +548,7 @@ fn level_completed(
         return Ok((false, 0));
     }
     let mut score = 0;
-    const MAX_TIME: usize = 300;
+    const MAX_TIME: usize = 500;
     const MAX_ERROR_PENALTY: usize = 5;
     if level == 1 {
         let mut level1_completed = state.level1_completed.lock().unwrap();
