@@ -13,6 +13,7 @@
 
     let legend = "hidden";
     let success = "hidden";
+    let errors = 0;
 
     let output = "> Das ist dein Output";
     let outputColorClass = "";
@@ -303,6 +304,7 @@
 
 
         if(error){
+            errors++;
             outputColorClass = "invalid-output";
             output = "> Da ist etwas schief gelaufen, schau dir die Fehler an und versuche es erneut.";
             legend = "";
@@ -312,6 +314,7 @@
             output = "";
             legend = "hidden";
             success = "";
+            //pause timer
         }
 
     }

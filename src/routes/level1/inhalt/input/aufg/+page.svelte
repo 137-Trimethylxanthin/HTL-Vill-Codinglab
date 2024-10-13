@@ -92,7 +92,10 @@ function validate(){
         error = true;
     }
 
+
+
     if (error){
+        errors++;
         outputColorClass = "invalid-output";
         output = "> Es ist ein Fehler aufgetreten";
         output += "\n> Bitte überprüfe die falschen Felder";
@@ -105,6 +108,7 @@ function validate(){
     }
 
 }
+let errors = 0;
 
 </script>
 

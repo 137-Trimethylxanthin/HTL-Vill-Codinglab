@@ -130,6 +130,7 @@
             output += "> Hey, ist dieser " + user_wochen_tag_value + " nicht ein schöner Tag, " + user_name_value + "\n";
             _enableButton();
         } else {
+            errors++;
             outputColorClass = "invalid-output";
             output = "> Leider nicht ganz richtig. \n";
             output += "> Ich hab dir die falschen Felder markiert \n";
@@ -137,6 +138,7 @@
 
 
     }
+    let errors = 0;
 </script>
 
 

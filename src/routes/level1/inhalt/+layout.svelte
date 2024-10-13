@@ -81,6 +81,15 @@
     }
 
 
+    //custom event listener
+    window.addEventListener("popstate", handleUrlChange);
+
+    //finsih timer
+    window.addEventListener("finishTimer", (e) => {
+        finishTimer( true);
+    });
+
+
 </script>
 
 

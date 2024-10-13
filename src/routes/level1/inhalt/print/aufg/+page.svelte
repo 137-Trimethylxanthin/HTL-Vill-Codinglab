@@ -42,6 +42,7 @@
             output += "\n\n> Gut gemacht! Du hast print() verwendet. Du kannst nun auf Weiter klicken.";
             _enableButton();
         } else {
+            errors++;
             outputColorClass = "invalid-output";
             output = "Das ist nicht ganz richtig. Versuche es nochmal.";
             if (!startHasValidStart) output += "\n> Du hast 'print' nicht richtig geschrieben. (Beachte, dass es klein ist)";
@@ -49,7 +50,7 @@
             if (!endHasValidEnd) output += "\n> Du hast noch etwas nach der ')' stehen. print(\"Dein Text\")";
         }
     }
-
+let errors = 0;
 </script>
 
 
