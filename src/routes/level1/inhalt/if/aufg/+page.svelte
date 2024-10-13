@@ -333,6 +333,11 @@
 
     let firstPartIDK = "hidden";
     let secondPartIDK = "hidden";
+
+    function finishLevel() {
+        document.dispatchEvent(new CustomEvent("finishTimer"));
+        _next("../code_example"); // TODO: REMOVE CODE EXAMPLE
+    }
 </script>
 
 
@@ -410,7 +415,7 @@ else:
 
 </div>
 
-<button class="next" on:click={() =>{_next("../code_example")}}>Weiter</button> <br>
+<button class="next" on:click={() =>{finishLevel()}}>Weiter</button> <br>
 <button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>
 
 <div class="bothErr vergleichErr nameErr"></div>

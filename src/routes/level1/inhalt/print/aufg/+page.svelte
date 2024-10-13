@@ -51,6 +51,12 @@
         }
     }
 let errors = 0;
+
+function finishLevel() {
+    document.dispatchEvent(new CustomEvent("finishTimer"));
+    _next("../variable/expl");
+}
+
 </script>
 
 
@@ -77,5 +83,5 @@ let errors = 0;
 
 </div>
 
-<button class="next" on:click={() =>{_next("../variable/expl")}}>Weiter</button><br>
+<button class="next" on:click={() =>{finishLevel();}}>Weiter</button><br>
 <button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>

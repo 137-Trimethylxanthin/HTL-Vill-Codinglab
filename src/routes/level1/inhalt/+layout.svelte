@@ -1,22 +1,22 @@
 <script lang="ts">
   import { afterNavigate } from "$app/navigation";
+  import { onMount } from "svelte";
   import { level1Store } from "../../../utils/stores";
 
   let currentTime = $level1Store["total"].time;
-  console.log($level1Store["total"]);
   let levelTime = 0;
 
-  //read level from url
+  // read level from url
   let url = window.location.pathname.split("/");
   let tickClock = false;
   let mode = url.pop();
-  let level = url.pop();
-  let interval = undefined;
+  let level = url.pop() as string;
+  let interval: any = undefined;
 
   export function handleUrlChange() {
     url = window.location.pathname.split("/");
     mode = url.pop();
-    level = url.pop();
+    level = url.pop() as string;
     if (mode === "aufg") {
       tickClock = true;
     }
@@ -44,8 +44,6 @@
       }, 1000);
     }
   }
-
-  handleUrlChange();
 
   export const finishTimer = (finished: boolean, error: number) => {
     clearInterval(interval);
@@ -86,6 +84,12 @@
     tickClock = false;
   };
 
+  onMount(() => {
+    handleUrlChange();
+    document.addEventListener("finishTimer", (e) => {
+        finishTimer(true);
+    });
+  });
 
   afterNavigate(handleUrlChange);
 </script>
