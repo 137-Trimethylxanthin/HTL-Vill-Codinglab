@@ -18,7 +18,6 @@ build_windows:
   image: mcr.microsoft.com/windows/servercore:ltsc2019
   before_script:
     - Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-    - choco install nodejs-lts -y
     - choco install rust-ms -y
     - choco install visualstudio2019buildtools -y
     - refreshenv
