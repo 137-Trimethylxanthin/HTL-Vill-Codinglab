@@ -20,7 +20,7 @@ build_windows:
     - Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
     - choco install rust-ms -y
     - choco install visualstudio2019buildtools -y
-    - npm ci
+    - npm i
   script:
     - npm run tauri build
     - $APP_VERSION = (Get-Content -Raw -Path .\package.json | ConvertFrom-Json).version

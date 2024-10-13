@@ -1,18 +1,16 @@
 <script lang="ts">
     import { nameStore } from "../../utils/stores";
-    import { goto } from "$app/navigation";
     import { invoke } from "@tauri-apps/api/core";
-    import { writable, type Writable } from "svelte/store";
     import { ask, message } from "@tauri-apps/plugin-dialog";
-  import { level1Store, level2Store, level3Store } from "../../utils/stores";
+    import { level1Store, level2Store, level3Store } from "../../utils/stores";
 
     async function logOut() {
         if (await ask('Willst du wirklich Beenden?', { title: 'Beenden' })) {
-            console.log("logOut 222");
             resetStores();
             invoke('logout').then((res) => {
                 if (res) {
-                    goto('/');
+                    // @ts-ignore
+                    window.location = "/";
                 } else {
                     message("User konnte nicht abgemeldet werden, bereits abgemeldet?")
                 }
@@ -64,7 +62,8 @@
             if (res) {
                 invoke('logout').then((res) => {
                     if (res) {
-                        goto('/');
+                        // @ts-ignore
+                        window.location = "/";
                     } else {
                         message("User konnte nicht abgemeldet werden, bereits abgemeldet?")
                     }
@@ -123,12 +122,9 @@
         if (!emailRegex.test(email) || emailWasSent === true) {
             (document.getElementById("sendMail") as HTMLButtonElement).disabled = true;
             (document.getElementById("sendMail") as HTMLButtonElement).classList.remove("isOk");
-            console.log("nope");
-
         } else {
             (document.getElementById("sendMail") as HTMLButtonElement).disabled = false;
             (document.getElementById("sendMail") as HTMLButtonElement).classList.add("isOk");
-            console.log("yep");
         } 
     }
 
