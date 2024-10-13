@@ -1,0 +1,50 @@
+stages:
+  - build
+  - release
+
+variables:
+  CARGO_HOME: "${CI_PROJECT_DIR}/.cargo"
+
+cache:
+  paths:
+    - .cargo
+    - target/
+    - node_modules/
+
+build_windows:
+  stage: build
+  tags:
+    - windows
+  image: mcr.microsoft.com/windows/servercore:ltsc2019
+  before_script:
+    - Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+    - choco install nodejs-lts -y
+    - choco install rust-ms -y
+    - choco install visualstudio2019buildtools -y
+    - refreshenv
+    - npm ci
+  script:
+    - npm run tauri build
+    - $APP_VERSION = (Get-Content -Raw -Path .\package.json | ConvertFrom-Json).version
+    - echo "APP_VERSION=$APP_VERSION" >> $GITLAB_ENV
+  artifacts:
+    paths:
+      - src-tauri/target/release/bundle/
+    expire_in: 1 week
+
+create_release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - echo "Creating release for version $APP_VERSION"
+  release:
+    name: 'Release $APP_VERSION'
+    tag_name: $CI_COMMIT_TAG
+    description: 'Release notes for version $APP_VERSION'
+    assets:
+      links:
+        - name: 'Windows Release Bundle'
+          url: '${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_SHA}/download?job=build_windows'
+          link_type: 'package'
