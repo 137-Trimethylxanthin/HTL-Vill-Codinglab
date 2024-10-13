@@ -24,7 +24,7 @@ export function _enableButton() {
 }
 
 export function _next(path:string) {
-    goto(path).then(r => console.log(r));
+    goto(path);
 }
 
 /*
