@@ -29,7 +29,7 @@
             level3Store.set({
                 "total": {
                     time: time,
-                    points: result[2],
+                    points: result[1],
                     maxPoints: 100,
                     status: '✅',
                     errors: errors
