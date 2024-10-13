@@ -3,7 +3,7 @@
     import { goto } from "$app/navigation";
     import { invoke } from "@tauri-apps/api/core";
     import { writable, type Writable } from "svelte/store";
-  import { ask, message } from "@tauri-apps/plugin-dialog";
+    import { ask, message } from "@tauri-apps/plugin-dialog";
 
     async function logOut() {
         if (await ask('Willst du wirklich Beenden?', { title: 'Beenden' })) {
@@ -35,9 +35,13 @@
                     }
                 })
             }
+        }).catch((err) => {
+            emailWasSent = false;
+            email = "error - email konnte nicht gesendet werden";
+            return;
         });
 
-        emailWasSend = true;
+        emailWasSent = true;
         email = "";
         checkMail();
     }
@@ -74,13 +78,13 @@
 
 
     let email = ""; 
-    let emailWasSend = false;
+    let emailWasSent = false;
 
     let emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
 
     function checkMail() {
         console.log(email);
-        if (!emailRegex.test(email) || emailWasSend === true) {
+        if (!emailRegex.test(email) || emailWasSent === true) {
             (document.getElementById("sendMail") as HTMLButtonElement).disabled = true;
             (document.getElementById("sendMail") as HTMLButtonElement).classList.remove("isOk");
             console.log("nope");
@@ -115,9 +119,9 @@
 
 <div class="logoutContainer" >
     <h1>Falls du genauere daten haben willst</h1>
-    <p>Gib unten deine Email ein und wir schicken dir eine bericht mit allen zeiten und punkten</p>
+    <p>Gib unten deine Email ein und wir schicken dir einen Bericht mit allen Zeiten und Punkten</p>
     <form on:submit|preventDefault={sendMail}>
-        <label for="email">Vorname:</label><br />
+        <label for="email">E-Mail:</label><br />
         <input type="text" id="email" bind:value={email} on:input={checkMail} name="email" placeholder="Email" required autocomplete="off"/><br />
         <button id="sendMail" type="submit">Senden</button>
     </form>
