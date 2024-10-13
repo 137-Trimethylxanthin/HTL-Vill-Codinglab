@@ -336,7 +336,7 @@
 
     function finishLevel() {
         document.dispatchEvent(new CustomEvent("finishTimer"));
-        _next("../code_example"); // TODO: REMOVE CODE EXAMPLE
+        _next("/home");
     }
 </script>
 
