@@ -1,8 +1,23 @@
 <script lang="ts">
+    import SMTPCredentialsModal from '../components/SMTPCredentialsModal.svelte';
     import { invoke } from '@tauri-apps/api/core';
 	import { message } from '@tauri-apps/plugin-dialog';
 	import { nameStore } from '../utils/stores';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
+
+    let showSMTPCredentialsModal = false;
+
+    onMount(async () => {
+        const hasCredentials = await invoke('has_smtp_credentials');
+        if (!hasCredentials) {
+            showSMTPCredentialsModal = true;
+        }
+    });
+
+    function handleCloseModal() {
+        showSMTPCredentialsModal = false;
+    }
 
     function setupUser(e: SubmitEvent) {
         const name = (e.target as any).vorname.value;
@@ -25,4 +40,7 @@
         <input type="text" id="name" name="vorname" required placeholder="Vorname" autocomplete="off"/><br />
         <button type="submit">Starten</button>
     </form>
+    {#if showSMTPCredentialsModal}
+        <SMTPCredentialsModal on:close={handleCloseModal} />
+    {/if}
 </div>

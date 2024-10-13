@@ -132,13 +132,11 @@
     {/if}
 </header>
 
-
 <slot />
-
 
 <footer>
     <p class="copyLeft">© 2024 Coding Lab</p>
+    <!-- svelte-ignore a11y-invalid-attribute -->
     <p class="middleLinks">Made By <a on:click={() => {open("https://github.com/137-Trimethylxanthin")}} href="#">Max</a> und <a on:click={() => {open("https://github.com/gamersi")}} href="#">Simon</a></p>
-
 </footer>
 

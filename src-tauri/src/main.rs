@@ -8,14 +8,16 @@ use std::{fs, io};
 use lettre::message::{MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
+use aes_gcm::{
+    aead::{Aead, KeyInit},
+    Aes256Gcm, Nonce, Key
+};
+use rand::Rng;
+use serde::{Deserialize, Serialize};
 use tauri_plugin_dialog::DialogExt;
 use tauri::path::BaseDirectory;
 use tauri::{Manager, Runtime, State};
 use tauri_plugin_shell::ShellExt;
-
-const SMTP_SERVER: &str = "smtp.gmail.com";
-const SMTP_USERNAME: &str = "sigamer805@gmail.com";
-const SMTP_PASSWORD: &str = "passwd";
 
 struct ApplicationState {
     name: Mutex<String>,
@@ -58,27 +60,25 @@ impl ScoreCalculator {
 struct Mailer {}
 
 impl Mailer {
-    fn send_mail(from: &str, to: &str, subject: &str, html: &str) {
+    fn send_mail(smtp_credentials: SmtpCredentials, from: &str, to: &str, subject: &str, html: &str) -> Result<(), Box<dyn std::error::Error>> {
         let email = Message::builder()
-            .from(from.parse().unwrap())
-            .to(to.parse().unwrap())
+            .from(from.parse()?)
+            .to(to.parse()?)
             .subject(subject)
             .multipart(
                 MultiPart::alternative()
                     .singlepart(
                         SinglePart::html(html.to_string())
                     )
-            )
-            .unwrap();
-        let creds = Credentials::new(SMTP_USERNAME.to_string(), SMTP_PASSWORD.to_string());
-        let mailer = SmtpTransport::relay(SMTP_SERVER)
-            .unwrap()
+            )?;
+        let creds = Credentials::new(smtp_credentials.username, smtp_credentials.password);
+        let mailer = SmtpTransport::relay(&smtp_credentials.url)?
             .credentials(creds)
             .build();
 
         match mailer.send(&email) {
-            Ok(_) => println!("Email sent successfully"),
-            Err(e) => eprintln!("Email could not be sent: {:?}", e),
+            Ok(_) => Ok(()),
+            Err(e) => Err(Box::new(e))
         }
     }
 }
@@ -203,6 +203,83 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
     Ok(())
 }
 
+#[derive(Serialize, Deserialize)]
+struct SmtpCredentials {
+    url: String,
+    username: String,
+    password: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct EncryptedData {
+    ciphertext: Vec<u8>,
+    nonce: [u8; 12],
+}
+
+fn encrypt_credentials(credentials: &SmtpCredentials, key: &[u8; 32]) -> EncryptedData {
+    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
+    let mut rng = rand::thread_rng();
+    let mut nonce = [0u8; 12];
+    rng.fill(&mut nonce);
+    let nonce = Nonce::from_slice(&nonce);
+    
+    let plaintext = serde_json::to_string(credentials).unwrap().into_bytes();
+    let ciphertext = cipher.encrypt(nonce, plaintext.as_ref()).unwrap();
+    
+    EncryptedData {
+        ciphertext,
+        nonce: *nonce.as_ref(),
+    }
+}
+
+fn decrypt_credentials(encrypted: &EncryptedData, key: &[u8; 32]) -> Result<SmtpCredentials, Box<dyn std::error::Error>> {
+    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
+    let nonce = Nonce::from_slice(&encrypted.nonce);
+    
+    let plaintext = cipher.decrypt(nonce, encrypted.ciphertext.as_ref()).map_err(|e| e.to_string())?;
+    let credentials: SmtpCredentials = serde_json::from_slice(&plaintext)?;
+    
+    Ok(credentials)
+}
+
+fn save_credentials<R: Runtime>(app: tauri::AppHandle<R>, credentials: &SmtpCredentials) -> Result<(), Box<dyn std::error::Error>> {
+    let app_data_dir = app.path().app_data_dir().unwrap();
+    std::fs::create_dir_all(&app_data_dir)?;
+
+    let key: [u8; 32] = rand::thread_rng().gen();
+    let encrypted = encrypt_credentials(credentials, &key);
+
+    let encrypted_data = serde_json::to_vec(&encrypted)?;
+    std::fs::write(app_data_dir.join("smtp_credentials.enc"), encrypted_data)?;
+    std::fs::write(app_data_dir.join("encryption_key"), key)?;
+
+    Ok(())
+}
+
+fn load_credentials<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<SmtpCredentials, Box<dyn std::error::Error>> {
+    let app_data_dir = app.path().app_data_dir().unwrap();
+
+    let encrypted_data = fs::read(app_data_dir.join("smtp_credentials.enc"))?;
+    let key = fs::read(app_data_dir.join("encryption_key"))?;
+
+    let encrypted: EncryptedData = serde_json::from_slice(&encrypted_data)?;
+    let key: [u8; 32] = key.try_into().map_err(|_| "Invalid key length")?;
+
+    decrypt_credentials(&encrypted, &key)
+}
+
+#[tauri::command]
+fn store_smtp_credentials<R: Runtime>(app: tauri::AppHandle<R>, url: String, username: String, password: String) -> Result<(), String> {
+    let credentials = SmtpCredentials { url, username, password };
+    save_credentials(app, &credentials).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn has_smtp_credentials<R: Runtime>(app: tauri::AppHandle<R>) -> bool {
+    let app_data_dir = app.path().app_data_dir().unwrap();
+    app_data_dir.join("smtp_credentials.enc").exists() && app_data_dir.join("encryption_key").exists()
+}
+
 #[tauri::command]
 fn setup_user<R: Runtime>(
     app: tauri::AppHandle<R>,
@@ -245,7 +322,7 @@ fn setup_user<R: Runtime>(
 }
 
 #[tauri::command]
-fn logout(state: State<'_, ApplicationState>) -> Result<bool, String> {
+fn logout<R: Runtime>(state: State<'_, ApplicationState>, app: tauri::AppHandle<R>) -> Result<bool, String> {
     let name: String;
     // let dirname: String;
     let level1_completed: bool;
@@ -274,74 +351,81 @@ fn logout(state: State<'_, ApplicationState>) -> Result<bool, String> {
         level3_time_completed = *state.level3_time_completed.lock().unwrap();
     }
 
-    // TODO: Write more appropriate message
-    // TODO: Better error handling for mailer
-    std::thread::spawn(move || {
-        Mailer::send_mail(
-            "Coding Lab <sigamer805@gmail.com>",
-            format!("{} <{}>", name, "rechbers@edu.htl-villach.at").as_str(),
-            "Coding Lab - Ergebnisse",
-            format!(r#"
-                <html>
-                    <head>
-                        <style>
-                            body {{
-                                font-family: Arial, sans-serif;
-                            }}
-                            .container {{
-                                width: 80%;
-                                margin: 0 auto;
-                            }}
-                            .header {{
-                                background-color: #f1f1f1;
-                                padding: 10px;
-                                text-align: center;
-                            }}
-                            .content {{
-                                padding: 10px;
-                            }}
-                            .footer {{
-                                background-color: #f1f1f1;
-                                padding: 10px;
-                                text-align: center;
-                            }}
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            <div class="header">
-                                <img src="https://yt3.googleusercontent.com/tK-wIyMHMWu-Sbi4Y0pdsrUGvvo7WtSK75wvumRKWZfxL0rw2FrclnNiSBBT54pFIroxpenAl9Y=s160-c-k-c0x00ffffff-no-rj" alt="HTL Logo" width="100" height="100">
-                                <h1>Coding Lab - Ergebnisse</h1>
+    if let Ok(smtp_credentials) = load_credentials(&app) {
+        let sender_email = smtp_credentials.username.clone();
+
+        std::thread::spawn(move || {
+            if let Err(e) = Mailer::send_mail(
+                smtp_credentials,
+                format!("Coding Lab <{}>", sender_email).as_str(),
+                format!("{} <{}>", name, "rechbers@edu.htl-villach.at").as_str(),
+                "Coding Lab - Ergebnisse",
+                format!(r#"
+                    <html>
+                        <head>
+                            <style>
+                                body {{
+                                    font-family: Arial, sans-serif;
+                                }}
+                                .container {{
+                                    width: 80%;
+                                    margin: 0 auto;
+                                }}
+                                .header {{
+                                    background-color: #f1f1f1;
+                                    padding: 10px;
+                                    text-align: center;
+                                }}
+                                .content {{
+                                    padding: 10px;
+                                }}
+                                .footer {{
+                                    background-color: #f1f1f1;
+                                    padding: 10px;
+                                    text-align: center;
+                                }}
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <div class="header">
+                                    <img src="https://yt3.googleusercontent.com/tK-wIyMHMWu-Sbi4Y0pdsrUGvvo7WtSK75wvumRKWZfxL0rw2FrclnNiSBBT54pFIroxpenAl9Y=s160-c-k-c0x00ffffff-no-rj" alt="HTL Logo" width="100" height="100">
+                                    <h1>Coding Lab - Ergebnisse</h1>
+                                </div>
+                                <div class="content">
+                                    <p>Liebe/r {name},</p>
+                                    <p>Vielen Dank dass du beim Coding Lab der HTL Villach teilgenommen hast. Hier sind deine Ergebnisse:</p>
+                                    <ul>
+                                        <li>Level 1: {level1_completed} ({level1_time_completed} Sekunden)</li>
+                                        <li>Level 2: {level2_completed} ({level2_time_completed} Sekunden)</li>
+                                        <li>Level 3: {level3_completed} ({level3_time_completed} Sekunden)</li>
+                                    </ul>
+                                    <p>Dein Gesamtpunktestand beträgt {score} / 300 Punkten.</p>
+                                    <p>Vielen Dank für deine Teilnahme!</p>
+                                </div>
+                                <div class="footer">
+                                    <p>Coding Lab - HTL Villach Informatik</p>
+                                </div>
                             </div>
-                            <div class="content">
-                                <p>Liebe/r {name},</p>
-                                <p>Vielen Dank dass du beim Coding Lab der HTL Villach teilgenommen hast. Hier sind deine Ergebnisse:</p>
-                                <ul>
-                                    <li>Level 1: {level1_completed} ({level1_time_completed} Sekunden)</li>
-                                    <li>Level 2: {level2_completed} ({level2_time_completed} Sekunden)</li>
-                                    <li>Level 3: {level3_completed} ({level3_time_completed} Sekunden)</li>
-                                </ul>
-                                <p>Dein Gesamtpunktestand beträgt {score} / 300 Punkten.</p>
-                                <p>Vielen Dank für deine Teilnahme!</p>
-                            </div>
-                            <div class="footer">
-                                <p>Coding Lab - HTL Villach Informatik</p>
-                            </div>
-                        </div>
-                    </body>
-                </html>
-            "#,
-                name = name,
-                level1_completed = if level1_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
-                level1_time_completed = level1_time_completed,
-                level2_completed = if level2_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
-                level2_time_completed = level2_time_completed,
-                level3_completed = if level3_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
-                level3_time_completed = level3_time_completed,
-                score = score,
-            ).as_str(),
-        );
-    });
+                        </body>
+                    </html>
+                "#,
+                    name = name,
+                    level1_completed = if level1_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
+                    level1_time_completed = level1_time_completed,
+                    level2_completed = if level2_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
+                    level2_time_completed = level2_time_completed,
+                    level3_completed = if level3_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
+                    level3_time_completed = level3_time_completed,
+                    score = score,
+                ).as_str(),
+            ) {
+                eprintln!("Error sending email: {:?}", e);
+            }
+        });
+    } else {
+        eprintln!("No SMTP credentials found");
+    }
     
     {
         let mut state_name = state.name.lock().unwrap();
@@ -516,6 +600,8 @@ fn main() {
             level3_time_completed: Mutex::new(0),
         })
         .invoke_handler(tauri::generate_handler![
+            store_smtp_credentials,
+            has_smtp_credentials,
             setup_user,
             logout,
             get_name,

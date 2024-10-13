@@ -65,7 +65,7 @@
 
 
 
-*{
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -75,17 +75,16 @@
     color: var(--text);
 }
 
-body{
+body {
     font-family: 'Fira Sans', sans-serif;
     font-weight: 500;
     background-color: var(--base);
     margin: auto 2vw auto 2vw;
 }
 
-header{
+header {
     margin-bottom: 2vh;
 }
-
 
 #close{
     width: 100%;
