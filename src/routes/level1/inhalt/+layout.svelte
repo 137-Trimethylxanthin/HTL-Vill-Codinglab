@@ -47,16 +47,31 @@
 
   handleUrlChange();
 
-  export const finishTimer = (finished: boolean) => {
+  export const finishTimer = (finished: boolean, error: number) => {
     clearInterval(interval);
     level1Store.set({
       ...$level1Store,
       [level]: {
         ...$level1Store[level],
-        time: levelTime,
+        time: $level1Store[level].time + levelTime,
         status: finished ? "✅" : "🟡",
+        errors: $level1Store[level].errors + error, 
       },
     });
+
+    let completeFinished = true;
+
+    if (Object.keys($level1Store).length === 4) {
+      for (let key in $level1Store) {
+        if (key !== "total") {
+          if ($level1Store[key].status !== "✅") {
+            completeFinished = false;
+            break;
+          }
+        }
+      }
+    }
+
 
     level1Store.set({
       ...$level1Store,
@@ -64,20 +79,13 @@
         ...$level1Store["total"],
         time: currentTime,
         maxPoints: 100,
-        status: "🟡",
+        status: completeFinished ? "✅" : "🟡",
       },
     });
 
     tickClock = false;
   };
 
-  // custom event listener
-  window.addEventListener("popstate", handleUrlChange);
-
-  // finish timer
-  window.addEventListener("finishTimer", (e) => {
-    finishTimer(true);
-  });
 
   afterNavigate(handleUrlChange);
 </script>
