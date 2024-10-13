@@ -232,23 +232,6 @@ header {
     padding: .5vh 1vw;
 }
 
-.levelSelect div:first-child button{
-    margin-top: 8vh !important
-}
-
-.levelSelect div:first-child div{
-    margin-top: 2vh !important
-}
-
-.levelSelect div:last-child button{
-    margin-bottom: 8vh !important
-}
-
-.levelSelect div:last-child div{
-    transform: translateY(-7vh);
-}
-
-
 .levelbtn:hover {
     background: var(--surface1);
     box-shadow: var(--surface0) 0 0.1em 0.6em;

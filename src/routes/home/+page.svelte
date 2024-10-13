@@ -14,7 +14,7 @@
 
     invoke("get_levels").then((res: any) => {
         if (res) {
-            levels.set(res)
+            levels.set(res);
         }
     });
 </script>
@@ -36,7 +36,10 @@
         <button class="levelbtn" on:click={switchLevel(1)}>Level 1
         {#if $levels[0] !== undefined && $levels[0][0] === true}
             <span class="icon">&#10004;</span>
-            <span class="time">{String(Math.floor($levels[1][0] / 60)).padStart(2, '0')}:{String($levels[1][0] % 60).padStart(2, '0')}</span>
+            <div class="infos">
+                <span class="time">{String(Math.floor($levels[1][0] / 60)).padStart(2, '0')}:{String($levels[1][0] % 60).padStart(2, '0')}</span>
+                <span class="score">{$levels[2][0]}/100</span>
+            </div>
         {/if}
         </button>
         <div class="tooltip">
@@ -49,7 +52,10 @@
         <button class="levelbtn" on:click={switchLevel(2)}>Level 2
         {#if $levels[0] !== undefined && $levels[0][1] === true}
             <span class="icon">&#10004;</span>
-            <span class="time">{String(Math.floor($levels[1][1] / 60)).padStart(2, '0')}:{String($levels[1][1] % 60).padStart(2, '0')}</span>
+            <div class="infos">
+                <span class="time">{String(Math.floor($levels[1][1] / 60)).padStart(2, '0')}:{String($levels[1][1] % 60).padStart(2, '0')}</span>
+                <span class="score">{$levels[2][1]}/100</span>
+            </div>
         {/if}
         </button>
         <div class="tooltip">
@@ -62,7 +68,10 @@
         <button class="levelbtn" on:click={switchLevel(3)} >Level 3
         {#if $levels[0] !== undefined && $levels[0][2] === true}
             <span class="icon">&#10004;</span>
-            <span class="time">{String(Math.floor($levels[1][2] / 60)).padStart(2, '0')}:{String($levels[1][2] % 60).padStart(2, '0')}</span>
+            <div class="infos">
+                <span class="time">{String(Math.floor($levels[1][2] / 60)).padStart(2, '0')}:{String($levels[1][2] % 60).padStart(2, '0')}</span>
+                <span class="score">{$levels[2][2]}/100</span>
+            </div>
         {/if}
         </button>
         <div class="tooltip">
@@ -76,7 +85,23 @@
 </div>
 
 <style>
+
+    .infos {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
     .time {
+        font-size: 2vh;
+        margin-left: 1vh;
+        color: var(--text);
+        background-color: var(--overlay0);
+        padding: 0.5vh;
+        border-radius: 0.5vh;
+    }
+
+    .score {
         font-size: 2vh;
         margin-left: 1vh;
         color: var(--text);
