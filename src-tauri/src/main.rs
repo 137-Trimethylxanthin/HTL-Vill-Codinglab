@@ -239,11 +239,11 @@ fn encrypt_credentials(credentials: &SmtpCredentials, key: &[u8; 32]) -> Encrypt
     }
 }
 
-fn decrypt_credentials(encrypted: &EncryptedData, key: &[u8; 32]) -> Result<SmtpCredentials, Box<dyn std::error::Error>> {
+fn decrypt_credentials(encrypted: &EncryptedData, key: &[u8; 32]) -> Result<SmtpCredentials, std::io::Error> {
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
     let nonce = Nonce::from_slice(&encrypted.nonce);
     
-    let plaintext = cipher.decrypt(nonce, encrypted.ciphertext.as_ref()).map_err(|e| e.to_string())?;
+    let plaintext = cipher.decrypt(nonce, encrypted.ciphertext.as_ref()).map_err(|_| std::io::ErrorKind::InvalidData)?;
     let credentials: SmtpCredentials = serde_json::from_slice(&plaintext)?;
     
     Ok(credentials)
@@ -263,14 +263,14 @@ fn save_credentials<R: Runtime>(app: tauri::AppHandle<R>, credentials: &SmtpCred
     Ok(())
 }
 
-fn load_credentials<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<SmtpCredentials, Box<dyn std::error::Error>> {
+fn load_credentials<R: Runtime>(app: &tauri::AppHandle<R>) -> Result<SmtpCredentials, std::io::Error> {
     let app_data_dir = app.path().app_data_dir().unwrap();
 
     let encrypted_data = fs::read(app_data_dir.join("smtp_credentials.enc"))?;
     let key = fs::read(app_data_dir.join("encryption_key"))?;
 
     let encrypted: EncryptedData = serde_json::from_slice(&encrypted_data)?;
-    let key: [u8; 32] = key.try_into().map_err(|_| "Invalid key length")?;
+    let key: [u8; 32] = key.try_into().map_err(|_| std::io::ErrorKind::InvalidData)?;
 
     decrypt_credentials(&encrypted, &key)
 }
@@ -329,144 +329,128 @@ fn setup_user<R: Runtime>(
 }
 
 #[tauri::command]
-fn logout<R: Runtime>(state: State<'_, ApplicationState>, app: tauri::AppHandle<R>) -> Result<bool, String> {
-    let name: String;
-    // let dirname: String;
-    let level1_completed: bool;
-    let level2_completed: bool;
-    let level3_completed: bool;
-    let level1_time_completed: usize;
-    let level2_time_completed: usize;
-    let level3_time_completed: usize;
-    let level1_score: usize;
-    let level2_score: usize;
-    let level3_score: usize;
-
-    {
-        let state_name = state.name.lock().unwrap();
-        let state_dirname = state.dirname.lock().unwrap();
-        
-        if state_name.is_empty() || state_dirname.is_empty() {
-            return Ok(false);
-        }
-
-        name = state_name.clone();
-        // dirname = state_dirname.clone();
-        level1_completed = *state.level1_completed.lock().unwrap();
-        level2_completed = *state.level2_completed.lock().unwrap();
-        level3_completed = *state.level3_completed.lock().unwrap();
-        level1_time_completed = *state.level1_time_completed.lock().unwrap();
-        level2_time_completed = *state.level2_time_completed.lock().unwrap();
-        level3_time_completed = *state.level3_time_completed.lock().unwrap();
-        level1_score = *state.level1_score.lock().unwrap();
-        level2_score = *state.level2_score.lock().unwrap();
-        level3_score = *state.level3_score.lock().unwrap();
+fn send_mail<R: Runtime>(app: tauri::AppHandle<R>, state: State<'_, ApplicationState>, email: &str) -> Result<bool, String> {
+    if email.is_empty() {
+        return Ok(false);
     }
-
-    if let Ok(smtp_credentials) = load_credentials(&app) {
-        let sender_email = smtp_credentials.username.clone();
-
-        std::thread::spawn(move || {
-            if let Err(e) = Mailer::send_mail(
-                smtp_credentials,
-                format!("Coding Lab <{}>", sender_email).as_str(),
-                format!("{} <{}>", name, "rechbers@edu.htl-villach.at").as_str(),
-                "Coding Lab - Ergebnisse",
-                format!(r#"
-                    <html>
-                        <head>
-                            <style>
-                                body {{
-                                    font-family: Arial, sans-serif;
-                                }}
-                                .container {{
-                                    width: 80%;
-                                    margin: 0 auto;
-                                }}
-                                .header {{
-                                    background-color: #f1f1f1;
-                                    padding: 10px;
-                                    text-align: center;
-                                }}
-                                .content {{
-                                    padding: 10px;
-                                }}
-                                .footer {{
-                                    background-color: #f1f1f1;
-                                    padding: 10px;
-                                    text-align: center;
-                                }}
-                            </style>
-                        </head>
-                        <body>
-                            <div class="container">
-                                <div class="header">
-                                    <img src="https://yt3.googleusercontent.com/tK-wIyMHMWu-Sbi4Y0pdsrUGvvo7WtSK75wvumRKWZfxL0rw2FrclnNiSBBT54pFIroxpenAl9Y=s160-c-k-c0x00ffffff-no-rj" alt="HTL Logo" width="100" height="100">
-                                    <h1>Coding Lab - Ergebnisse</h1>
-                                </div>
-                                <div class="content">
-                                    <p>Liebe/r {name},</p>
-                                    <p>Vielen Dank dass du beim Coding Lab der HTL Villach teilgenommen hast. Hier sind deine Ergebnisse:</p>
-                                    <ul>
-                                        <li>Level 1: {level1_completed} ({level1_time_completed} Sekunden, {level1_score} Punkte)</li>
-                                        <li>Level 2: {level2_completed} ({level2_time_completed} Sekunden, {level2_score} Punkte)</li>
-                                        <li>Level 3: {level3_completed} ({level3_time_completed} Sekunden, {level3_score} Punkte)</li>
-                                    </ul>
-                                    <p>Dein Gesamtpunktestand beträgt {score} / 300 Punkten.</p>
-                                    <p>Vielen Dank für deine Teilnahme!</p>
-                                </div>
-                                <div class="footer">
-                                    <p>Coding Lab - HTL Villach Informatik</p>
-                                </div>
-                            </div>
-                        </body>
-                    </html>
-                "#,
-                    name = name,
-                    level1_completed = if level1_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
-                    level1_time_completed = level1_time_completed,
-                    level2_completed = if level2_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
-                    level2_time_completed = level2_time_completed,
-                    level3_completed = if level3_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
-                    level3_time_completed = level3_time_completed,
-                    level1_score = level1_score,
-                    level2_score = level2_score,
-                    level3_score = level3_score,
-                    score = level1_score + level2_score + level3_score,
-                ).as_str(),
-            ) {
-                eprintln!("Error sending email: {:?}", e);
-            }
-        });
-    } else {
-        eprintln!("No SMTP credentials found");
+    let smtp_credentials = load_credentials(&app).map_err(|e| e.to_string())?;
+    let sender_email = smtp_credentials.username.clone();
+    let name = state.name.lock().unwrap().clone();
+    if name.is_empty() {
+        return Ok(false);
     }
+    let level1_completed = *state.level1_completed.lock().unwrap();
+    let level2_completed = *state.level2_completed.lock().unwrap();
+    let level3_completed = *state.level3_completed.lock().unwrap();
+    let level1_time_completed = *state.level1_time_completed.lock().unwrap();
+    let level2_time_completed = *state.level2_time_completed.lock().unwrap();
+    let level3_time_completed = *state.level3_time_completed.lock().unwrap();
+    let level1_score = *state.level1_score.lock().unwrap();
+    let level2_score = *state.level2_score.lock().unwrap();
+    let level3_score = *state.level3_score.lock().unwrap();
+    Mailer::send_mail(
+        smtp_credentials,
+        format!("Coding Lab <{}>", sender_email).as_str(),
+        format!("{} <{}>", name, email).as_str(),
+        "Coding Lab - Ergebnisse",
+        format!(r#"
+            <html>
+                <head>
+                    <style>
+                        body {{
+                            font-family: Arial, sans-serif;
+                        }}
+                        .container {{
+                            width: 80%;
+                            margin: 0 auto;
+                        }}
+                        .header {{
+                            background-color: #f1f1f1;
+                            padding: 10px;
+                            text-align: center;
+                        }}
+                        .content {{
+                            padding: 10px;
+                        }}
+                        .footer {{
+                            background-color: #f1f1f1;
+                            padding: 10px;
+                            text-align: center;
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <img src="https://yt3.googleusercontent.com/tK-wIyMHMWu-Sbi4Y0pdsrUGvvo7WtSK75wvumRKWZfxL0rw2FrclnNiSBBT54pFIroxpenAl9Y=s160-c-k-c0x00ffffff-no-rj" alt="HTL Logo" width="100" height="100">
+                            <h1>Coding Lab - Ergebnisse</h1>
+                        </div>
+                        <div class="content">
+                            <p>Liebe/r {name},</p>
+                            <p>Vielen Dank dass du beim Coding Lab der HTL Villach teilgenommen hast. Hier sind deine Ergebnisse:</p>
+                            <ul>
+                                <li>Level 1: {level1_completed} ({level1_time_completed} Sekunden, {level1_score} Punkte)</li>
+                                <li>Level 2: {level2_completed} ({level2_time_completed} Sekunden, {level2_score} Punkte)</li>
+                                <li>Level 3: {level3_completed} ({level3_time_completed} Sekunden, {level3_score} Punkte)</li>
+                            </ul>
+                            <p>Dein Gesamtpunktestand beträgt {score} / 300 Punkten.</p>
+                            <p>Vielen Dank für deine Teilnahme!</p>
+                        </div>
+                        <div class="footer">
+                            <p>Coding Lab - HTL Villach Informatik</p>
+                        </div>
+                    </div>
+                </body>
+            </html>
+        "#,
+            name = name,
+            level1_completed = if level1_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
+            level1_time_completed = level1_time_completed,
+            level2_completed = if level2_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
+            level2_time_completed = level2_time_completed,
+            level3_completed = if level3_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
+            level3_time_completed = level3_time_completed,
+            level1_score = level1_score,
+            level2_score = level2_score,
+            level3_score = level3_score,
+            score = level1_score + level2_score + level3_score,
+        ).as_str(),
+    ).map_err(|e| e.to_string())?;
     
-    {
-        let mut state_name = state.name.lock().unwrap();
-        let mut state_dirname = state.dirname.lock().unwrap();
-        let mut state_level1_completed = state.level1_completed.lock().unwrap();
-        let mut state_level2_completed = state.level2_completed.lock().unwrap();
-        let mut state_level3_completed = state.level3_completed.lock().unwrap();
-        let mut state_level1_time_completed = state.level1_time_completed.lock().unwrap();
-        let mut state_level2_time_completed = state.level2_time_completed.lock().unwrap();
-        let mut state_level3_time_completed = state.level3_time_completed.lock().unwrap();
-        let mut state_level1_score = state.level1_score.lock().unwrap();
-        let mut state_level2_score = state.level2_score.lock().unwrap();
-        let mut state_level3_score = state.level3_score.lock().unwrap();
+    Ok(true)
+}
 
-        *state_name = String::new();
-        *state_dirname = String::new();
-        *state_level1_completed = false;
-        *state_level2_completed = false;
-        *state_level3_completed = false;
-        *state_level1_time_completed = 0;
-        *state_level2_time_completed = 0;
-        *state_level3_time_completed = 0;
-        *state_level1_score = 0;
-        *state_level2_score = 0;
-        *state_level3_score = 0;
+#[tauri::command]
+fn logout(state: State<'_, ApplicationState>) -> Result<bool, String> {
+    let mut state_name = state.name.lock().unwrap();
+    let mut state_dirname = state.dirname.lock().unwrap();
+    if state_name.is_empty() {
+        return Ok(false);
     }
+    if state_dirname.is_empty() {
+        return Ok(false);
+    }
+    let mut state_level1_completed = state.level1_completed.lock().unwrap();
+    let mut state_level2_completed = state.level2_completed.lock().unwrap();
+    let mut state_level3_completed = state.level3_completed.lock().unwrap();
+    let mut state_level1_time_completed = state.level1_time_completed.lock().unwrap();
+    let mut state_level2_time_completed = state.level2_time_completed.lock().unwrap();
+    let mut state_level3_time_completed = state.level3_time_completed.lock().unwrap();
+    let mut state_level1_score = state.level1_score.lock().unwrap();
+    let mut state_level2_score = state.level2_score.lock().unwrap();
+    let mut state_level3_score = state.level3_score.lock().unwrap();
+
+    *state_name = String::new();
+    *state_dirname = String::new();
+    *state_level1_completed = false;
+    *state_level2_completed = false;
+    *state_level3_completed = false;
+    *state_level1_time_completed = 0;
+    *state_level2_time_completed = 0;
+    *state_level3_time_completed = 0;
+    *state_level1_score = 0;
+    *state_level2_score = 0;
+    *state_level3_score = 0;
 
     Ok(true)
 }
@@ -659,6 +643,7 @@ fn main() {
             store_smtp_credentials,
             has_smtp_credentials,
             setup_user,
+            send_mail,
             logout,
             get_name,
             open_code_with_filename,
