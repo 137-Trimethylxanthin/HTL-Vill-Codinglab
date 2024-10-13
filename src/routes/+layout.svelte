@@ -135,7 +135,8 @@
                 <li><button on:click={goHome}><img class="icons" src="/media/home-{theme}.png" alt="Info"></button></li>
                 <li></li>
                 <li></li>
-                <li><button on:click={logOut}><img class="icons" src="/media/logout-{theme}.png" alt="Logout"></button></li>            </ul>
+                <li><button on:click={logOut}><img class="icons" src="/media/logout-{theme}.png" alt="Logout"></button></li>
+            </ul>
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div on:click={toggleHeader} id="openToggle">Close</div>

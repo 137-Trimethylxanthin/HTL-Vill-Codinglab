@@ -1,10 +1,11 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::fs::OpenOptions;
 use std::path::Path;
 use std::sync::Mutex;
 use std::time::SystemTime;
-use std::{fs, io};
+use std::{fs, io::{self, Write}};
 use lettre::message::{MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
@@ -210,6 +211,20 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
     Ok(())
 }
 
+fn append_email_name_to_file<R: Runtime>(app: &tauri::AppHandle<R>, email: &str, name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let app_data_dir = app.path().app_data_dir().unwrap();
+    let file_path = app_data_dir.join("emails.txt");
+
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(file_path)?;
+
+    writeln!(file, "{} <{}>", name, email)?;
+
+    Ok(())
+}
+
 #[derive(Serialize, Deserialize)]
 struct SmtpCredentials {
     url: String,
@@ -338,6 +353,9 @@ fn send_mail<R: Runtime>(app: tauri::AppHandle<R>, state: State<'_, ApplicationS
     let name = state.name.lock().unwrap().clone();
     if name.is_empty() {
         return Ok(false);
+    }
+    if let Err(e) = append_email_name_to_file(&app, email, name.as_str()) {
+        return Err(e.to_string());
     }
     let level1_completed = *state.level1_completed.lock().unwrap();
     let level2_completed = *state.level2_completed.lock().unwrap();
