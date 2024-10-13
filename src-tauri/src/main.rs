@@ -28,6 +28,9 @@ struct ApplicationState {
     level1_time_completed: Mutex<usize>,
     level2_time_completed: Mutex<usize>,
     level3_time_completed: Mutex<usize>,
+    level1_score: Mutex<usize>,
+    level2_score: Mutex<usize>,
+    level3_score: Mutex<usize>,
 }
 
 /*
@@ -45,14 +48,14 @@ impl ScoreCalculator {
         max_time: usize,
         errors: usize,
         max_error_penalty: usize,
-        levels_completed: usize,
-        total_levels: usize,
+        sublevels_completed: usize,
+        total_sublevels: usize,
     ) -> usize {
         let time_ratio = time as f64 / max_time as f64;
         let error_ratio = errors as f64 / max_error_penalty as f64;
         let time_score = 40.0 * (1.0 - time_ratio).max(0.0);
         let error_score = 15.0 * (1.0 - error_ratio).max(0.0);
-        let completion_score = 45.0 * (levels_completed as f64 / total_levels as f64);
+        let completion_score = 45.0 * (sublevels_completed as f64 / total_sublevels as f64);
         (time_score + error_score + completion_score).round() as usize
     }
 }
@@ -331,7 +334,9 @@ fn logout<R: Runtime>(state: State<'_, ApplicationState>, app: tauri::AppHandle<
     let level1_time_completed: usize;
     let level2_time_completed: usize;
     let level3_time_completed: usize;
-    let score = 0; // TODO: add score to state
+    let level1_score: usize;
+    let level2_score: usize;
+    let level3_score: usize;
 
     {
         let state_name = state.name.lock().unwrap();
@@ -349,6 +354,9 @@ fn logout<R: Runtime>(state: State<'_, ApplicationState>, app: tauri::AppHandle<
         level1_time_completed = *state.level1_time_completed.lock().unwrap();
         level2_time_completed = *state.level2_time_completed.lock().unwrap();
         level3_time_completed = *state.level3_time_completed.lock().unwrap();
+        level1_score = *state.level1_score.lock().unwrap();
+        level2_score = *state.level2_score.lock().unwrap();
+        level3_score = *state.level3_score.lock().unwrap();
     }
 
     if let Ok(smtp_credentials) = load_credentials(&app) {
@@ -396,9 +404,9 @@ fn logout<R: Runtime>(state: State<'_, ApplicationState>, app: tauri::AppHandle<
                                     <p>Liebe/r {name},</p>
                                     <p>Vielen Dank dass du beim Coding Lab der HTL Villach teilgenommen hast. Hier sind deine Ergebnisse:</p>
                                     <ul>
-                                        <li>Level 1: {level1_completed} ({level1_time_completed} Sekunden)</li>
-                                        <li>Level 2: {level2_completed} ({level2_time_completed} Sekunden)</li>
-                                        <li>Level 3: {level3_completed} ({level3_time_completed} Sekunden)</li>
+                                        <li>Level 1: {level1_completed} ({level1_time_completed} Sekunden, {level1_score} Punkte)</li>
+                                        <li>Level 2: {level2_completed} ({level2_time_completed} Sekunden, {level2_score} Punkte)</li>
+                                        <li>Level 3: {level3_completed} ({level3_time_completed} Sekunden, {level3_score} Punkte)</li>
                                     </ul>
                                     <p>Dein Gesamtpunktestand beträgt {score} / 300 Punkten.</p>
                                     <p>Vielen Dank für deine Teilnahme!</p>
@@ -417,7 +425,10 @@ fn logout<R: Runtime>(state: State<'_, ApplicationState>, app: tauri::AppHandle<
                     level2_time_completed = level2_time_completed,
                     level3_completed = if level3_completed { "Abgeschlossen" } else { "Nicht abgeschlossen" },
                     level3_time_completed = level3_time_completed,
-                    score = score,
+                    level1_score = level1_score,
+                    level2_score = level2_score,
+                    level3_score = level3_score,
+                    score = level1_score + level2_score + level3_score,
                 ).as_str(),
             ) {
                 eprintln!("Error sending email: {:?}", e);
@@ -436,6 +447,9 @@ fn logout<R: Runtime>(state: State<'_, ApplicationState>, app: tauri::AppHandle<
         let mut state_level1_time_completed = state.level1_time_completed.lock().unwrap();
         let mut state_level2_time_completed = state.level2_time_completed.lock().unwrap();
         let mut state_level3_time_completed = state.level3_time_completed.lock().unwrap();
+        let mut state_level1_score = state.level1_score.lock().unwrap();
+        let mut state_level2_score = state.level2_score.lock().unwrap();
+        let mut state_level3_score = state.level3_score.lock().unwrap();
 
         *state_name = String::new();
         *state_dirname = String::new();
@@ -445,8 +459,10 @@ fn logout<R: Runtime>(state: State<'_, ApplicationState>, app: tauri::AppHandle<
         *state_level1_time_completed = 0;
         *state_level2_time_completed = 0;
         *state_level3_time_completed = 0;
+        *state_level1_score = 0;
+        *state_level2_score = 0;
+        *state_level3_score = 0;
     }
-
 
     Ok(true)
 }
@@ -500,7 +516,7 @@ fn check_python(state: State<'_, ApplicationState>, level: usize) -> Result<bool
     if state.name.lock().unwrap().is_empty() {
         return Ok(false);
     }
-    if level < 1 || level > 3 {
+    if !(1..=3).contains(&level) {
         return Ok(false);
     }
     // let dirname = state.dirname.lock().unwrap();
@@ -516,14 +532,20 @@ fn check_python(state: State<'_, ApplicationState>, level: usize) -> Result<bool
 fn level_completed(
     state: State<'_, ApplicationState>,
     level: usize,
-    time: usize
+    time: usize,
+    errors: usize,
+    sublevels_completed: usize,
+    total_sublevels: usize,
 ) -> Result<(bool, usize), String> {
     if state.name.lock().unwrap().is_empty() {
         return Ok((false, 0));
     }
-    if level < 1 || level > 3 {
+    if !(1..=3).contains(&level) {
         return Ok((false, 0));
     }
+    let mut score = 0;
+    const MAX_TIME: usize = 300;
+    const MAX_ERROR_PENALTY: usize = 5;
     if level == 1 {
         let mut level1_completed = state.level1_completed.lock().unwrap();
         if *level1_completed {
@@ -532,6 +554,16 @@ fn level_completed(
         *level1_completed = true;
         let mut level1_time_completed = state.level1_time_completed.lock().unwrap();
         *level1_time_completed = time;
+        score = ScoreCalculator::calculate_score(
+            time,
+            MAX_TIME,
+            errors,
+            MAX_ERROR_PENALTY,
+            sublevels_completed,
+            total_sublevels,
+        );
+        let mut level1_score = state.level1_score.lock().unwrap();
+        *level1_score = score;
     } else if level == 2 {
         let mut level2_completed = state.level2_completed.lock().unwrap();
         if *level2_completed {
@@ -540,6 +572,16 @@ fn level_completed(
         *level2_completed = true;
         let mut level2_time_completed = state.level2_time_completed.lock().unwrap();
         *level2_time_completed = time;
+        score = ScoreCalculator::calculate_score(
+            time,
+            MAX_TIME,
+            errors,
+            MAX_ERROR_PENALTY,
+            sublevels_completed,
+            total_sublevels,
+        );
+        let mut level2_score = state.level2_score.lock().unwrap();
+        *level2_score = score;
     } else {
         let mut level3_completed = state.level3_completed.lock().unwrap();
         if *level3_completed {
@@ -548,23 +590,25 @@ fn level_completed(
         *level3_completed = true;
         let mut level3_time_completed = state.level3_time_completed.lock().unwrap();
         *level3_time_completed = time;
+        score = ScoreCalculator::calculate_score(
+            time,
+            MAX_TIME,
+            errors,
+            MAX_ERROR_PENALTY,
+            sublevels_completed,
+            total_sublevels,
+        );
+        let mut level3_score = state.level3_score.lock().unwrap();
+        *level3_score = score;
     }
-    // TODO: Use real values (@max add these vars to the state) and find balanced max values
-    let score = ScoreCalculator::calculate_score(
-        time,
-        30, // max time, 300 seconds
-        0,
-        5,
-        3,
-        3,
-    );
+    score = score.min(100);
     Ok((true, score))
 }
 
 #[tauri::command]
-fn get_levels(state: State<'_, ApplicationState>) -> Result<(Vec<bool>, Vec<usize>), String> {
+fn get_levels(state: State<'_, ApplicationState>) -> Result<(Vec<bool>, Vec<usize>, Vec<usize>), String> {
     if state.name.lock().unwrap().is_empty() {
-        return Ok((vec![false, false, false], vec![0, 0, 0]));
+        return Ok((vec![false, false, false], vec![0, 0, 0], vec![0, 0, 0]));
     }
     let level1_completed = *state.level1_completed.lock().unwrap();
     let level2_completed = *state.level2_completed.lock().unwrap();
@@ -572,6 +616,10 @@ fn get_levels(state: State<'_, ApplicationState>) -> Result<(Vec<bool>, Vec<usiz
     let level1_time_completed = *state.level1_time_completed.lock().unwrap();
     let level2_time_completed = *state.level2_time_completed.lock().unwrap();
     let level3_time_completed = *state.level3_time_completed.lock().unwrap();
+    let level1_score = *state.level1_score.lock().unwrap();
+    let level2_score = *state.level2_score.lock().unwrap();
+    let level3_score = *state.level3_score.lock().unwrap();
+
     Ok((
         vec![level1_completed, level2_completed, level3_completed],
         vec![
@@ -579,6 +627,7 @@ fn get_levels(state: State<'_, ApplicationState>) -> Result<(Vec<bool>, Vec<usiz
             level2_time_completed,
             level3_time_completed,
         ],
+        vec![level1_score, level2_score, level3_score],
     ))
 }
 
@@ -598,6 +647,9 @@ fn main() {
             level1_time_completed: Mutex::new(0),
             level2_time_completed: Mutex::new(0),
             level3_time_completed: Mutex::new(0),
+            level1_score: Mutex::new(0),
+            level2_score: Mutex::new(0),
+            level3_score: Mutex::new(0),
         })
         .invoke_handler(tauri::generate_handler![
             store_smtp_credentials,
