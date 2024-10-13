@@ -152,7 +152,7 @@
 </div>  
 
 <div class="logoutContainer" >
-    <h1>Falls du genauere daten haben willst</h1>
+    <h1>Falls du genauere Daten haben willst</h1>
     <p>Gib unten deine Email ein und wir schicken dir einen Bericht mit allen Zeiten und Punkten</p>
     <form on:submit|preventDefault={sendMail}>
         <label for="email">E-Mail:</label><br />
