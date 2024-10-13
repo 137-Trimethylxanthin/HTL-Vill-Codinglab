@@ -5,9 +5,11 @@
     import { invoke } from '@tauri-apps/api/core';
     import { goto } from '$app/navigation';
     import { message } from '@tauri-apps/plugin-dialog';
+    import { level2Store } from '../../../utils/stores';
 
     let time = 0;
     let interval: any;
+    let errors = 0;
 
     onMount(() => {
         openVSCode("level2.py");
@@ -19,11 +21,22 @@
     let status = 'Am Arbeiten';
     let valid = false;
 
+
+
     function levelCompleted() {
-        invoke('level_completed', { level: 2, time }).then((result: any) => {
+        invoke('level_completed', { level: 2, time, errors, sublevelsCompleted:1,totalSublevels:1  }).then((result: any) => {
             if (!result[0]) {
                 message('Level 2 konnte nicht gespeichert werden', { title: 'Fehler' })
             }
+            level2Store.set({
+                "total": {
+                    time: time,
+                    points: result[2],
+                    maxPoints: 100,
+                    status: '✅',
+                    errors: errors
+                }
+            });
             alert('Level 2 erfolgreich abgeschlossen. Score: ' + result[1]);
         });
     }
@@ -37,6 +50,7 @@
                 levelCompleted();
             } else {
                 status = 'Fehler';
+                errors++;
                 valid = false;
             }
         });

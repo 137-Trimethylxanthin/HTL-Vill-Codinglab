@@ -1,9 +1,17 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
     import {_enableButton, _next} from "../../+layout";
+    import {finishTimer} from "../../+layout.svelte";
     import {onMount} from "svelte";
     onMount(() => {
         _enableButton();
     });
+
+
+
+
+    reloadPage();
+
 </script>
 
 
@@ -63,5 +71,8 @@
 
 </div>
 
-<button class="next" on:click={() => {_next("aufg")}}> Weiter </button> <br>
+<button class="next" on:click={() => {
+    finishTimer();
+    _next("aufg")
+    }}> Weiter </button> <br>
 <button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>

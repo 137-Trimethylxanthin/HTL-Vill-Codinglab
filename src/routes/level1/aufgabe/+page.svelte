@@ -1,7 +1,8 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { invoke } from "@tauri-apps/api/core";
-    import { writable, type Writable } from "svelte/store";
+    import { level1Store } from "../../../utils/stores";
+    
 
     function switchSubLevel(sub: string ) {
         return () => {
@@ -9,13 +10,31 @@
         }
     }
 
-    let sub_leves: Writable<any[]> = writable([]);
+    let printTime = 10;
+    let variableTime = 0;
+    let inputTime = 0;
+    let ifTime = 0;
 
-    invoke("get_sub_levels").then((res: any) => { // i need the times for the sublevels
-        if (res) {
-            sub_leves.set(res)
+    function checkCompleted() {
+        console.log(Object.keys($level1Store));
+        if (Object.keys($level1Store).includes("print")) {
+            printTime = $level1Store["print"].time;
         }
-    });
+        if (Object.keys($level1Store).includes("variable")) {
+            variableTime = $level1Store["variable"].time;
+        }
+        if (Object.keys($level1Store).includes("input")) {
+            inputTime = $level1Store["input"].time;
+        }
+        if (Object.keys($level1Store).includes("if")) {
+            ifTime = $level1Store["if"].time;
+        }
+    }
+
+    checkCompleted();
+
+    
+    
 </script>
 
 <div class="title">
@@ -25,23 +44,17 @@
 
 <div class="levelSelect">
     <div class="tooltip-container">
-        <button class="levelbtn" on:click={switchSubLevel("print")}>Print
-        {#if $sub_leves[0] !== undefined && $sub_leves[0][0] === true}
-            <span class="icon">&#10004;</span>
-            <span class="time">{String(Math.floor($sub_leves[1][0] / 60)).padStart(2, '0')}:{String($sub_leves[1][0] % 60).padStart(2, '0')}</span>
-        {/if}
+        <button class="levelbtn" on:click={switchSubLevel("print")} >Print
         </button>
+
+
         <div class="tooltip">
             Hier lernst du Wörter auf dem Bildschirm auszugeben.
         </div>
     </div>
 
     <div class="tooltip-container">
-        <button class="levelbtn" on:click={switchSubLevel("variable")}>Variablen
-        {#if $sub_leves[0] !== undefined && $sub_leves[0][1] === true}
-            <span class="icon">&#10004;</span>
-            <span class="time">{String(Math.floor($sub_leves[1][1] / 60)).padStart(2, '0')}:{String($sub_leves[1][1] % 60).padStart(2, '0')}</span>
-        {/if}
+        <button class="levelbtn" on:click={switchSubLevel("variable")}  >Variablen
         </button>
         <div class="tooltip">
             Hier lernst du daten zu speichern.
@@ -49,11 +62,7 @@
     </div>
     
     <div class="tooltip-container">
-        <button class="levelbtn" on:click={switchSubLevel("input")}>Input
-        {#if $sub_leves[0] !== undefined && $sub_leves[0][2] === true}
-            <span class="icon">&#10004;</span>
-            <span class="time">{String(Math.floor($sub_leves[1][2] / 60)).padStart(2, '0')}:{String($sub_leves[1][2] % 60).padStart(2, '0')}</span>
-        {/if}
+        <button class="levelbtn" on:click={switchSubLevel("input")}  >Input
         </button>
         <div class="tooltip">
             Hier lernst du eingaben vom Benutzer zu nehmen.
@@ -61,11 +70,7 @@
     </div>
 
     <div class="tooltip-container">
-        <button class="levelbtn" on:click={switchSubLevel("if")}>If
-        {#if $sub_leves[0] !== undefined && $sub_leves[0][3] === true}
-            <span class="icon">&#10004;</span>
-            <span class="time">{String(Math.floor($sub_leves[1][3] / 60)).padStart(2, '0')}:{String($sub_leves[1][3] % 60).padStart(2, '0')}</span>
-        {/if}
+        <button class="levelbtn" on:click={switchSubLevel("if")} >If
         </button>
         <div class="tooltip">
             Hier lernst du bedingungen zu setzen.

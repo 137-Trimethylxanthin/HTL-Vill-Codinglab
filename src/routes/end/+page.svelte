@@ -4,6 +4,7 @@
     import { invoke } from "@tauri-apps/api/core";
     import { writable, type Writable } from "svelte/store";
     import { ask, message } from "@tauri-apps/plugin-dialog";
+  import { level1Store, level2Store, level3Store } from "../../utils/stores";
 
     async function logOut() {
         if (await ask('Willst du wirklich Beenden?', { title: 'Beenden' })) {
@@ -47,32 +48,33 @@
     }
 
     let gesZeit = 0;
-    let gesPunkte = 0;
-    let gesErreichbar = 0;
 
     let level1 = {
         name: "Level 1",
-        punkte: 0,
-        maxPunkte: 0,
-        time: 0,
-        status: "🟡" // ✅ = bestanden, ❌ = nicht bestanden, teilweise bestanden = 🟡
+        punkte: $level1Store["total"].points,
+        maxPunkte: $level1Store["total"].maxPoints,
+        time: $level1Store["total"].time,
+        status: $level1Store["total"].status
     }
 
     let level2 = {
         name: "Level 2",
-        punkte: 0,
-        maxPunkte: 0,
-        time: 0,
-        status: "❌"
+        punkte: $level2Store["total"].points,
+        maxPunkte: $level2Store["total"].maxPoints,
+        time: $level2Store["total"].time,
+        status: $level2Store["total"].status
     }
 
     let level3 = {
         name: "Level 3",
-        punkte: 0,
-        maxPunkte: 0,
-        time: 0,
-        status: "❌"
+        punkte: $level3Store["total"].points,
+        maxPunkte: $level3Store["total"].maxPoints,
+        time: $level3Store["total"].time,
+        status: $level3Store["total"].status
     }
+
+    let gesPunkte = level1.punkte + level2.punkte + level3.punkte;
+    let gesErreichbar = level1.maxPunkte + level2.maxPunkte + level3.maxPunkte;
 
     let levels = [level1, level2, level3];
 
@@ -111,7 +113,9 @@
     <h3>Level:</h3>
     <ul>
         {#each levels as level}
-            <li>{level.name} ({level.status}): {level.punkte}/{level.maxPunkte} - {String(Math.floor(level.time / 60)).padStart(2, '0')}:{String(level.time % 60).padStart(2, '0')}</li>
+            {#if level.status !== "❌"}
+                <li>{level.name} ({level.status}): {level.punkte}/{level.maxPunkte} - {String(Math.floor(level.time / 60)).padStart(2, '0')}:{String(level.time % 60).padStart(2, '0')}</li>
+            {/if}
         {/each}
     </ul>
 

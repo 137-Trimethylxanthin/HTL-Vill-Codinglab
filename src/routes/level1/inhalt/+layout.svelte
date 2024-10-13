@@ -1,54 +1,84 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+
+
 
     import { level1Store } from "../../../utils/stores";
 
 
-    let currentTime = $level1Store["total"]
+    let currentTime = $level1Store["total"].time;
+    console.log($level1Store["total"]);
     let levelTime = 0;
 
     //read level from url
     let url = window.location.pathname.split("/");
-    let currentMode = undefined;
     let tickClock = false
     let mode = url.pop();
     let level = url.pop();
+    let interval = undefined;
 
-    if (mode === "expl") {
-        currentMode = url.pop();
-    } else if (mode === "aufg") {
-        currentMode = url.pop();
-        tickClock = true;
-    }
+    //on change of url
 
-    if (currentMode === undefined) {
-        levelTime = 0;
-    } else {
-        if (!Object.keys($level1Store).includes(currentMode)) {
-            level1Store.set({ ...$level1Store, [currentMode]: 0 });
+
+    export function handleUrlChange() {
+        url = window.location.pathname.split("/");
+        mode = url.pop();
+        level = url.pop();
+        if (mode === "aufg") {
+            tickClock = true;
+        }
+
+
+
+
+        if (tickClock) {
+            if (!Object.keys($level1Store).includes(level)) {
+            level1Store.set({ ...$level1Store, [level]: {
+                time: 0,
+                status: "❌",
+                points: 0,
+                maxPoints: 20,
+                errors: 0
+            } });
 
         } else {
-            levelTime = $level1Store[currentMode];
+            levelTime = $level1Store[level];
+        }
+
+            interval = setInterval(() => {
+                levelTime += 1;
+                currentTime += 1;
+            }, 1000);
         }
     }
 
-    let interval = undefined;
+    handleUrlChange();
 
-    if (tickClock) {
-        interval = setInterval(() => {            
-            levelTime += 1;
-            currentTime += 1;
-        }, 1000);
-    }
+    //on change of url
 
 
-    export const finishTimer = () => {
+    export const finishTimer = (finished: boolean) => {
         clearInterval(interval);
-        level1Store.set({ ...$level1Store, [currentMode]: levelTime });
-        level1Store.set({ ...$level1Store, ["total"]: currentTime });
+        level1Store.set({ ...$level1Store, [level]: {
+            ...$level1Store[level],
+            time: levelTime,
+            status: finished ? "✅" : "🟡"
+        } });
+
+
+
+        level1Store.set({ ...$level1Store, ["total"]: {
+            ...$level1Store["total"],
+            time: currentTime,
+            maxPoints: 100,
+            status: "🟡"
+        }
+        });
+
+
+        tickClock = false;
+
     }
-
-    
-
 
 
 </script>

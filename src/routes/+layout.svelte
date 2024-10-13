@@ -7,6 +7,7 @@
     import { nameStore } from "../utils/stores";
     import { exit } from '@tauri-apps/plugin-process';
     import { open } from '@tauri-apps/plugin-shell';
+    import { level1Store } from "../utils/stores";
 
     if (process.env.NODE_ENV === "production") {
         document.addEventListener("contextmenu", (e) => {
@@ -57,7 +58,33 @@
     }
 
     async function logOut() {
+        console.log("logOut");
         if (window.location.pathname !== '/') {
+            let level = 1;
+            let time = $level1Store["total"].time;
+            let errors = $level1Store["total"].errors;
+            let sublevelsCompleted = 0;
+            let totalSublevels = 4;
+            
+            if (Object.keys($level1Store)) {
+                for (let key in $level1Store) {
+                    if (key !== "total") {
+                        if ($level1Store[key].status === "✅") {
+                            sublevelsCompleted++;
+                        }
+                    }
+                }
+            }
+            invoke("level_completed", {
+                level,
+                time,
+                errors,
+                sublevelsCompleted,
+                totalSublevels,
+            }).then((res) => {
+                
+            });
+
             goto('/end');
         }
     }
