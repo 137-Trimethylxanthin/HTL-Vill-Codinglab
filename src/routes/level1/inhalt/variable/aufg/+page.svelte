@@ -124,6 +124,7 @@
         }
 
         if (correct) {
+            stopTimer(true);
             outputColorClass = "valid-output";
             output = "> Jahr: " + user_jahr_value + " Monat: " + user_monat_nummer_value + " Tag: " + user_tag_value + "\n";
             output += "> " + user_greeting_value + " " + user_name_value + " wie geht es dir? \n";
@@ -140,9 +141,17 @@
     }
     let errors = 0;
 
-    function finishLevel() {
-        document.dispatchEvent(new CustomEvent("finishTimer"));
-        _next("../input/expl");
+    let timerStopped = false;
+
+    function stopTimer(finnished: boolean){
+        if(timerStopped) return;
+        timerStopped = true;
+        document.dispatchEvent(new CustomEvent("finishTimer", {
+            detail: {
+                finished: finnished,
+                error: errors,
+            }
+        }));
     }
 </script>
 
@@ -182,5 +191,5 @@ print(f"Hey, ist dieser &#123;<input autocomplete="off"  class="inline-input {st
 
 </div>
 
-<button class="next" on:click={() =>{finishLevel()}}>Weiter</button><br>
-<button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>
+<button class="next" on:click={() =>{_next("../input/expl");}}>Weiter</button><br>
+<button class="back" on:click={() =>{stopTimer(false);_next("../../aufgabe")}}>Zurück</button>

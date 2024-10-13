@@ -63,8 +63,10 @@
             let level = 1;
             let time = $level1Store["total"].time;
             let errors = $level1Store["total"].errors;
+        
             let sublevelsCompleted = 0;
             let totalSublevels = 4;
+            let evenStartedLevel1 = false;
             
             if (Object.keys($level1Store)) {
                 for (let key in $level1Store) {
@@ -72,18 +74,34 @@
                         if ($level1Store[key].status === "✅") {
                             sublevelsCompleted++;
                         }
+                        if ($level1Store[key].status === "🟡" || $level1Store[key].status === "✅") {
+                            evenStartedLevel1 = true;
+                        }
                     }
                 }
             }
-            invoke("level_completed", {
-                level,
-                time,
-                errors,
-                sublevelsCompleted,
-                totalSublevels,
-            }).then((res) => {
-                
-            });
+            console.log(sublevelsCompleted + " / " + totalSublevels);
+            if (evenStartedLevel1) {
+                invoke("level_completed", {
+                    level,
+                    time,
+                    errors,
+                    sublevelsCompleted,
+                    totalSublevels,
+                }).then((res) => {
+                    console.log(res);
+                        if (res[0]) {
+                            level1Store.set({
+                            "total": {
+                                ...$level1Store["total"],
+                                points: res[1],
+                            }
+                        });
+                    }
+
+                });
+            }
+           
 
             goto('/end');
         }

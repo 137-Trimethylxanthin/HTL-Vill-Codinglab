@@ -8,6 +8,8 @@
 
     async function logOut() {
         if (await ask('Willst du wirklich Beenden?', { title: 'Beenden' })) {
+            console.log("logOut 222");
+            resetStores();
             invoke('logout').then((res) => {
                 if (res) {
                     goto('/');
@@ -19,6 +21,38 @@
             return;
         }
     }
+
+    function resetStores() {
+        console.log("resetting stores");
+        level1Store.set({
+            "total": {
+                time: 0,
+                points: 0,
+                maxPoints: 0,
+                status: "❌",
+                errors: 0,
+            },
+        });
+        level2Store.set({
+            "total": {
+                time: 0,
+                points: 0,
+                maxPoints: 0,
+                status: "❌",
+                errors: 0,
+            },
+        });
+                level3Store.set({
+            "total": {
+                time: 0,
+                points: 0,
+                maxPoints: 0,
+                status: "❌",
+                errors: 0,
+            },
+        });
+    }
+    
 
     function sendMail(e: SubmitEvent) {
         

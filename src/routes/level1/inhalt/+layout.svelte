@@ -14,15 +14,21 @@
   let interval: any = undefined;
 
   export function handleUrlChange() {
+    console.log($level1Store);
     url = window.location.pathname.split("/");
+    console.log(window.location.pathname);
+    console.log(url);
     mode = url.pop();
+    console.log(mode);
     level = url.pop() as string;
+    console.log(level);
     if (mode === "aufg") {
       tickClock = true;
     }
 
     if (tickClock) {
       if (!Object.keys($level1Store).includes(level)) {
+        console.log("new level");
         level1Store.set({
           ...$level1Store,
           [level]: {
@@ -33,6 +39,7 @@
             errors: 0,
           },
         });
+        console.log($level1Store);
         levelTime = 0;
       } else {
         levelTime = $level1Store[level].time;
@@ -47,28 +54,39 @@
 
   export const finishTimer = (finished: boolean, error: number) => {
     clearInterval(interval);
+
+    console.log("finishTimer");
+    console.log($level1Store);
+
+    console.log(level);
+    console.log(typeof level);
+
+
     level1Store.set({
       ...$level1Store,
       [level]: {
         ...$level1Store[level],
-        time: $level1Store[level].time + levelTime,
+        time: levelTime,
         status: finished ? "✅" : "🟡",
-        errors: $level1Store[level].errors + error, 
+        errors: error, 
       },
     });
+    console.log("level1Store");
+    console.log($level1Store);
 
-    let completeFinished = true;
+    let completeFinished = false;
 
-    if (Object.keys($level1Store).length === 4) {
-      for (let key in $level1Store) {
+    for (let key in $level1Store) {
         if (key !== "total") {
-          if ($level1Store[key].status !== "✅") {
+            if ($level1Store[key].status !== "✅") {
             completeFinished = false;
             break;
-          }
+            } else {
+            completeFinished = true;
+            }
         }
-      }
     }
+    
 
 
     level1Store.set({
@@ -86,8 +104,10 @@
 
   onMount(() => {
     handleUrlChange();
+
     document.addEventListener("finishTimer", (e) => {
-        finishTimer(true);
+        const { finished, error } = e.detail;
+        finishTimer(finished, error);
     });
   });
 

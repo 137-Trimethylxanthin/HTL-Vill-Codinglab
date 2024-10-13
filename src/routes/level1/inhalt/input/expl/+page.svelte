@@ -1,6 +1,8 @@
 <script lang="ts">
     import { _disableButton, _enableButton, _next } from "../../+layout";
     import { onMount } from "svelte";
+    import { nameStore } from "../../../../../utils/stores";
+
     onMount(() => {
         _disableButton();
     });
@@ -13,6 +15,12 @@
     let input1Output = "hidden";
     let input2 = "";
     let input2Output = "hidden";
+
+    function changeName(){
+        if ($nameStore === undefined) {
+            nameStore.set(name);
+        }
+    }
 </script>
 
 
@@ -55,5 +63,5 @@ print("Alter: " + <code style="color: var(--teal);">alter</code>)
 
 </div>
 
-<button class="next" on:click={() => {_next("aufg")}}> Weiter </button><br>
+<button class="next" on:click={() => {changeName();_next("aufg")}}> Weiter </button><br>
 <button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>

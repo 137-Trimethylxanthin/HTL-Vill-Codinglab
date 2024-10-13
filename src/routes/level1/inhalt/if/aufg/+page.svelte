@@ -310,6 +310,7 @@
             legend = "";
             success = "hidden";
         } else{
+            stopTimer(true);
             outputColorClass = "valid-output";
             output = "";
             legend = "hidden";
@@ -334,9 +335,17 @@
     let firstPartIDK = "hidden";
     let secondPartIDK = "hidden";
 
-    function finishLevel() {
-        document.dispatchEvent(new CustomEvent("finishTimer"));
-        _next("/home");
+    let timerStopped = false;
+
+    function stopTimer(finnished: boolean){
+        if(timerStopped) return;
+        timerStopped = true;
+        document.dispatchEvent(new CustomEvent("finishTimer", {
+            detail: {
+                finished: finnished,
+                error: errors,
+            }
+        }));
     }
 </script>
 
@@ -415,7 +424,7 @@ else:
 
 </div>
 
-<button class="next" on:click={() =>{finishLevel()}}>Weiter</button> <br>
-<button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>
+<button class="next" on:click={() =>{_next("/home")}}>Weiter</button> <br>
+<button class="back" on:click={() =>{stopTimer(false); _next("../../aufgabe")}}>Zurück</button>
 
 <div class="bothErr vergleichErr nameErr"></div>

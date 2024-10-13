@@ -101,6 +101,7 @@ function validate(){
         output += "\n> Bitte überprüfe die falschen Felder";
     }
     else{
+        stopTimer(true);
         outputColorClass = "valid-output";
         output = "";
         firstInput = "";
@@ -110,10 +111,20 @@ function validate(){
 }
 let errors = 0;
 
-function finishLevel() {
-    document.dispatchEvent(new CustomEvent("finishTimer"));
-    _next("../input/expl");
-}
+let timerStopped = false;
+
+
+
+function stopTimer(finnished: boolean){
+    if(timerStopped) return;
+    timerStopped = true;
+        document.dispatchEvent(new CustomEvent("finishTimer", {
+            detail: {
+                finished: finnished,
+                error: errors,
+            }
+        }));
+    }
 </script>
 
 <div class="lernContainer">
@@ -147,6 +158,6 @@ print("Und hast am " + <input autocomplete="off"  class="inline-input {datum_nam
 <code class="{ende}">Hallo <code style="color: var(--teal);">{input_val_1}</code>, du bist <code style="color: var(--teal);">{input_val_2}</code> Jahre alt <br>Und hast am <code style="color: var(--teal);">{input_val_3}</code> Geburtstag</code>
 </pre>
 </div>
-<button class="next" on:click={() => {finishLevel}}>Weiter</button><br>
-<button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>
+<button class="next" on:click={() => {_next("../input/expl");}}>Weiter</button><br>
+<button class="back" on:click={() =>{stopTimer(false);_next("../../aufgabe")}}>Zurück</button>
 

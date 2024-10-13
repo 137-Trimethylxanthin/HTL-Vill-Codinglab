@@ -36,6 +36,7 @@
         let endHasValidEnd = inputVal.endsWith(")");
 
         if(startHasValidStart && middleIsString && endHasValidEnd && inputVal.length > 0){
+            stopTimer(true);
             outputColorClass = "valid-output";
             output = "Dein Text:";
             output += "\n> "+ middle.substring(1, middle.length - 1);
@@ -52,10 +53,21 @@
     }
 let errors = 0;
 
-function finishLevel() {
-    document.dispatchEvent(new CustomEvent("finishTimer"));
-    _next("../variable/expl");
-}
+let timerStopped = false;
+
+  /**
+   * @param {boolean} finnished
+   */
+function stopTimer(finnished){
+    if(timerStopped) return;
+    timerStopped = true;
+        document.dispatchEvent(new CustomEvent("finishTimer", {
+            detail: {
+                finished: finnished,
+                error: errors,
+            }
+        }));
+    }
 
 </script>
 
@@ -83,5 +95,5 @@ function finishLevel() {
 
 </div>
 
-<button class="next" on:click={() =>{finishLevel();}}>Weiter</button><br>
-<button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>
+<button class="next" on:click={() =>{_next("../variable/expl");}}>Weiter</button><br>
+<button class="back" on:click={() =>{stopTimer(false);_next("../../aufgabe")}}>Zurück</button>

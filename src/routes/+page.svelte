@@ -2,10 +2,12 @@
     import SMTPCredentialsModal from '../components/SMTPCredentialsModal.svelte';
     import { invoke } from '@tauri-apps/api/core';
 	import { message } from '@tauri-apps/plugin-dialog';
-	import { nameStore } from '../utils/stores';
+	import { nameStore, level1Store, level2Store, level3Store } from '../utils/stores';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
     import { randomName } from '../utils/lib';
+
+ 
 
     let showSMTPCredentialsModal = false;
 
