@@ -108,7 +108,10 @@ impl VSCodeInstallation {
                 .await
                 .expect("failed to execute process")
         };
-        output.stdout.split(|&x| x == 0x0A).map(|x| String::from_utf8(x.to_vec()).unwrap()).collect()
+        output.stdout.split(|&x| x == b'\n' || x == b'\r')
+            .filter(|&x| !x.is_empty())
+            .map(|x| String::from_utf8(x.to_vec()).unwrap())
+            .collect()
     }
 
     async fn install_extension<R: Runtime>(extension: &str, app: &tauri::AppHandle<R>) {
