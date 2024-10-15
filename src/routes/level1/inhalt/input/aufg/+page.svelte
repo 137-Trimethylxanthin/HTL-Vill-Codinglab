@@ -98,7 +98,7 @@ function validate(){
         errors++;
         outputColorClass = "invalid-output";
         output = "> Es ist ein Fehler aufgetreten";
-        output += "\n> Bitte überprüfe die falschen Felder";
+        output += "\n> Bitte überprüfe die rot markierten Felder";
     }
     else{
         stopTimer(true);
@@ -131,7 +131,7 @@ function stopTimer(finnished: boolean){
     <h1>Input - Aufgabe</h1>
     <p>
         Schreibe den Input für den Namen und das Alter in die dafür vorgesehenen Variablen. <br>
-        Frage auch nach dem Geburtsdatum des Users und speichere es in eine Variable. <br>
+        Frage auch nach dem Geburtsdatum des Benutzers und speichere es in eine Variable. <br>
         <br>
         Danach führe den Code aus und fülle die Inputs aus und sehe dir den Output an. <br>
         <br>

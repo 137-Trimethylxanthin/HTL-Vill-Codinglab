@@ -26,8 +26,8 @@
 
 
 <div class="startText">
-    <p>Beim Coding Lab lernst du die Grundlagen der <b>Programmierung</b> in Python.</p>
-    <p>Wähle eines der drei verschiedenen Level aus, um zu beginnen. Du kannst ein beliebiges Level auswählen, aber Anfänger sollten mit Level 1 beginnen.</p>
+    <p>Im Coding Lab lernst du die Grundlagen der <b>Programmierung</b> in Python.</p>
+    <p>Wähle eines der drei verschiedenen Level aus, um zu beginnen.</p>
 </div>
 
 
@@ -43,7 +43,7 @@
         {/if}
         </button>
         <div class="tooltip">
-            Dieses Level ist für komplette Anfänger die noch nie programmiert haben. <br>
+            Dieses Level ist für komplette Anfänger, die noch nie programmiert haben. <br>
             Hier werden dir die Grundlagen beigebracht.
         </div>
     </div>
@@ -59,7 +59,7 @@
         {/if}
         </button>
         <div class="tooltip">
-            Dieses Level ist für Leute, die schon einmal programmiert haben. <br>
+            Dieses Level ist für jene, die schon einmal programmiert haben. <br>
             Es gibt eine Erklärung zu den Funktionen, die du brauchst.
         </div>
     </div>
@@ -75,12 +75,12 @@
         {/if}
         </button>
         <div class="tooltip">
-            Ein Level für die Profis. <br>
-            Hier solltest du bereits die Grundlagen von Python kennen (oder die vorherigen Level gemacht haben).
+            Ein Level für Profis. <br>
+            Hier solltest du bereits die Grundlagen von Python kennen (oder die vorherigen Levels absolviert haben).
         </div>
     </div>
     {#if $levels[0] !== undefined && $levels[0][0] && $levels[0][1] && $levels[0][2]}
-        <p class="congrats">Gratulation! Du hast alle Level geschafft!</p>
+        <p class="congrats">Gratulation! Du hast alle Levels geschafft!</p>
     {/if}
 </div>
 

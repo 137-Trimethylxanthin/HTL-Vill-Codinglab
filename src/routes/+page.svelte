@@ -40,7 +40,7 @@
 
 <div class="loginContainer" >
     <h1>Willkommen im Coding Lab!</h1>
-    <p>Gebe bitte deinen Vornamen ein, damit wir dich ansprechen können.</p>
+    <p>Gib bitte deinen Namen ein.</p>
     <form on:submit|preventDefault={setupUser}>
         <label for="vorname">Vorname:</label><br />
         <input type="text" id="name" name="vorname" placeholder="Vorname (optional)" autocomplete="off"/><br />

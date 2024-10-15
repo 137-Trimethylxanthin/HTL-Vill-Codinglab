@@ -38,18 +38,18 @@
 </script>
 
 <div class="title">
-    <h2>Wähle ein Thema aus um zu beginnen</h2>
+    <h2>Wähle ein Thema aus, um zu beginnen</h2>
 </div>
 
 
 <div class="levelSelect">
     <div class="tooltip-container">
-        <button class="levelbtn" on:click={switchSubLevel("print")} >Print
+        <button class="levelbtn" on:click={switchSubLevel("print")} >Ausgabe
         </button>
 
 
         <div class="tooltip">
-            Hier lernst du Wörter auf dem Bildschirm auszugeben.
+            Hier lernst du Zeichen auf dem Bildschirm auszugeben.
         </div>
     </div>
 
@@ -57,23 +57,23 @@
         <button class="levelbtn" on:click={switchSubLevel("variable")}  >Variablen
         </button>
         <div class="tooltip">
-            Hier lernst du daten zu speichern.
+            Hier lernst du Daten zu speichern und diese zu verarbeiten.
         </div>
     </div>
     
     <div class="tooltip-container">
-        <button class="levelbtn" on:click={switchSubLevel("input")}  >Input
+        <button class="levelbtn" on:click={switchSubLevel("input")}  >Eingabe
         </button>
         <div class="tooltip">
-            Hier lernst du eingaben vom Benutzer zu nehmen.
+            Hier lernst du Eingaben vom Benutzer einzulesen.
         </div>
     </div>
 
     <div class="tooltip-container">
-        <button class="levelbtn" on:click={switchSubLevel("if")} >If
+        <button class="levelbtn" on:click={switchSubLevel("if")} >Verzweigung
         </button>
         <div class="tooltip">
-            Hier lernst du bedingungen zu setzen.
+            Hier lernst du dein Programm zu verzweigen.
         </div>
     </div>
 </div>

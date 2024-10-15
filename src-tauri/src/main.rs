@@ -408,7 +408,7 @@ fn send_mail<R: Runtime>(app: tauri::AppHandle<R>, state: State<'_, ApplicationS
                         </div>
                         <div class="content">
                             <p>Liebe/r {name},</p>
-                            <p>Vielen Dank dass du beim Coding Lab der HTL Villach teilgenommen hast. Hier sind deine Ergebnisse:</p>
+                            <p>Vielen Dank, dass du beim Coding Lab der HTL Villach teilgenommen hast. Hier sind deine Ergebnisse:</p>
                             <ul>
                                 <li>Level 1: {level1_completed} ({level1_time_completed} Sekunden, {level1_score} Punkte)</li>
                                 <li>Level 2: {level2_completed} ({level2_time_completed} Sekunden, {level2_score} Punkte)</li>

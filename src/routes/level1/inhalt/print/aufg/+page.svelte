@@ -77,7 +77,7 @@ function stopTimer(finnished){
 
     <p>
         Nun versuche es selbst. <br>
-        Schreibe ein print, welches deinen Namen ausgibt:
+        Schreibe ein print-Statement, welches deinen Namen ausgibt:
     </p>
 
     <code class="codeBlock">

@@ -134,7 +134,7 @@
             errors++;
             outputColorClass = "invalid-output";
             output = "> Leider nicht ganz richtig. \n";
-            output += "> Ich hab dir die falschen Felder markiert \n";
+            output += "> Die falschen Felder wurden markiert.\n";
         }
 
 
@@ -157,12 +157,12 @@
 
 
 <div class="lernContainer">
-    <h1>variablen - Aufgabe</h1>
+    <h1>Variablen - Aufgabe</h1>
 
     <p>
         Ich hoffe, du hast dir die Erklärung durchgelesen, denn nun kommt die Aufgabe. <br>
         Fülle die Lücken passend aus und drücke auf "Ausführen". <br>
-        Du musst auch die Variablen mit <b>str</b> oder <b>int</b> beschriften(typisieren). <br>
+        Du musst den Variablen auch mit <b>str</b> oder <b>int</b> einen Datentyp geben. <br>
     </p>
 
 <pre class="codeBlock">
@@ -173,13 +173,13 @@ name:<input autocomplete="off" class="inline-input {stat[3]}" style="width: 2vw"
 tag:<input autocomplete="off" class="inline-input {stat[4]}" style="width: 2vw" maxlength="3" bind:value={user_tag}> = <input autocomplete="off" type="number" class="inline-input" style="width: 1.5vw" maxlength="2" bind:value={user_tag_value}> <br>
 wochentag:<input autocomplete="off"  class="inline-input {stat[5]}" style="width: 2vw" maxlength="3" bind:value={user_wochen_tag}> = "<input autocomplete="off"  class="inline-input" style="width: 12vw" maxlength="23" bind:value={user_wochen_tag_value}>" <br>
 
-<code class="comment"># Hier will ich das Jahr, den Monat und den Tag </code>
+<code class="comment"># Hier soll das Jahr, der Monat und der Tag ausgefüllt werden</code>
 print("Jahr:", <input autocomplete="off"  class="inline-input {stat[6]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_1}>, "Monat:" <input autocomplete="off"  class="inline-input {stat[7]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_2}>, "Tag:", <input autocomplete="off"  class="inline-input {stat[8]}" style="width: 6.5vw" maxlength="12" bind:value={user_print1_3}>)
 
-<code class="comment"># Hier will ich die Begrüssung und den Namen</code>
+<code class="comment"># Hier bitte die Begrüßung und den Namen einfüllen</code>
 print(<input autocomplete="off"  class="inline-input {stat[9]}" style="width: 5.5vw" maxlength="8" bind:value={user_print2_1}> + " " + <input autocomplete="off"  class="inline-input {stat[10]}" style="width: 5.5vw" maxlength="10" bind:value={user_print2_2}> + " wie geht es dir?")
 
-<code class="comment"># Hier will ich den Wochentag und den Namen</code>
+<code class="comment"># Hier soll der Wochentag und der Name hin</code>
 print(f"Hey, ist dieser &#123;<input autocomplete="off"  class="inline-input {stat[11]}" style="width: 5.5vw" maxlength="10" bind:value={user_print3_1}>} nicht ein schöner Tag, &#123;<input autocomplete="off"  class="inline-input {stat[12]}" style="width: 5.5vw" maxlength="10" bind:value={user_print3_2}>}
 </pre>
 

@@ -130,14 +130,14 @@
 </script>
 
 <div class="title noMargin">
-    <h1>Danke fürs Spielen {$nameStore === undefined ? "" : $nameStore}</h1>
+    <h1>Danke fürs Spielen{$nameStore === undefined ? "" : `, ${$nameStore}!`}</h1>
 </div>
 
 <div class="timeContainer">
     <h2>Zeit und Punkte</h2>
-    <h3>Gesamt Zeit:</h3>
+    <h3>Gesamtzeit:</h3>
     <p>{String(Math.floor(gesZeit / 60)).padStart(2, '0')}:{String(gesZeit % 60).padStart(2, '0')}</p>
-    <h3>Gesamt Punkte:</h3>
+    <h3>Gesamtpunkte:</h3>
     <p>{gesPunkte}/{gesErreichbar}</p>
     <h3>Level:</h3>
     <ul>
@@ -151,11 +151,11 @@
 </div>  
 
 <div class="logoutContainer" >
-    <h1>Falls du genauere Daten haben willst</h1>
-    <p>Gib unten deine Email ein und wir schicken dir einen Bericht mit allen Zeiten und Punkten</p>
+    <h1>Statistik per E-Mail schicken</h1>
+    <p>Gib deine E-Mail-Adresse ein und wir senden dir einen Bericht mit allen Zeiten und Punkten zu.</p>
     <form on:submit|preventDefault={sendMail}>
-        <label for="email">E-Mail:</label><br />
-        <input type="text" id="email" bind:value={email} on:input={checkMail} name="email" placeholder="Email" required autocomplete="off"/><br />
+        <label for="email">E-Mail-Adresse:</label><br />
+        <input type="text" id="email" bind:value={email} on:input={checkMail} name="email" placeholder="E-Mail-Adresse" required autocomplete="off"/><br />
         <button id="sendMail" type="submit">Senden</button>
     </form>
 </div>
