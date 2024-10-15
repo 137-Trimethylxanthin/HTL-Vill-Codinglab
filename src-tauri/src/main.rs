@@ -80,7 +80,7 @@ impl Mailer {
                     )
             )?;
         let creds = Credentials::new(smtp_credentials.username, smtp_credentials.password);
-        let mailer = SmtpTransport::relay(&smtp_credentials.url)?
+        let mailer = SmtpTransport::starttls_relay(&smtp_credentials.url)?
             .credentials(creds)
             .build();
 
