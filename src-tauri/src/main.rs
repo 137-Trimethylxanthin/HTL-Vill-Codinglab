@@ -60,8 +60,8 @@ impl ScoreCalculator {
             40.0
         };
         let error_score = 15.0 * (1.0 - error_ratio).max(0.0);
-        let completion_score = 45.0 * (sublevels_completed as f64 / total_sublevels as f64);
-        (time_score + error_score + completion_score).round() as usize
+        let completion_score = 45.0; // completion score is always 45% for now as it will be detucted later
+        ((time_score + error_score + completion_score).round() as usize) / total_sublevels * sublevels_completed
     }
 }
 

@@ -80,8 +80,6 @@
         checkMail();
     }
 
-    let gesZeit = 0;
-
     let level1 = {
         name: "Level 1",
         punkte: $level1Store["total"].points,
@@ -108,6 +106,7 @@
 
     let gesPunkte = level1.punkte + level2.punkte + level3.punkte;
     let gesErreichbar = level1.maxPunkte + level2.maxPunkte + level3.maxPunkte;
+    let gesZeit = level1.time + level2.time + level3.time;
 
     let levels = [level1, level2, level3];
 
