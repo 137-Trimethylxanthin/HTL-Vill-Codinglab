@@ -8,8 +8,8 @@
   },
   "bundle": {
     "active": true,
-    "copyright": "2024 HTL Villach",
-    "longDescription": "Coding Lab 2024 HTL Villach Abteilung Informatik",
+    "copyright": "2025 HTL Villach",
+    "longDescription": "Coding Lab 2025 HTL Villach Abteilung Informatik",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -39,7 +39,7 @@
   },
   "productName": "codinglab",
   "mainBinaryName": "codinglab",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "identifier": "at.htlvillach.codinglab",
   "plugins": {
     "updater": {

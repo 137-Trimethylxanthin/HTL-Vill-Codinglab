@@ -1,6 +1,6 @@
 [package]
 name = "codinglab"
-version = "0.2.2"
+version = "0.2.3"
 description = "Coding Lab HTL Villach"
 authors = ["Sitter Max", "Rechberger Simon"]
 default-run = "codinglab"
