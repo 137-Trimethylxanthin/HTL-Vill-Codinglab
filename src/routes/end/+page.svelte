@@ -40,7 +40,7 @@
                 errors: 0,
             },
         });
-                level3Store.set({
+        level3Store.set({
             "total": {
                 time: 0,
                 points: 0,

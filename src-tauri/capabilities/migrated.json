@@ -26,6 +26,7 @@
     "process:default",
     "fs:default",
     "shell:default",
-    "dialog:default"
+    "dialog:default",
+    "core:window:allow-set-fullscreen"
   ]
 }
