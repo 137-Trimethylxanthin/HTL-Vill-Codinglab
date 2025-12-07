@@ -406,7 +406,7 @@ fn send_mail<R: Runtime>(app: tauri::AppHandle<R>, state: State<'_, ApplicationS
                 <body>
                     <div class="container">
                         <div class="header">
-                            <img src="https://yt3.googleusercontent.com/tK-wIyMHMWu-Sbi4Y0pdsrUGvvo7WtSK75wvumRKWZfxL0rw2FrclnNiSBBT54pFIroxpenAl9Y=s160-c-k-c0x00ffffff-no-rj" alt="HTL Logo" width="100" height="100">
+                            <img src="https://gitlab.com/uploads/-/system/group/avatar/12594023/logo.png?width=512" alt="HTL Logo" width="100" height="100">
                             <h1>Coding Lab - Ergebnisse</h1>
                         </div>
                         <div class="content">
