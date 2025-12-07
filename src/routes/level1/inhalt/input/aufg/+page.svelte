@@ -139,13 +139,13 @@ function stopTimer(finnished: boolean){
     </p>
 
 <pre class="codeBlock">
-name: <input autocomplete="off"  class="inline-input {name_type_state}" style="width: 2vw" maxlength="3" bind:value={user_name_type}> = input("<input autocomplete="off"  type="text" style="width: 30vw" maxlength="58" bind:value={user_name}>")
-alter: <input autocomplete="off"  class="inline-input {alter_type_state}" style="width: 2vw" maxlength="3" bind:value={user_alter_type}> = int(input("<input autocomplete="off"  type="text" style="width: 12vw" maxlength="23" bind:value={user_alter}>"))
+name: <input autocomplete="off"  class="inline-input {name_type_state}" style="width: 2.5vw" maxlength="3" bind:value={user_name_type}> = input("<input autocomplete="off"  type="text" style="width: 29vw" maxlength="50" bind:value={user_name}>")
+alter: <input autocomplete="off"  class="inline-input {alter_type_state}" style="width: 2.5vw" maxlength="3" bind:value={user_alter_type}> = int(input("<input autocomplete="off"  type="text" style="width: 15vw" maxlength="23" bind:value={user_alter}>"))
 <code class="comment"># Hier musst du dir einen Variablenamen ausdenken</code>
-<input autocomplete="off"  class="inline-input {datum_name_state}" type="text" style="width: 12vw" maxlength="23" bind:value={user_datum_name}>: <input autocomplete="off"  class="inline-input {datum_type_state}" style="width: 2vw" maxlength="3" bind:value={user_datum_type}> = input("<input autocomplete="off"  type="text" style="width: 12vw" maxlength="23" bind:value={user_datum}>")
+<input autocomplete="off"  class="inline-input {datum_name_state}" type="text" style="width: 12vw" maxlength="23" bind:value={user_datum_name}>: <input autocomplete="off"  class="inline-input {datum_type_state}" style="width: 2.5vw" maxlength="3" bind:value={user_datum_type}> = input("<input autocomplete="off"  type="text" style="width: 16vw" maxlength="25" bind:value={user_datum}>")
 
 print("Hallo " + name + ", du bist " + alter + " Jahre alt")
-print("Und hast am " + <input autocomplete="off"  class="inline-input {datum_name_state}" type="text" style="width: 12vw" maxlength="23" bind:value={user_datum_name_in_print}> + " Geburtstag");)
+print("Und hast am " + <input autocomplete="off"  class="inline-input {datum_name_state}" type="text" style="width: 12vw" maxlength="23" bind:value={user_datum_name_in_print}> + " Geburtstag")
 </pre>
 
 <button class="validate" on:click={() => {validate()}}>Ausführen</button>

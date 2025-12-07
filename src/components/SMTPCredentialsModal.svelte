@@ -27,6 +27,11 @@
   function handleClose() {
     dispatch("close");
   }
+
+  function handleIgnore() {
+    dispatch("ignore");
+    dispatch("close");
+  }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -53,6 +58,7 @@
         <p class="error">{errorMessage}</p>
       {/if}
       <div class="button-group">
+        <button type="button" on:click={handleIgnore}>Ignore</button>
         <button type="button" on:click={handleClose}>Cancel</button>
         <button type="submit" disabled={isLoading}>
           {isLoading ? "Saving..." : "Save"}
@@ -99,6 +105,7 @@
   .button-group {
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: 10px;
     margin-top: 20px;
   }

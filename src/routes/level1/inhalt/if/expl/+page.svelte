@@ -37,23 +37,21 @@
     </p>
     <p class="noMargin">Code:</p>
 <pre class="codeBlock">
-    if <code style="color: var(--peach);">1</code> <code style="color: var(--red);">==</code> <code style="color: var(--peach);">1</code>: <code class="comment"># True</code>
-        print("1 ist gleich 1")
-    
-    alter: int = 15
-    if <code style="color: var(--peach);">alter</code> <code style="color: var(--red);">&gt;</code> <code style="color: var(--peach);">18</code>: <code class="comment"># False</code>
-        print("du bist erwachsen")
-    else:
-        print("du bist noch nicht erwachsen")
+if <code style="color: var(--peach);">1</code> <code style="color: var(--red);">==</code> <code style="color: var(--peach);">1</code>: <code class="comment"># True</code>
+    print("1 ist gleich 1")
 
-    <code class="comment"># Variable wird neu zugewiesen und die Bedingung wird neu evaluiert</code>
-    alter = 20
-    if <code style="color: var(--peach);">alter</code> <code style="color: var(--red);">&gt;</code> <code style="color: var(--peach);">18</code>: <code class="comment"># True</code>
-        print("du bist erwachsen und noch jung")
-    else:
-        print("du bist nicht erwachsen oder nicht mehr jung")
+alter: int = 15
+if <code style="color: var(--peach);">alter</code> <code style="color: var(--red);">&gt;</code> <code style="color: var(--peach);">18</code>: <code class="comment"># False</code>
+    print("du bist erwachsen")
+else:
+    print("du bist noch nicht erwachsen")
 
-
+<code class="comment"># Variable wird neu zugewiesen und die Bedingung wird neu evaluiert</code>
+alter = 20
+if <code style="color: var(--peach);">alter</code> <code style="color: var(--red);">&gt;</code> <code style="color: var(--peach);">18</code>: <code class="comment"># True</code>
+    print("du bist erwachsen und noch jung")
+else:
+    print("du bist nicht erwachsen oder nicht mehr jung")
 </pre>
 
 <p class="noMargin">Output:</p>

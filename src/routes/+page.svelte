@@ -2,7 +2,7 @@
     import SMTPCredentialsModal from '../components/SMTPCredentialsModal.svelte';
     import { invoke } from '@tauri-apps/api/core';
 	import { message } from '@tauri-apps/plugin-dialog';
-	import { nameStore, level1Store, level2Store, level3Store } from '../utils/stores';
+	import { nameStore } from '../utils/stores';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
     import { randomName } from '../utils/lib';
@@ -12,6 +12,11 @@
     let showSMTPCredentialsModal = false;
 
     onMount(async () => {
+        const wasIgnored = typeof window !== 'undefined' && sessionStorage.getItem('smtpModalIgnored') === 'true';
+        if (wasIgnored) {
+            return;
+        }
+
         const hasCredentials = await invoke('has_smtp_credentials');
         if (!hasCredentials) {
             showSMTPCredentialsModal = true;
@@ -19,6 +24,13 @@
     });
 
     function handleCloseModal() {
+        showSMTPCredentialsModal = false;
+    }
+
+    function handleIgnoreModal() {
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem('smtpModalIgnored', 'true');
+        }
         showSMTPCredentialsModal = false;
     }
 
@@ -47,7 +59,7 @@
         <button class="loginButton" type="submit">Starten</button>
     </form>
     {#if showSMTPCredentialsModal}
-        <SMTPCredentialsModal on:close={handleCloseModal} />
+        <SMTPCredentialsModal on:close={handleCloseModal} on:ignore={handleIgnoreModal} />
     {/if}
 </div>
 

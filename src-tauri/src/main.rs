@@ -178,6 +178,7 @@ impl VSCodeInstallation {
     }
 
     async fn prepare_open<R: Runtime>(app: tauri::AppHandle<R>) {
+        println!("Preparing to open VSCode...");
         let installed_extensions = VSCodeInstallation::get_installed_extensions(&app).await;
         let required_extensions = vec![
             "ms-python.python",
@@ -331,8 +332,9 @@ fn setup_user<R: Runtime>(
         .resolve("python/", BaseDirectory::Resource)
         .expect("failed to resolve resource");
     copy_dir_all(resource_path, document_directory).unwrap();
-    tauri::async_runtime::block_on(async {
-        VSCodeInstallation::prepare_open(app).await;
+    let app_for_prepare = app.clone();
+    tauri::async_runtime::spawn(async move {
+        VSCodeInstallation::prepare_open(app_for_prepare).await;
     });
     // if !PythonValidator::check_python() {
     //     message(

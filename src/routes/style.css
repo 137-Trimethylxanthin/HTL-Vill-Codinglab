@@ -611,9 +611,13 @@ header {
 
 }
 
-.codeBlock input.inline-input, .cmd input.inline-input{
+.codeBlock input.inline-input,
+.cmd input.inline-input {
     margin: 0 0 0.4vh 0;
-    padding: 0.5vh 0.1vw 0.5vh 0.2vw;
+    padding: clamp(0.35rem, 0.5vh, 0.55rem) clamp(0.25rem, 0.3vw, 0.4rem);
+    min-height: max(2.4vh, 1.8rem);
+    line-height: 1.2;
+    box-sizing: border-box;
     transform: translateX(0);
     cursor: text;
 }

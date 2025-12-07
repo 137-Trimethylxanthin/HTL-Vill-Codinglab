@@ -3,6 +3,7 @@
     import { invoke } from "@tauri-apps/api/core";
     import { ask, message } from "@tauri-apps/plugin-dialog";
     import { level1Store, level2Store, level3Store } from "../../utils/stores";
+    import { onMount } from "svelte";
 
     async function logOut() {
         if (await ask('Willst du wirklich Beenden?', { title: 'Beenden' })) {
@@ -113,6 +114,7 @@
 
     let email = ""; 
     let emailWasSent = false;
+    let hasSmtpCredentials = false;
 
     let emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
 
@@ -126,6 +128,10 @@
             (document.getElementById("sendMail") as HTMLButtonElement).classList.add("isOk");
         } 
     }
+
+    onMount(async () => {
+        hasSmtpCredentials = await invoke("has_smtp_credentials");
+    });
 
 </script>
 
@@ -150,14 +156,21 @@
 
 </div>  
 
-<div class="logoutContainer" >
-    <h1>Statistik per E-Mail schicken</h1>
-    <p>Gib deine E-Mail-Adresse ein und wir senden dir einen Bericht mit allen Zeiten und Punkten zu.</p>
-    <form on:submit|preventDefault={sendMail}>
-        <label for="email">E-Mail-Adresse:</label><br />
-        <input type="text" id="email" bind:value={email} on:input={checkMail} name="email" placeholder="E-Mail-Adresse" required autocomplete="off"/><br />
-        <button id="sendMail" type="submit">Senden</button>
-    </form>
-</div>
+{#if hasSmtpCredentials}
+    <div class="logoutContainer" >
+        <h1>Statistik per E-Mail schicken</h1>
+        <p>Gib deine E-Mail-Adresse ein und wir senden dir einen Bericht mit allen Zeiten und Punkten zu.</p>
+        <form on:submit|preventDefault={sendMail}>
+            <label for="email">E-Mail-Adresse:</label><br />
+            <input type="text" id="email" bind:value={email} on:input={checkMail} name="email" placeholder="E-Mail-Adresse" required autocomplete="off"/><br />
+            <button id="sendMail" type="submit">Senden</button>
+        </form>
+    </div>
+{:else}
+    <div class="logoutContainer" >
+        <h1>Statistik per E-Mail schicken</h1>
+        <p>Der Versand per E-Mail ist derzeit nicht verfügbar, da keine SMTP-Zugangsdaten hinterlegt sind.</p>
+    </div>
+{/if}
 
 <button class="ende" on:click={logOut}>Beenden</button>
