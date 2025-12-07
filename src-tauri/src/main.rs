@@ -244,7 +244,7 @@ struct EncryptedData {
 
 fn encrypt_credentials(credentials: &SmtpCredentials, key: &[u8; 32]) -> EncryptedData {
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut nonce = [0u8; 12];
     rng.fill(&mut nonce);
     let nonce = Nonce::from_slice(&nonce);
@@ -272,7 +272,8 @@ fn save_credentials<R: Runtime>(app: tauri::AppHandle<R>, credentials: &SmtpCred
     let app_data_dir = app.path().app_data_dir().unwrap();
     std::fs::create_dir_all(&app_data_dir)?;
 
-    let key: [u8; 32] = rand::thread_rng().gen();
+    let mut rng = rand::rng();
+    let key: [u8; 32] = rng.random();
     let encrypted = encrypt_credentials(credentials, &key);
 
     let encrypted_data = serde_json::to_vec(&encrypted)?;
@@ -503,7 +504,7 @@ fn open_code_with_filename(
     let output = if cfg!(target_os = "windows") {
         tauri::async_runtime::block_on(async move {
             app.shell().command("cmd")
-                .args(["/C", &format!("code {}", file_open.to_str().unwrap())])
+                .args(["/C", &format!("code --disable-workspace-trust {}", file_open.to_str().unwrap())])
                 .output()
                 .await
                 .expect("failed to execute process")
@@ -511,7 +512,7 @@ fn open_code_with_filename(
     } else {
         tauri::async_runtime::block_on(async move {
             app.shell().command("sh")
-                .args(["-c", &format!("code {}", file_open.to_str().unwrap())])
+                .args(["-c", &format!("code --disable-workspace-trust {}", file_open.to_str().unwrap())])
                 .output()
                 .await
                 .expect("failed to execute process")
@@ -554,10 +555,9 @@ fn level_completed(
     if !(1..=3).contains(&level) {
         return Ok((false, 0));
     }
-    let mut score = 0;
     const MAX_TIME: usize = 500;
     const MAX_ERROR_PENALTY: usize = 5;
-    if level == 1 {
+    let score = if level == 1 {
         let mut level1_completed = state.level1_completed.lock().unwrap();
         if *level1_completed {
             return Ok((false, 0));
@@ -565,7 +565,7 @@ fn level_completed(
         *level1_completed = true;
         let mut level1_time_completed = state.level1_time_completed.lock().unwrap();
         *level1_time_completed = time;
-        score = ScoreCalculator::calculate_score(
+        let calculated_score = ScoreCalculator::calculate_score(
             time,
             MAX_TIME,
             errors,
@@ -574,7 +574,8 @@ fn level_completed(
             total_sublevels,
         );
         let mut level1_score = state.level1_score.lock().unwrap();
-        *level1_score = score;
+        *level1_score = calculated_score;
+        calculated_score
     } else if level == 2 {
         let mut level2_completed = state.level2_completed.lock().unwrap();
         if *level2_completed {
@@ -583,7 +584,7 @@ fn level_completed(
         *level2_completed = true;
         let mut level2_time_completed = state.level2_time_completed.lock().unwrap();
         *level2_time_completed = time;
-        score = ScoreCalculator::calculate_score(
+        let calculated_score = ScoreCalculator::calculate_score(
             time,
             MAX_TIME,
             errors,
@@ -592,7 +593,8 @@ fn level_completed(
             total_sublevels,
         );
         let mut level2_score = state.level2_score.lock().unwrap();
-        *level2_score = score;
+        *level2_score = calculated_score;
+        calculated_score
     } else {
         let mut level3_completed = state.level3_completed.lock().unwrap();
         if *level3_completed {
@@ -601,7 +603,7 @@ fn level_completed(
         *level3_completed = true;
         let mut level3_time_completed = state.level3_time_completed.lock().unwrap();
         *level3_time_completed = time;
-        score = ScoreCalculator::calculate_score(
+        let calculated_score = ScoreCalculator::calculate_score(
             time,
             MAX_TIME,
             errors,
@@ -610,10 +612,11 @@ fn level_completed(
             total_sublevels,
         );
         let mut level3_score = state.level3_score.lock().unwrap();
-        *level3_score = score;
-    }
-    score = score.min(100);
-    Ok((true, score))
+        *level3_score = calculated_score;
+        calculated_score
+    };
+    let final_score = score.min(100);
+    Ok((true, final_score))
 }
 
 #[tauri::command]

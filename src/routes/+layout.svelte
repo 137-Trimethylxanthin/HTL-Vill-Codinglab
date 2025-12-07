@@ -5,7 +5,6 @@
     import "./style.css"
 	import { goto } from "$app/navigation";
     import { nameStore } from "../utils/stores";
-    import { exit } from '@tauri-apps/plugin-process';
     import { open } from '@tauri-apps/plugin-shell';
     import { level1Store } from "../utils/stores";
 

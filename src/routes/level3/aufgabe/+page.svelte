@@ -65,7 +65,8 @@
     <h1 class="timer">
         {String(Math.floor(time / 60)).padStart(2, '0')}:{String(time % 60).padStart(2, '0')}
     </h1>
-    <p>Status:
+    <p>
+        Status:
         {#if status == "Fehler"}
             <span style="color: var(--red);">{status}</span>
         {:else if status == "Erfolg"}
@@ -73,6 +74,7 @@
         {:else}
             {status}
         {/if}
+    </p>
 </div>
 
 {#if valid}

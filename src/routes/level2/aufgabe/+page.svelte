@@ -75,6 +75,7 @@
         {:else}
             {status}
         {/if}
+    </p>
 </div>
 
 {#if valid}

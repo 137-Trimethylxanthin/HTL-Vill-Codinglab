@@ -4,7 +4,8 @@
     "beforeBuildCommand": "npm run sveltekit:build",
     "beforeDevCommand": "npm run sveltekit:dev",
     "frontendDist": "../build",
-    "devUrl": "http://localhost:5173"
+    "devUrl": "http://localhost:5173",
+    "removeUnusedCommands": true
   },
   "bundle": {
     "active": true,
@@ -39,7 +40,7 @@
   },
   "productName": "codinglab",
   "mainBinaryName": "codinglab",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "identifier": "at.htlvillach.codinglab",
   "plugins": {
     "updater": {
