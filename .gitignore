@@ -51,7 +51,6 @@ pnpm-lock.yaml
 
 # npm
 .npm
-package-lock.json
 
 ### Svelte ###
 
