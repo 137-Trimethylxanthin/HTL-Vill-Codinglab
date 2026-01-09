@@ -13,7 +13,7 @@
 <div class="lernContainer">
     <h1>print</h1>
     <p>
-        Print ist ein Befehl, der Text auf den Bildschirm anzeigt. <br>
+        Print ist ein Befehl, der Text auf dem Bildschirm anzeigt. <br>
         PS: Kommentare werden mit # gemacht. Sie werden bei Ablauf des Programmes ignoriert.<br>
         <code class="inline-input comment"># Kommentar</code> <br>
         Hier ist ein Beispiel:
@@ -30,4 +30,5 @@ print("Hello World")
 
 </div>
 
-<button class="next" on:click={() => {_next("aufg")}}> Weiter </button>
+<button class="next" on:click={() => {_next("aufg")}}> Weiter </button><br>
+<button class="back" on:click={() =>{_next("../../aufgabe")}}>Zurück</button>

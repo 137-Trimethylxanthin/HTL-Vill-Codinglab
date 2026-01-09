@@ -92,12 +92,16 @@ function validate(){
         error = true;
     }
 
+
+
     if (error){
+        errors++;
         outputColorClass = "invalid-output";
         output = "> Es ist ein Fehler aufgetreten";
-        output += "\n> Bitte überprüfe die falschen Felder";
+        output += "\n> Bitte überprüfe die rot markierten Felder";
     }
     else{
+        stopTimer(true);
         outputColorClass = "valid-output";
         output = "";
         firstInput = "";
@@ -105,14 +109,29 @@ function validate(){
     }
 
 }
+let errors = 0;
 
+let timerStopped = false;
+
+
+
+function stopTimer(finnished: boolean){
+    if(timerStopped) return;
+    timerStopped = true;
+        document.dispatchEvent(new CustomEvent("finishTimer", {
+            detail: {
+                finished: finnished,
+                error: errors,
+            }
+        }));
+    }
 </script>
 
 <div class="lernContainer">
     <h1>Input - Aufgabe</h1>
     <p>
         Schreibe den Input für den Namen und das Alter in die dafür vorgesehenen Variablen. <br>
-        Frage auch nach dem Geburtsdatum des Users und speichere es in eine Variable. <br>
+        Frage auch nach dem Geburtsdatum des Benutzers und speichere es in eine Variable. <br>
         <br>
         Danach führe den Code aus und fülle die Inputs aus und sehe dir den Output an. <br>
         <br>
@@ -120,13 +139,13 @@ function validate(){
     </p>
 
 <pre class="codeBlock">
-name: <input autocomplete="off"  class="inline-input {name_type_state}" style="width: 2vw" maxlength="3" bind:value={user_name_type}> = input("<input autocomplete="off"  type="text" style="width: 30vw" maxlength="58" bind:value={user_name}>")
-alter: <input autocomplete="off"  class="inline-input {alter_type_state}" style="width: 2vw" maxlength="3" bind:value={user_alter_type}> = int(input("<input autocomplete="off"  type="text" style="width: 12vw" maxlength="23" bind:value={user_alter}>"))
+name: <input autocomplete="off"  class="inline-input {name_type_state}" style="width: 2.5vw" maxlength="3" bind:value={user_name_type}> = input("<input autocomplete="off"  type="text" style="width: 29vw" maxlength="50" bind:value={user_name}>")
+alter: <input autocomplete="off"  class="inline-input {alter_type_state}" style="width: 2.5vw" maxlength="3" bind:value={user_alter_type}> = int(input("<input autocomplete="off"  type="text" style="width: 15vw" maxlength="23" bind:value={user_alter}>"))
 <code class="comment"># Hier musst du dir einen Variablenamen ausdenken</code>
-<input autocomplete="off"  class="inline-input {datum_name_state}" type="text" style="width: 12vw" maxlength="23" bind:value={user_datum_name}>: <input autocomplete="off"  class="inline-input {datum_type_state}" style="width: 2vw" maxlength="3" bind:value={user_datum_type}> = input("<input autocomplete="off"  type="text" style="width: 12vw" maxlength="23" bind:value={user_datum}>")
+<input autocomplete="off"  class="inline-input {datum_name_state}" type="text" style="width: 12vw" maxlength="23" bind:value={user_datum_name}>: <input autocomplete="off"  class="inline-input {datum_type_state}" style="width: 2.5vw" maxlength="3" bind:value={user_datum_type}> = input("<input autocomplete="off"  type="text" style="width: 16vw" maxlength="25" bind:value={user_datum}>")
 
 print("Hallo " + name + ", du bist " + alter + " Jahre alt")
-print("Und hast am " + <input autocomplete="off"  class="inline-input {datum_name_state}" type="text" style="width: 12vw" maxlength="23" bind:value={user_datum_name_in_print}> + " Geburtstag");)
+print("Und hast am " + <input autocomplete="off"  class="inline-input {datum_name_state}" type="text" style="width: 12vw" maxlength="23" bind:value={user_datum_name_in_print}> + " Geburtstag")
 </pre>
 
 <button class="validate" on:click={() => {validate()}}>Ausführen</button>
@@ -139,5 +158,6 @@ print("Und hast am " + <input autocomplete="off"  class="inline-input {datum_nam
 <code class="{ende}">Hallo <code style="color: var(--teal);">{input_val_1}</code>, du bist <code style="color: var(--teal);">{input_val_2}</code> Jahre alt <br>Und hast am <code style="color: var(--teal);">{input_val_3}</code> Geburtstag</code>
 </pre>
 </div>
-<button class="next" on:click={() => {_next("../if/expl")}}>Weiter</button>
+<button class="next" on:click={() => {_next("../if/expl");}}>Weiter</button><br>
+<button class="back" on:click={() =>{stopTimer(false);_next("../../aufgabe")}}>Zurück</button>
 

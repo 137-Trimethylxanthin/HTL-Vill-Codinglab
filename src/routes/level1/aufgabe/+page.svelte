@@ -1,29 +1,44 @@
-<script>
-    import {goto} from "$app/navigation";
+<script lang="ts">
+    import { goto } from "$app/navigation";
 
-    function startLvl(){
-        console.log("start lvl 1");
-        goto("inhalt/print/expl");
+    function switchSubLevel(sub: string ) {
+        return () => {
+            goto(`/level1/inhalt/${sub}/expl`);
+        }
     }
-
 </script>
 
-
-<div id="level1Div">
-    <h1>Level 1</h1>
-
-    <p>Hier wirst du die Grundlagen von Python lernen:</p>
-    <ul class="index">
-        <li>print (Textausgabe)</li>
-        <li>input (Texteingabe)</li>
-        <li>int (Einlesen von Nummern)</li>
-        <li>variablen (Speichern von Daten)</li>
-        <li>if (Vergleichen von Variablen)</li>
-        <li> =, &gt;, &lt;, ! (Vergleichsoperatoren)</li>
-    </ul>
-
-    <p>Bist du bereit?</p>
-    <button on:click={startLvl}>Start</button>
+<div class="title">
+    <h2>Wähle ein Thema aus, um zu beginnen</h2>
+</div>
 
 
+<div class="levelSelect">
+    <div class="tooltip-container">
+        <button class="levelbtn" on:click={switchSubLevel("print")}>Ausgabe</button>
+        <div class="tooltip">
+            Hier lernst du Zeichen auf dem Bildschirm auszugeben.
+        </div>
+    </div>
+
+    <div class="tooltip-container">
+        <button class="levelbtn" on:click={switchSubLevel("variable")}>Variablen</button>
+        <div class="tooltip">
+            Hier lernst du Daten zu speichern und diese zu verarbeiten.
+        </div>
+    </div>
+    
+    <div class="tooltip-container">
+        <button class="levelbtn" on:click={switchSubLevel("input")}>Eingabe</button>
+        <div class="tooltip">
+            Hier lernst du Eingaben vom Benutzer einzulesen.
+        </div>
+    </div>
+
+    <div class="tooltip-container">
+        <button class="levelbtn" on:click={switchSubLevel("if")}>Verzweigung</button>
+        <div class="tooltip">
+            Hier lernst du dein Programm zu verzweigen.
+        </div>
+    </div>
 </div>

@@ -1,25 +1,43 @@
 [package]
 name = "codinglab"
-version = "0.1.1"
-description = "Coding Lab 2024 Tag der offenen Tür HTL Villach"
+version = "0.2.4"
+description = "Coding Lab HTL Villach"
 authors = ["Sitter Max", "Rechberger Simon"]
 default-run = "codinglab"
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.5.1", features = [] }
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.5.4", features = [ "shell-open", "updater", "process-command-api", "process-exit", "fs-all", "dialog-all"] }
-pyo3 = "0.20.2"
-regex = "1.10.3"
+tauri = { version = "2.9.1", features = [] }
+regex = "1.12.2"
+tauri-plugin-process = "2.3.1"
+tauri-plugin-fs = "2.4.4"
+tauri-plugin-shell = "2.3.3"
+tauri-plugin-dialog = "2.4.2"
+lettre = "0.11.9"
+rand = "0.9.2"
+aes-gcm = "0.10.3"
+
+[profile.dev]
+incremental = true # Compile your binary in smaller steps.
+
+[profile.release]
+codegen-units = 1 # Allows LLVM to perform better optimization.
+lto = true # Enables link-time-optimizations.
+opt-level = "s" # Prioritizes small binary size. Use `3` if you prefer speed.
+panic = "abort" # Higher performance by disabling panic handlers.
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.
 # If you use cargo directly instead of tauri's cli you can use this feature flag to switch between tauri's `dev` and `build` modes.
 # DO NOT REMOVE!!
 custom-protocol = [ "tauri/custom-protocol" ]
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2"

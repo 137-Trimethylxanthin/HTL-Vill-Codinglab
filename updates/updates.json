@@ -1,11 +1,11 @@
 {
-    "version": "0.1.1",
-    "notes": "Hotfixes",
-    "pub_date": "2024-02-01T09:20:00+00:00",
+    "version": "0.2.3",
+    "notes": "Fixes and Fullscreen",
+    "pub_date": "2025-01-30T020:00:00+00:00",
     "platforms": {
       "windows-x86_64": {
-        "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSNUVkZFdyYUI1eld2cGk3OTl6Z3FkL1RwZmtpWUVESUxtVmxhRjcwbjhDZ1ZJRFV5alo3ZldPUmZEVEZaNHFac1hjWWNmT21VQXNkTUl0TGw2TFVDQmhXNmRUMjdBUFFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzA2NzgyOTkxCWZpbGU6Y29kaW5nbGFiXzAuMS4xX3g2NC1zZXR1cC5uc2lzLnppcApIelUydktkblg4SUtXQjFqOVNLZ2liOGZ3c1IvWUJRQjltbWhsQVhrOHRyR1diNEJJZkFVamZPdFFpS0JmeTVodW5YZXd5Q1VidEx3T3pjUnkrWEdEZz09Cg==",
-        "url": "https://github.com/137-Trimethylxanthin/HTL-Vill-Codinglab/releases/download/0.1.1/codinglab_0.1.1_x64-setup.nsis.zip"
+        "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSNUVkZFdyYUI1eldKQzV6MmVBSjd3NG1CWHhZaGo1VkdPMEVyb2hZcjlpRjF3Szh3eFRBeDlxb2NuUjVjOUFiVDM1amJkaUMxTzFjZkF1Y0loMkFCVXJWcER3d01qaFFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzM4MjU3OTM4CWZpbGU6Y29kaW5nbGFiXzAuMi4zX3g2NC1zZXR1cC5uc2lzLnppcApXa0plaDQyTVhBWHY0YlFGcU05VTloQVRuYkNOQjY5akZzWFZXQkJkV2xibUF2NDdzR2ovRCthNFpMaFVKbmV2ai8wajJLRStIR1dmeWZDTEpwL05Cdz09Cg==",
+        "url": "https://github.com/137-Trimethylxanthin/HTL-Vill-Codinglab/releases/download/0.2.3/codinglab_0.2.3_x64-setup.nsis.zip"
       }
     }
   }

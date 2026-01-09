@@ -36,18 +36,37 @@
         let endHasValidEnd = inputVal.endsWith(")");
 
         if(startHasValidStart && middleIsString && endHasValidEnd && inputVal.length > 0){
+            stopTimer(true);
             outputColorClass = "valid-output";
             output = "Dein Text:";
             output += "\n> "+ middle.substring(1, middle.length - 1);
             output += "\n\n> Gut gemacht! Du hast print() verwendet. Du kannst nun auf Weiter klicken.";
             _enableButton();
         } else {
+            errors++;
             outputColorClass = "invalid-output";
             output = "Das ist nicht ganz richtig. Versuche es nochmal.";
             if (!startHasValidStart) output += "\n> Du hast 'print' nicht richtig geschrieben. (Beachte, dass es klein ist)";
             if (!middleIsString) output += "\n> Du brauchst Anführungszeichen um den Text. print(\"Dein Text\")";
             if (!endHasValidEnd) output += "\n> Du hast noch etwas nach der ')' stehen. print(\"Dein Text\")";
         }
+    }
+let errors = 0;
+
+let timerStopped = false;
+
+  /**
+   * @param {boolean} finnished
+   */
+function stopTimer(finnished){
+    if(timerStopped) return;
+    timerStopped = true;
+        document.dispatchEvent(new CustomEvent("finishTimer", {
+            detail: {
+                finished: finnished,
+                error: errors,
+            }
+        }));
     }
 
 </script>
@@ -58,7 +77,7 @@
 
     <p>
         Nun versuche es selbst. <br>
-        Schreibe ein print, welches deinen Namen ausgibt:
+        Schreibe ein print-Statement, welches deinen Namen ausgibt:
     </p>
 
     <code class="codeBlock">
@@ -76,4 +95,5 @@
 
 </div>
 
-<button class="next" on:click={() =>{_next("../variable/expl")}}>Weiter</button>
+<button class="next" on:click={() =>{_next("../variable/expl");}}>Weiter</button><br>
+<button class="back" on:click={() =>{stopTimer(false);_next("../../aufgabe")}}>Zurück</button>
