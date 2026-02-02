@@ -1,10 +1,29 @@
 <script lang="ts">
-  import LessonCard from "../../../../../components/LessonCard.svelte";
   import InteractiveCodeExample from "../../../../../components/InteractiveCodeExample.svelte";
-  import NavButtons from "../../../../../components/NavButtons.svelte";
+  import LessonPage from "../../../../../components/LessonPage.svelte";
+
+  const exampleCode = `if 1 == 1: # True
+  print("1 ist gleich 1")
+
+alter: int = 15
+if alter > 18: # False
+  print("du bist erwachsen")
+else:
+  print("du bist noch nicht erwachsen")
+
+# Variable wird neu zugewiesen und die Bedingung wird neu evaluiert
+alter = 20
+if alter > 18: # True
+  print("du bist erwachsen und noch jung")
+else:
+  print("du bist nicht erwachsen oder nicht mehr jung")`;
+
+  const exampleOutput = `> 1 ist gleich 1
+> du bist noch nicht erwachsen
+> du bist erwachsen und noch jung`;
 </script>
 
-<LessonCard title="Verzweigung">
+<LessonPage title="Verzweigung" nextHref="aufg" backHref="../../aufgabe">
   <p>
     <code class="inline-code">if</code> führt einen Codeblock nur aus, wenn eine <code style="color: var(--peach);">Bedingung</code> wahr ist. <br>
     <code class="inline-code">if <code style="color: var(--peach);">bedingung</code>:</code> <br>
@@ -27,30 +46,5 @@
     <code class="inline-code">&gt;=</code> größer oder gleich <br><br>
     <code class="inline-code">&lt;=</code> kleiner oder gleich <br>
   </p>
-  <InteractiveCodeExample>
-    <svelte:fragment slot="code">
-      if <code style="color: var(--peach);">1</code> <code style="color: var(--red);">==</code> <code style="color: var(--peach);">1</code>: <code class="comment"># True</code>
-      print("1 ist gleich 1")
-
-      alter: int = 15
-      if <code style="color: var(--peach);">alter</code> <code style="color: var(--red);">&gt;</code> <code style="color: var(--peach);">18</code>: <code class="comment"># False</code>
-      print("du bist erwachsen")
-      else:
-      print("du bist noch nicht erwachsen")
-
-      <code class="comment"># Variable wird neu zugewiesen und die Bedingung wird neu evaluiert</code>
-      alter = 20
-      if <code style="color: var(--peach);">alter</code> <code style="color: var(--red);">&gt;</code> <code style="color: var(--peach);">18</code>: <code class="comment"># True</code>
-      print("du bist erwachsen und noch jung")
-      else:
-      print("du bist nicht erwachsen oder nicht mehr jung")
-    </svelte:fragment>
-    <svelte:fragment slot="output">
-      > 1 ist gleich 1
-      > du bist noch nicht erwachsen
-      > du bist erwachsen und noch jung
-    </svelte:fragment>
-  </InteractiveCodeExample>
-</LessonCard>
-
-<NavButtons nextHref="aufg" backHref="../../aufgabe" />
+  <InteractiveCodeExample code={exampleCode} output={exampleOutput} />
+</LessonPage>

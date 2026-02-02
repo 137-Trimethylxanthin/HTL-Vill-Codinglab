@@ -3,11 +3,7 @@
   export let isValid: boolean | null = null; // null = neutral, true = valid, false = invalid
 </script>
 
-<pre class="cmd" class:valid-output={isValid === true} class:invalid-output={isValid === false}>
-  {#if output}
-    {@html output}
-  {:else}
-    <slot />
-  {/if}
-</pre>
+<div class="cmd" class:valid-output={isValid === true} class:invalid-output={isValid === false}>
+  {#if output}{@html output}{:else}<slot />{/if}
+</div>
 

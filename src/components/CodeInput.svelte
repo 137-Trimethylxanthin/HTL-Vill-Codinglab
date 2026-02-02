@@ -16,7 +16,7 @@
   class="inline-input {state}"
   type={type}
   {placeholder}
-  {maxLength}
+  maxlength={maxLength}
   bind:value
   style="width: {width}"
   {autofocus}

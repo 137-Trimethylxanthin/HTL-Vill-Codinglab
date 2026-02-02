@@ -1,55 +1,61 @@
 <script lang="ts">
-  import ExerciseCard from "../../../../../components/ExerciseCard.svelte";
+  import type ExerciseCard from "../../../../../components/ExerciseCard.svelte";
   import CodeBlock from "../../../../../components/CodeBlock.svelte";
   import CodeInput from "../../../../../components/CodeInput.svelte";
+  import ExercisePage from "../../../../../components/ExercisePage.svelte";
   import { nameStore } from "../../../../../utils/stores";
+  import { extractQuotedText } from "../../../../../utils/validation";
 
   let exerciseCard: ExerciseCard;
   let inputVal = "";
   let errors = 0;
 
   function handleValidate() {
-    if (inputVal.length <= 0) {
+    const trimmed = inputVal.trim();
+    if (!trimmed) {
       exerciseCard.setOutput("Du hast noch nichts geschrieben.", false);
       return;
     }
 
-    let middle = "";
-    try {
-      middle = inputVal.split("(")[1].split(")")[0];
-    } catch (e) {
+    if (!/^print\b/.test(trimmed)) {
+      errors++;
+      exerciseCard.setOutput(
+        "Das ist nicht ganz richtig. Versuche es nochmal.\n> Du hast 'print' nicht richtig geschrieben. (Beachte, dass es klein ist)",
+        false
+      );
+      return;
+    }
+
+    const openIndex = trimmed.indexOf("(");
+    const closeIndex = trimmed.lastIndexOf(")");
+    if (openIndex === -1 || closeIndex === -1 || closeIndex < openIndex) {
+      errors++;
       exerciseCard.setOutput("Du hast keine Klammern geschrieben.", false);
       return;
     }
 
-    let startHasValidStart = inputVal.startsWith("print(");
-    let middleIsString = middle.startsWith('"') && middle.endsWith('"');
-    let endHasValidEnd = inputVal.endsWith(")");
-
-    if (startHasValidStart && middleIsString && endHasValidEnd && inputVal.length > 0) {
-      exerciseCard.stopTimer(true);
-      const text = middle.substring(1, middle.length - 1);
-      exerciseCard.setOutput(
-        `Dein Text:\n> ${text}\n\n> Gut gemacht! Du hast print() verwendet. Du kannst nun auf Weiter klicken.`,
-        true
-      );
-      exerciseCard.enableNext();
-    } else {
+    const inner = trimmed.slice(openIndex + 1, closeIndex).trim();
+    const text = extractQuotedText(inner);
+    if (text === null) {
       errors++;
-      let message = "Das ist nicht ganz richtig. Versuche es nochmal.";
-      if (!startHasValidStart)
-        message += "\n> Du hast 'print' nicht richtig geschrieben. (Beachte, dass es klein ist)";
-      if (!middleIsString)
-        message += '\n> Du brauchst Anführungszeichen um den Text. print("Dein Text")';
-      if (!endHasValidEnd)
-        message += '\n> Du hast noch etwas nach der \')\' stehen. print("Dein Text")';
-      exerciseCard.setOutput(message, false);
+      exerciseCard.setOutput(
+        'Das ist nicht ganz richtig. Versuche es nochmal.\n> Du brauchst Anführungszeichen um den Text. print("Dein Text")',
+        false
+      );
+      return;
     }
+
+    exerciseCard.stopTimer(true);
+    exerciseCard.setOutput(
+      `Dein Text:\n${text}\n\nGut gemacht! Du hast print() verwendet. Du kannst nun auf Weiter klicken.`,
+      true
+    );
+    exerciseCard.enableNext();
   }
 </script>
 
-<ExerciseCard
-  bind:this={exerciseCard}
+<ExercisePage
+  bind:exerciseCard
   title="print - Aufgabe"
   prompt="Nun versuche es selbst. <br>Schreibe ein print-Statement, welches deinen Namen ausgibt:"
   nextHref="../variable/expl"
@@ -57,8 +63,8 @@
   on:validate={handleValidate}
 >
   <CodeBlock>
-    print("Dein Text") <br>
-    <code style="color: var(--green)"># Nun du, {$nameStore}</code> <br>
+    print("Dein Text:")<br>
+    <code style="color: var(--green)"># Nun du, {$nameStore}</code><br>
     <CodeInput bind:value={inputVal} autofocus />
   </CodeBlock>
-</ExerciseCard>
+</ExercisePage>

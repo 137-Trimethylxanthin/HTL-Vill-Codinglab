@@ -1,11 +1,28 @@
 <script lang="ts">
-  import LessonCard from "../../../../../components/LessonCard.svelte";
   import InteractiveCodeExample from "../../../../../components/InteractiveCodeExample.svelte";
-  import NavButtons from "../../../../../components/NavButtons.svelte";
+  import LessonPage from "../../../../../components/LessonPage.svelte";
   import { nameStore } from "../../../../../utils/stores";
+
+  let displayName = "";
+  let exampleCode = "";
+  let exampleOutput = "";
+
+  $: displayName = $nameStore || "Name";
+
+  $: exampleCode = `nummer1: int = 5
+nummer2: int = 10
+name: str = "${displayName}"
+
+print(nummer1, "+", nummer2, "=", nummer1 + nummer2)
+print("Hallo " + name + "!")
+print(f"Hey {name}! Wusstest du dass: {nummer1} + {nummer2} = {nummer1 + nummer2}?")`;
+
+  $: exampleOutput = `> 5 + 10 = 15
+> Hallo ${displayName}!
+> Hey ${displayName}! Wusstest du dass: 5 + 10 = 15?`;
 </script>
 
-<LessonCard title="Variablen">
+<LessonPage title="Variablen" nextHref="aufg" backHref="../../aufgabe">
   <p>
     Eine Variable ist eine Art Behälter mit einem Wert und einem Datentyp. Diese Werte können dann später wieder abgerufen und weiter verarbeitet werden. <br>
     In Python können wir Variablen mit dem <code class="inline-code">=</code> Zeichen erstellen. <br>
@@ -18,22 +35,7 @@
     Hier ein Beispiel:
   </p>
 
-  <InteractiveCodeExample>
-    <svelte:fragment slot="code">
-      nummer1: int = 5
-      nummer2: int = 10
-      name: str = "{$nameStore}"
-
-      print(<code style="color: var(--green)">nummer1</code>, "+", <code style="color: var(--mauve)">nummer2</code>, "=", <code style="color: var(--yellow)">nummer1 + nummer2</code>)
-      print("Hallo " + <code style="color: var(--teal)">name</code> + "!")
-      print(f"Hey <code style="color: var(--teal)">&#123;name}</code>! Wusstest du dass: <code style="color: var(--green)">&#123;nummer1}</code> + <code style="color: var(--mauve)">&#123;nummer2}</code> = <code style="color: var(--yellow)">&#123;nummer1 + nummer2}</code>?
-    </svelte:fragment>
-    <svelte:fragment slot="output">
-      > <code style="color: var(--green)">5</code> + <code style="color: var(--mauve)">10</code> = <code style="color: var(--yellow)">15</code> <br>
-      > Hallo <code style="color: var(--teal);">{$nameStore}</code>!
-      > Hey <code style="color: var(--teal);">{$nameStore}</code>! Wusstest du dass: <code style="color: var(--green)">5</code> + <code style="color: var(--mauve)">10</code> = <code style="color: var(--yellow)">15</code>?
-    </svelte:fragment>
-  </InteractiveCodeExample>
+  <InteractiveCodeExample code={exampleCode} output={exampleOutput} />
 
   <p>
     Wie du siehst, kannst du Variablen auch mit <code class="inline-code">print()</code> ausgeben und mehrere Variablen aneinanderreihen. <br>
@@ -50,6 +52,4 @@
     <br>
     Wie du siehst, kannst du mit Variablen auch rechnen, aber dazu erfährst du mehr in Level 2.<br>
   </p>
-</LessonCard>
-
-<NavButtons nextHref="aufg" backHref="../../aufgabe" />
+</LessonPage>

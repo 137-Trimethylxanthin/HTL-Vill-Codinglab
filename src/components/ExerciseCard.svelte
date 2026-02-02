@@ -11,6 +11,7 @@
   export let validateButtonLabel: string = "Ausführen";
   export let initialOutput: string = "> Hier ist dein Output";
   export let autofocus: boolean = true;
+  export let showOutput: boolean = true;
 
   const dispatch = createEventDispatcher();
 
@@ -81,7 +82,9 @@
     {validateButtonLabel}
   </button>
 
-  <ConsoleOutput output={output} isValid={outputState} />
+  {#if showOutput}
+    <ConsoleOutput output={output} isValid={outputState} />
+  {/if}
 </div>
 
 <NavButtons

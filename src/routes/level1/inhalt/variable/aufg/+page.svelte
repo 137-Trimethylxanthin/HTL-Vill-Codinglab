@@ -1,22 +1,21 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import ExerciseCard from "../../../../../components/ExerciseCard.svelte";
+  import type ExerciseCard from "../../../../../components/ExerciseCard.svelte";
   import CodeBlock from "../../../../../components/CodeBlock.svelte";
   import CodeInput from "../../../../../components/CodeInput.svelte";
+  import ExercisePage from "../../../../../components/ExercisePage.svelte";
+  import { isTypeMatch, normalizeIdentifier } from "../../../../../utils/validation";
+
+  type InputState = "" | "correct" | "wrong" | "nameErr" | "vergleichErr" | "bothErr";
 
   let exerciseCard: ExerciseCard;
-  let stat = ["", "", "", "", "", "", "", "", "", "", "", "", ""];
+  let stat: InputState[] = ["", "", "", "", "", "", "", "", "", "", "", "", ""];
 
-  let correct_answers = [
-    { name: "jahr", answer: "int" },
-    { name: "greeting", answer: "str" },
-    { name: "monat", answer: "int" },
-    { name: "name", answer: "str" },
-    { name: "tag", answer: "int" },
-    { name: "wochentag", answer: "str" },
-    { name: "print1", answer: ["jahr", "monat", "tag"] },
-    { name: "print2", answer: ["greeting", "name"] },
-    { name: "print3", answer: ["wochentag", "name"] },
+  const expectedTypes = ["int", "str", "int", "str", "int", "str"];
+  const expectedPrints = [
+    ["jahr", "monat", "tag"],
+    ["greeting", "name"],
+    ["wochentag", "name"],
   ];
 
   let user_jahr = "";
@@ -44,73 +43,39 @@
 
   let errors = 0;
 
-  function validate() {
-    let user_answers = [
-      { name: "jahr", answer: user_jahr },
-      { name: "begrüsung", answer: user_greeting },
-      { name: "monat_nummer", answer: user_monat_nummer },
-      { name: "name", answer: user_name },
-      { name: "tag", answer: user_tag },
-      { name: "wochentag", answer: user_wochen_tag },
-      { name: "print1", answer: [user_print1_1, user_print1_2, user_print1_3] },
-      { name: "print2", answer: [user_print2_1, user_print2_2] },
-      { name: "print3", answer: [user_print3_1, user_print3_2] },
-    ];
+  function setState(index: number, ok: boolean) {
+    stat[index] = ok ? "correct" : "wrong";
+    return ok;
+  }
 
+  function validate() {
     let correct = true;
     stat = ["", "", "", "", "", "", "", "", "", "", "", "", ""];
 
-    for (let i = 0; i < correct_answers.length; i++) {
-      let correct_answer = correct_answers[i];
-      let user_answer = user_answers[i];
-      if (correct_answer.answer !== user_answer.answer) {
-        if (correct_answer.name.startsWith("print")) {
-          let correct_temp = true;
-          for (let j = 0; j < correct_answer.answer.length; j++) {
-            let correct_print_answer = correct_answer.answer[j];
-            let user_print_answer = user_answer.answer[j];
-            if (correct_print_answer !== user_print_answer) {
-              correct_temp = false;
-              if (i === 6) {
-                stat[6 + j] = "wrong";
-              } else if (i === 7) {
-                stat[9 + j] = "wrong";
-              } else if (i === 8) {
-                stat[11 + j] = "wrong";
-              }
-            } else {
-              if (i === 6) {
-                stat[6 + j] = "correct";
-              } else if (i === 7) {
-                stat[9 + j] = "correct";
-              } else if (i === 8) {
-                stat[11 + j] = "correct";
-              }
-            }
-          }
-          if (!correct_temp) {
-            correct = false;
-          }
-        } else {
-          correct = false;
-          stat[i] = "wrong";
-        }
-      } else {
-        if (correct_answer.name.startsWith("print")) {
-          for (let j = 0; j < correct_answer.answer.length; j++) {
-            if (i === 6) {
-              stat[6 + j] = "correct";
-            } else if (i === 7) {
-              stat[9 + j] = "correct";
-            } else if (i === 8) {
-              stat[11 + j] = "correct";
-            }
-          }
-        } else {
-          stat[i] = "correct";
-        }
+    const typeInputs = [user_jahr, user_greeting, user_monat_nummer, user_name, user_tag, user_wochen_tag];
+    typeInputs.forEach((input, index) => {
+      const ok = isTypeMatch(input, expectedTypes[index]);
+      if (!setState(index, ok)) {
+        correct = false;
       }
-    }
+    });
+
+    const printInputs = [
+      [user_print1_1, user_print1_2, user_print1_3],
+      [user_print2_1, user_print2_2],
+      [user_print3_1, user_print3_2],
+    ];
+    const printOffsets = [6, 9, 11];
+
+    printInputs.forEach((group, groupIndex) => {
+      group.forEach((input, inputIndex) => {
+        const expected = expectedPrints[groupIndex][inputIndex];
+        const ok = normalizeIdentifier(input) === expected;
+        if (!setState(printOffsets[groupIndex] + inputIndex, ok)) {
+          correct = false;
+        }
+      });
+    });
 
     if (correct) {
       exerciseCard.stopTimer(true);
@@ -139,10 +104,10 @@
   });
 </script>
 
-<ExerciseCard
-  bind:this={exerciseCard}
+<ExercisePage
+  bind:exerciseCard
   title="Variablen - Aufgabe"
-  prompt="Ich hoffe, du hast dir die Erklärung durchgelesen, denn nun kommt die Aufgabe. <br>Fülle die Lücken passend aus und drücke auf \"Ausführen\". <br>Du musst den Variablen auch mit <b>str</b> oder <b>int</b> einen Datentyp geben."
+  prompt="Ich hoffe, du hast dir die Erklärung durchgelesen, denn nun kommt die Aufgabe. <br>Fülle die Lücken passend aus und drücke auf &quot;Ausführen&quot;. <br>Du musst den Variablen auch mit <b>str</b> oder <b>int</b> einen Datentyp geben."
   nextHref="../input/expl"
   backHref="../../aufgabe"
   on:validate={validate}
@@ -182,23 +147,23 @@
       maxLength={23}
     />" <br>
 
-    <code class="comment"># Hier soll das Jahr, der Monat und der Tag ausgefüllt werden</code>
+    <code class="comment"># Hier soll das Jahr, der Monat und der Tag ausgefüllt werden</code><br>
     print("Jahr:", <CodeInput bind:value={user_print1_1} state={stat[6]} width="6.5vw" maxLength={12} />, "Monat:" <CodeInput
       bind:value={user_print1_2}
       state={stat[7]}
       width="6.5vw"
       maxLength={12}
-    />, "Tag:", <CodeInput bind:value={user_print1_3} state={stat[8]} width="6.5vw" maxLength={12} />)
+    />, "Tag:", <CodeInput bind:value={user_print1_3} state={stat[8]} width="6.5vw" maxLength={12} />)<br>
 
-    <code class="comment"># Hier bitte die Begrüßung und den Namen einfüllen</code>
+    <code class="comment"># Hier bitte die Begrüßung und den Namen einfüllen</code><br>
     print(<CodeInput bind:value={user_print2_1} state={stat[9]} width="6vw" maxLength={8} /> + " " + <CodeInput
       bind:value={user_print2_2}
       state={stat[10]}
       width="5.5vw"
       maxLength={10}
-    /> + " wie geht es dir?")
+    /> + " wie geht es dir?")<br>
 
-    <code class="comment"># Hier soll der Wochentag und der Name hin</code>
+    <code class="comment"># Hier soll der Wochentag und der Name hin</code><br>
     print(f"Hey, ist dieser &#123;<CodeInput bind:value={user_print3_1} state={stat[11]} width="6vw" maxLength={10} />} nicht ein schöner Tag, &#123;<CodeInput
       bind:value={user_print3_2}
       state={stat[12]}
@@ -206,4 +171,4 @@
       maxLength={10}
     />}
   </CodeBlock>
-</ExerciseCard>
+</ExercisePage>

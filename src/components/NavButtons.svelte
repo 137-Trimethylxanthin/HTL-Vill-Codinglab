@@ -52,8 +52,20 @@
 <style>
   .nav-buttons {
     display: flex;
+    flex-direction: column;
     gap: 10px;
     margin-top: 20px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .nav-buttons :global(.next),
+  .nav-buttons :global(.back) {
+    position: static;
+    right: auto;
+    bottom: auto;
+    transform: none;
   }
 </style>
 

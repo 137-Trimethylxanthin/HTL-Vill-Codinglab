@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { afterNavigate, onMount } from "svelte";
+  import { onMount } from "svelte";
+  import { afterNavigate } from "$app/navigation";
   import { page } from "$app/stores";
   import { level1Store } from "../utils/stores";
   import { createEventDispatcher } from "svelte";
