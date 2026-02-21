@@ -1,7 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::fs::OpenOptions;
+use std::fs::{File, OpenOptions};
+use std::io::BufWriter;
 use std::path::Path;
 use std::sync::Mutex;
 use std::time::SystemTime;
@@ -14,6 +15,7 @@ use aes_gcm::{
     Aes256Gcm, Nonce, Key
 };
 use rand::Rng;
+use printpdf::{BuiltinFont, Mm, Op, PdfDocument, PdfFontHandle, PdfPage, PdfSaveOptions, Pt, RawImage, TextItem, TextMatrix, XObjectTransform};
 use serde::{Deserialize, Serialize};
 use tauri_plugin_dialog::DialogExt;
 use tauri::path::BaseDirectory;
@@ -242,6 +244,12 @@ struct EncryptedData {
     nonce: [u8; 12],
 }
 
+#[derive(Serialize)]
+struct CertificatePayload {
+    path: String,
+    pdf_bytes: Vec<u8>,
+}
+
 fn encrypt_credentials(credentials: &SmtpCredentials, key: &[u8; 32]) -> EncryptedData {
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
     let mut rng = rand::rng();
@@ -442,6 +450,192 @@ fn send_mail<R: Runtime>(app: tauri::AppHandle<R>, state: State<'_, ApplicationS
     ).map_err(|e| e.to_string())?;
     
     Ok(true)
+}
+
+#[tauri::command]
+fn create_certificate<R: Runtime>(
+    app: tauri::AppHandle<R>,
+    state: State<'_, ApplicationState>,
+    name: &str,
+) -> Result<CertificatePayload, String> {
+    let state_name = state.name.lock().unwrap().clone();
+    if state_name.is_empty() {
+        return Err("Kein aktiver Benutzer gefunden".to_string());
+    }
+
+    let certificate_name = name.trim();
+    if certificate_name.len() < 3 {
+        return Err("Name muss mindestens 3 Zeichen lang sein".to_string());
+    }
+
+    let safe_name = certificate_name
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect::<String>();
+    let file_name = format!("certificate_{}_{}.pdf", safe_name, get_sys_time_in_secs());
+
+    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    fs::create_dir_all(&app_data_dir).map_err(|e| e.to_string())?;
+    let certificate_path = app_data_dir.join(file_name);
+
+    let level1_completed = *state.level1_completed.lock().unwrap();
+    let level2_completed = *state.level2_completed.lock().unwrap();
+    let level3_completed = *state.level3_completed.lock().unwrap();
+    let level1_time_completed = *state.level1_time_completed.lock().unwrap();
+    let level2_time_completed = *state.level2_time_completed.lock().unwrap();
+    let level3_time_completed = *state.level3_time_completed.lock().unwrap();
+    let level1_score = *state.level1_score.lock().unwrap();
+    let level2_score = *state.level2_score.lock().unwrap();
+    let level3_score = *state.level3_score.lock().unwrap();
+    let total_score = level1_score + level2_score + level3_score;
+
+    let mut doc = PdfDocument::new("Coding Lab Certificate");
+    let page_width = Mm(210.0);
+    let page_height = Mm(297.0);
+    let mut ops = Vec::new();
+    let mut warnings = Vec::new();
+
+    let fmt_time = |seconds: usize| -> String { format!("{:02}:{:02}", seconds / 60, seconds % 60) };
+    let status_text = |completed: bool| if completed { "Abgeschlossen" } else { "Nicht abgeschlossen" };
+
+    if let Ok(logo) = RawImage::decode_from_bytes(include_bytes!("../icons/icon.png"), &mut warnings) {
+        let logo_id = doc.add_image(&logo);
+        ops.push(Op::UseXobject {
+            id: logo_id,
+            transform: XObjectTransform {
+                translate_x: Some(Mm(190.0).into()),
+                translate_y: Some(Mm(278.0).into()),
+                rotate: None,
+                scale_x: Some(0.4),
+                scale_y: Some(0.4),
+                dpi: Some(300.0),
+            },
+        });
+    }
+
+    ops.push(Op::StartTextSection);
+    ops.push(Op::SetFont {
+        size: Pt(12.0),
+        font: PdfFontHandle::Builtin(BuiltinFont::HelveticaBold),
+    });
+    ops.push(Op::SetTextMatrix {
+        matrix: TextMatrix::Translate(Mm(20.0).into(), Mm(278.0).into()),
+    });
+    ops.push(Op::ShowText {
+        items: vec![TextItem::Text("HTL Villach Informatik".to_string())],
+    });
+    ops.push(Op::SetFont {
+        size: Pt(34.0),
+        font: PdfFontHandle::Builtin(BuiltinFont::HelveticaBold),
+    });
+    ops.push(Op::SetTextMatrix {
+        matrix: TextMatrix::Translate(Mm(20.0).into(), Mm(248.0).into()),
+    });
+    ops.push(Op::ShowText {
+        items: vec![TextItem::Text("Zertifikat".to_string())],
+    });
+    ops.push(Op::SetFont {
+        size: Pt(18.0),
+        font: PdfFontHandle::Builtin(BuiltinFont::Helvetica),
+    });
+    ops.push(Op::SetTextMatrix {
+        matrix: TextMatrix::Translate(Mm(20.0).into(), Mm(230.0).into()),
+    });
+    ops.push(Op::ShowText {
+        items: vec![TextItem::Text(
+            "Dieses Zertifikat bestaetigt die Teilnahme".to_string(),
+        )],
+    });
+    ops.push(Op::SetTextMatrix {
+        matrix: TextMatrix::Translate(Mm(20.0).into(), Mm(220.0).into()),
+    });
+    ops.push(Op::ShowText {
+        items: vec![TextItem::Text("am Coding Lab der HTL Villach.".to_string())],
+    });
+    ops.push(Op::SetFont {
+        size: Pt(26.0),
+        font: PdfFontHandle::Builtin(BuiltinFont::HelveticaBold),
+    });
+    ops.push(Op::SetTextMatrix {
+        matrix: TextMatrix::Translate(Mm(20.0).into(), Mm(198.0).into()),
+    });
+    ops.push(Op::ShowText {
+        items: vec![TextItem::Text(certificate_name.to_string())],
+    });
+    ops.push(Op::SetFont {
+        size: Pt(16.0),
+        font: PdfFontHandle::Builtin(BuiltinFont::Helvetica),
+    });
+    ops.push(Op::SetTextMatrix {
+        matrix: TextMatrix::Translate(Mm(20.0).into(), Mm(176.0).into()),
+    });
+    ops.push(Op::ShowText {
+        items: vec![TextItem::Text(format!(
+            "Erreichte Gesamtpunkte: {} / 300",
+            total_score
+        ))],
+    });
+
+    ops.push(Op::SetTextMatrix {
+        matrix: TextMatrix::Translate(Mm(20.0).into(), Mm(156.0).into()),
+    });
+    ops.push(Op::ShowText {
+        items: vec![TextItem::Text(format!(
+            "Level 1: {} ({}, {} Punkte)",
+            status_text(level1_completed),
+            fmt_time(level1_time_completed),
+            level1_score
+        ))],
+    });
+    ops.push(Op::SetTextMatrix {
+        matrix: TextMatrix::Translate(Mm(20.0).into(), Mm(146.0).into()),
+    });
+    ops.push(Op::ShowText {
+        items: vec![TextItem::Text(format!(
+            "Level 2: {} ({}, {} Punkte)",
+            status_text(level2_completed),
+            fmt_time(level2_time_completed),
+            level2_score
+        ))],
+    });
+    ops.push(Op::SetTextMatrix {
+        matrix: TextMatrix::Translate(Mm(20.0).into(), Mm(136.0).into()),
+    });
+    ops.push(Op::ShowText {
+        items: vec![TextItem::Text(format!(
+            "Level 3: {} ({}, {} Punkte)",
+            status_text(level3_completed),
+            fmt_time(level3_time_completed),
+            level3_score
+        ))],
+    });
+
+    ops.push(Op::SetTextMatrix {
+        matrix: TextMatrix::Translate(Mm(20.0).into(), Mm(28.0).into()),
+    });
+    ops.push(Op::ShowText {
+        items: vec![TextItem::Text("HTL Villach - Coding Lab".to_string())],
+    });
+    ops.push(Op::EndTextSection);
+
+    let page = PdfPage::new(page_width, page_height, ops);
+    doc.with_pages(vec![page]);
+
+    let opts = PdfSaveOptions::default();
+    let pdf_bytes = doc.save(&opts, &mut warnings);
+    let mut writer = BufWriter::new(File::create(&certificate_path).map_err(|e| e.to_string())?);
+    writer.write_all(&pdf_bytes).map_err(|e| e.to_string())?;
+
+    Ok(CertificatePayload {
+        path: certificate_path.to_string_lossy().to_string(),
+        pdf_bytes,
+    })
 }
 
 #[tauri::command]
@@ -670,6 +864,7 @@ fn main() {
             has_smtp_credentials,
             setup_user,
             send_mail,
+            create_certificate,
             logout,
             get_name,
             open_code_with_filename,
