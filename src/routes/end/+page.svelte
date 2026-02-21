@@ -1,8 +1,7 @@
 <script lang="ts">
-    import { nameStore } from "../../utils/stores";
     import { invoke } from "@tauri-apps/api/core";
     import { ask, message } from "@tauri-apps/plugin-dialog";
-    import { level1Store, level2Store, level3Store } from "../../utils/stores";
+    import { level1Store, level2Store, level3Store, nameStore } from "../../utils/stores";
     import { onMount } from "svelte";
 
     async function logOut() {
@@ -133,6 +132,62 @@
         hasSmtpCredentials = await invoke("has_smtp_credentials");
     });
 
+    function checkName(e: any) {
+        nameStore.set((e.target as HTMLInputElement).value);
+    }
+
+    async function openPdfAndPrint(pdfBytes: number[]) {
+        const blobUrl = URL.createObjectURL(new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" }));
+        const overlay = document.createElement("div");
+        overlay.style.position = "fixed";
+        overlay.style.inset = "0";
+        overlay.style.background = "white";
+        overlay.style.zIndex = "99999";
+
+        const iframe = document.createElement("iframe");
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        iframe.style.border = "0";
+        iframe.src = blobUrl;
+        overlay.appendChild(iframe);
+        document.body.appendChild(overlay);
+
+        const cleanup = () => {
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+            URL.revokeObjectURL(blobUrl);
+        };
+
+        const onAfterPrint = () => {
+            window.removeEventListener("afterprint", onAfterPrint);
+            cleanup();
+        };
+        window.addEventListener("afterprint", onAfterPrint);
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                onAfterPrint();
+            }
+        });
+
+        iframe.onload = () => {
+            setTimeout(() => window.print(), 250);
+        };
+    }
+
+    async function createCertificate() {
+        if ($nameStore === undefined || $nameStore.length < 3) {
+            message("Name muss mindestens 3 Zeichen lang sein", { title: "Fehler" });
+            return;
+        }
+        try {
+            const payload = await invoke<{ path: string; pdf_bytes: number[] }>("create_certificate", { name: $nameStore });
+            await openPdfAndPrint(payload.pdf_bytes);
+        } catch (err) {
+            await message(`Zertifikat konnte nicht erstellt werden: ${err}`, { title: "Fehler" });
+        }
+    }
+
 </script>
 
 <div class="title noMargin">
@@ -172,5 +227,12 @@
         <p>Der Versand per E-Mail ist derzeit nicht verfügbar, da keine SMTP-Zugangsdaten hinterlegt sind.</p>
     </div>
 {/if}
+
+<div class="logoutContainer">
+    <h1>Zertifikat</h1>
+    <p>Hier kannst du ein Zertifikat für deine Leistung erstellen.</p>
+    <input type="text" id="name" placeholder="Name" value={$nameStore} on:input={checkName} required autocomplete="off"/><br />
+    <button class="button createCertificate" on:click={createCertificate}>Zertifikat erstellen</button>
+</div>
 
 <button class="ende" on:click={logOut}>Beenden</button>
