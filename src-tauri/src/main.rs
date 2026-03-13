@@ -117,27 +117,41 @@ impl VSCodeInstallation {
     }
 
     async fn install_extension<R: Runtime>(extension: &str, app: &tauri::AppHandle<R>) {
-        let output = if cfg!(target_os = "windows") {
-            app.shell().command("cmd")
+        let result = if cfg!(target_os = "windows") {
+            app.shell()
+                .command("cmd")
                 .args([
                     "/C",
                     format!("C: && code --install-extension {}", extension).as_str(),
                 ])
                 .output()
                 .await
-                .expect("failed to execute process")
         } else {
-            app.shell().command("sh")
+            app.shell()
+                .command("sh")
                 .args([
                     "-c",
                     format!("code --install-extension {}", extension).as_str(),
                 ])
                 .output()
                 .await
-                .expect("failed to execute process")
         };
 
-        println!("{:?}", output.stdout);
+        match result {
+            Ok(output) => {
+                if output.status.success() {
+                    println!("Extension installed successfully");
+                    println!("{:?}", output.stdout);
+                } else {
+                    eprintln!("Extension installation failed");
+                    eprintln!("stdout: {:?}", output.stdout);
+                    eprintln!("stderr: {:?}", output.stderr);
+                }
+            }
+            Err(err) => {
+                eprintln!("Failed to execute install command: {}", err);
+            }
+        }
     }
 
     fn get_settings_path() -> String {
