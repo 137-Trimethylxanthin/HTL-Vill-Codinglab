@@ -12,12 +12,12 @@
     let showSMTPCredentialsModal = false;
 
     onMount(async () => {
-        const wasIgnored = typeof window !== 'undefined' && sessionStorage.getItem('smtpModalIgnored') === 'true';
-        if (wasIgnored) {
+        const isPromptDisabled = await invoke<boolean>('is_smtp_prompt_disabled');
+        if (isPromptDisabled) {
             return;
         }
 
-        const hasCredentials = await invoke('has_smtp_credentials');
+        const hasCredentials = await invoke<boolean>('has_smtp_credentials');
         if (!hasCredentials) {
             showSMTPCredentialsModal = true;
         }
@@ -27,10 +27,8 @@
         showSMTPCredentialsModal = false;
     }
 
-    function handleIgnoreModal() {
-        if (typeof window !== 'undefined') {
-            sessionStorage.setItem('smtpModalIgnored', 'true');
-        }
+    async function handleIgnoreModal() {
+        await invoke('disable_smtp_prompt');
         showSMTPCredentialsModal = false;
     }
 

@@ -330,6 +330,20 @@ fn has_smtp_credentials<R: Runtime>(app: tauri::AppHandle<R>) -> bool {
 }
 
 #[tauri::command]
+fn is_smtp_prompt_disabled<R: Runtime>(app: tauri::AppHandle<R>) -> bool {
+    let app_data_dir = app.path().app_data_dir().unwrap();
+    app_data_dir.join("smtp_prompt_disabled").exists()
+}
+
+#[tauri::command]
+fn disable_smtp_prompt<R: Runtime>(app: tauri::AppHandle<R>) -> Result<(), String> {
+    let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    fs::create_dir_all(&app_data_dir).map_err(|e| e.to_string())?;
+    fs::write(app_data_dir.join("smtp_prompt_disabled"), b"1").map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
 fn setup_user<R: Runtime>(
     app: tauri::AppHandle<R>,
     state: State<'_, ApplicationState>,
@@ -876,6 +890,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             store_smtp_credentials,
             has_smtp_credentials,
+            is_smtp_prompt_disabled,
+            disable_smtp_prompt,
             setup_user,
             send_mail,
             create_certificate,
