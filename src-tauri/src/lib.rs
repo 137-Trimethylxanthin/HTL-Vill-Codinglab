@@ -4,6 +4,7 @@ mod commands;
 mod config;
 mod emails;
 mod error;
+mod history;
 mod mail;
 mod secrets;
 
