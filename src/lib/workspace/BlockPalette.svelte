@@ -17,13 +17,13 @@
 	} = $props();
 </script>
 
-<section class="flex flex-col gap-3">
-	<h2 class="text-sm font-bold tracking-wide text-muted-foreground uppercase">
+<section class="flex flex-col gap-3 portrait:flex-row portrait:items-stretch">
+	<h2 class="text-sm font-bold tracking-wide text-muted-foreground uppercase portrait:hidden">
 		{t.workspace.palette}
 	</h2>
 	{#each blocks as type (type)}
 		<button
-			class="press touch-none text-left disabled:opacity-50"
+			class="press touch-none text-left disabled:opacity-50 portrait:w-48 portrait:shrink-0"
 			{disabled}
 			onpointerdown={(e) => onGrab(type, e)}
 			onkeydown={(e) => {
@@ -36,5 +36,7 @@
 			<BlockTile {type} n={BLOCKS[type].param?.default} />
 		</button>
 	{/each}
-	<p class="mt-2 text-center text-sm text-muted-foreground">{t.workspace.trashHint}</p>
+	<p class="mt-2 text-center text-sm text-muted-foreground portrait:hidden">
+		{t.workspace.trashHint}
+	</p>
 </section>

@@ -1,13 +1,14 @@
 <script lang="ts">
 	import {
-		ChevronLeft,
-		ChevronRight,
 		FastForward,
+		Map as MapIcon,
 		Play,
 		RotateCcw,
+		SkipForward,
 		Square,
 		Star
 	} from '@lucide/svelte';
+	import type { MissionResult } from '$lib/session/types';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { findBlock, type Slot } from '$lib/blocks/edit';
@@ -32,14 +33,18 @@
 	let {
 		mission,
 		runner,
-		onPrev,
-		onNext
+		onBack,
+		onSkip,
+		onDone
 	}: {
 		mission: Mission;
 		runner: PythonRunner;
-		onPrev?: () => void;
-		onNext?: () => void;
+		onBack: () => void;
+		onSkip: () => void;
+		onDone: (result: MissionResult) => void;
 	} = $props();
+
+	let tab = $state<'program' | 'python'>('program');
 
 	// The page re-creates this component per mission ({#key}), so these live for one mission.
 	const ctrl = $derived(new MissionRun(mission, runner));
@@ -178,6 +183,16 @@
 
 	const drag = new DragController(hitTest, (source, target) => ctrl.canDrop(source, target), apply);
 
+	// Idle reset or navigation can unmount us mid-run or mid-drag: leave nothing running.
+	$effect(() => {
+		const current = ctrl;
+		return () => {
+			drag.cancel();
+			current.dispose();
+			clearTimeout(landTimer);
+		};
+	});
+
 	function grab(source: DragSource, e: PointerEvent) {
 		if (ctrl.status === 'running' || e.button > 0) return;
 		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -220,38 +235,35 @@
 	}}
 />
 
-<div class="grid h-full grid-rows-[auto_1fr] gap-4 bg-sky p-4">
+<div
+	class="grid h-full grid-rows-[auto_minmax(0,1fr)] gap-4 bg-sky p-4 portrait:gap-3 portrait:p-3"
+>
 	<header class="flex items-center gap-3 rounded-3xl bg-card px-3 py-3 shadow-sm">
-		<Button
-			variant="ghost"
-			class="size-14 press rounded-2xl"
-			aria-label={t.workspace.prevMission}
-			disabled={!onPrev}
-			onclick={() => onPrev?.()}><ChevronLeft class="size-8" /></Button
+		<Button variant="ghost" class="h-14 press rounded-2xl px-4 text-lg" onclick={() => onBack()}
+			><MapIcon class="size-7" />{t.workspace.back}</Button
 		>
 		<span class="rounded-xl bg-drone px-3 py-1 font-display text-xl font-bold text-drone-foreground"
 			>{mission.id}</span
 		>
 		<div class="min-w-0 grow">
-			<h1 class="text-3xl font-bold">{mission.title}</h1>
-			<p class="text-lg text-muted-foreground">{mission.goalText}</p>
+			<h1 class="truncate text-3xl font-bold portrait:text-2xl">{mission.title}</h1>
+			<p class="text-lg text-muted-foreground portrait:text-base">{mission.goalText}</p>
 		</div>
 		<Button
 			variant="ghost"
-			class="size-14 press rounded-2xl"
-			aria-label={t.workspace.nextMission}
-			disabled={!onNext}
-			onclick={() => onNext?.()}><ChevronRight class="size-8" /></Button
+			class="h-14 press rounded-2xl px-4 text-lg"
+			disabled={ctrl.status === 'running'}
+			onclick={() => onSkip()}>{t.workspace.skip}<SkipForward class="size-6" /></Button
 		>
 	</header>
 
 	<div
-		class="grid min-h-0 grid-cols-[minmax(13rem,0.8fr)_minmax(24rem,1.4fr)_minmax(20rem,1.4fr)] gap-4"
+		class="grid min-h-0 gap-4 portrait:grid-rows-[minmax(0,42fr)_auto_minmax(0,58fr)] portrait:gap-3 landscape:grid-cols-[minmax(13rem,0.8fr)_minmax(24rem,1.4fr)_minmax(20rem,1.4fr)]"
 	>
 		<div
 			data-drop-trash
 			class={cn(
-				'min-h-0 overflow-y-auto rounded-3xl bg-card/70 p-4 transition-colors',
+				'min-h-0 overflow-y-auto rounded-3xl bg-card/70 p-4 transition-colors portrait:row-start-2 portrait:overflow-x-auto portrait:overflow-y-hidden portrait:p-3',
 				drag.hover?.kind === 'trash' && 'bg-destructive/15'
 			)}
 		>
@@ -265,44 +277,72 @@
 
 		<div
 			data-drop-panel
-			class="grid min-h-0 min-w-0 grid-cols-1 grid-rows-[minmax(0,3fr)_minmax(0,2fr)] gap-4 rounded-3xl bg-card/70 p-4 [&>*]:min-w-0"
+			class="flex min-h-0 min-w-0 flex-col gap-4 rounded-3xl bg-card/70 p-4 portrait:row-start-3 portrait:gap-3 portrait:p-3"
 		>
-			<ProgramList
-				program={ctrl.program}
-				activeId={ctrl.activeId}
-				locked={ctrl.status === 'running'}
-				draggingId={drag.active?.kind === 'program' ? drag.active.id : null}
-				hover={drag.hover?.kind === 'slot' ? drag.hover.target : null}
-				{landedId}
-				onRemove={(id) => {
-					coach.activity();
-					ctrl.remove(id);
-				}}
-				onStep={(id, delta) => {
-					coach.activity();
-					ctrl.step(id, delta);
-				}}
-				onGrab={(id, e) => grab({ kind: 'program', id }, e)}
-			/>
-			<PythonView
-				code={ctrl.python.code}
-				activeLine={ctrl.player.line}
-				numberTargets={ctrl.numberTargets}
-				onNumber={mission.editablePython && ctrl.status !== 'running'
-					? (id, delta) => {
-							coach.activity();
-							ctrl.step(id, delta);
-						}
-					: undefined}
-			/>
+			<div class="flex gap-2 landscape:hidden">
+				<Button
+					variant={tab === 'program' ? 'default' : 'secondary'}
+					class="h-14 grow press rounded-2xl text-lg"
+					onclick={() => (tab = 'program')}>{t.workspace.showProgram}</Button
+				>
+				<Button
+					variant={tab === 'python' ? 'default' : 'secondary'}
+					class="h-14 grow press rounded-2xl text-lg"
+					onclick={() => (tab = 'python')}>{t.workspace.showPython}</Button
+				>
+			</div>
+			<div
+				class={cn(
+					'flex min-h-0 min-w-0 flex-col landscape:flex-[3]',
+					tab === 'python' ? 'portrait:hidden' : 'portrait:flex-1'
+				)}
+			>
+				<ProgramList
+					program={ctrl.program}
+					activeId={ctrl.activeId}
+					locked={ctrl.status === 'running'}
+					draggingId={drag.active?.kind === 'program' ? drag.active.id : null}
+					hover={drag.hover?.kind === 'slot' ? drag.hover.target : null}
+					{landedId}
+					onRemove={(id) => {
+						coach.activity();
+						ctrl.remove(id);
+					}}
+					onStep={(id, delta) => {
+						coach.activity();
+						ctrl.step(id, delta);
+					}}
+					onGrab={(id, e) => grab({ kind: 'program', id }, e)}
+				/>
+			</div>
+			<div
+				class={cn(
+					'flex min-h-0 min-w-0 flex-col landscape:flex-[2]',
+					tab === 'program' ? 'portrait:hidden' : 'portrait:flex-1'
+				)}
+			>
+				<PythonView
+					code={ctrl.python.code}
+					activeLine={ctrl.player.line}
+					numberTargets={ctrl.numberTargets}
+					onNumber={mission.editablePython && ctrl.status !== 'running'
+						? (id, delta) => {
+								coach.activity();
+								ctrl.step(id, delta);
+							}
+						: undefined}
+				/>
+			</div>
 		</div>
 
-		<div class="relative grid min-h-0 grid-rows-[1fr_auto] gap-4 rounded-3xl bg-card/70 p-4">
+		<div
+			class="relative grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-4 rounded-3xl bg-card/70 p-4 portrait:row-start-1 portrait:gap-2 portrait:p-3"
+		>
 			<div class="relative min-h-0">
 				<DroneStage player={ctrl.player} fog={mission.fog} />
 				<Coach {coach} />
 			</div>
-			<div class="flex flex-col gap-3">
+			<div class="flex flex-col gap-3 portrait:gap-2">
 				{#if ctrl.notice}
 					<p
 						class="rounded-2xl bg-warn px-4 py-2 text-center text-lg font-bold text-warn-foreground"
@@ -313,7 +353,7 @@
 				{#if ctrl.message}
 					<div
 						class={cn(
-							'rounded-2xl px-4 py-3 text-center text-xl font-bold',
+							'rounded-2xl px-4 py-3 text-center text-xl font-bold portrait:py-2',
 							ctrl.status === 'success' ? 'bg-success text-white' : 'bg-warn text-warn-foreground'
 						)}
 					>
@@ -331,17 +371,14 @@
 									</span>
 								{/each}
 							</span>
-							{#if onNext}
-								<Button
-									class="mt-2 h-14 press rounded-2xl bg-white px-8 text-xl font-bold text-success"
-									onclick={() => onNext?.()}
-									>{t.workspace.next}<ChevronRight class="size-6" /></Button
-								>
-							{/if}
+							<Button
+								class="mt-2 h-14 press rounded-2xl bg-white px-8 text-xl font-bold text-success"
+								onclick={() => onDone(ctrl.result())}>{t.workspace.next}</Button
+							>
 						{/if}
 					</div>
 				{/if}
-				<div class="flex gap-3">
+				<div class="flex gap-3 portrait:gap-2">
 					{#if ctrl.status === 'running'}
 						<Button
 							class="h-16 grow press rounded-2xl bg-destructive text-2xl font-bold text-white"

@@ -40,7 +40,7 @@
 	}
 </script>
 
-<section class="flex min-h-0 flex-col gap-3">
+<section class="flex min-h-0 flex-1 flex-col gap-3">
 	<h2 class="text-sm font-bold tracking-wide text-muted-foreground uppercase">
 		{t.workspace.python}
 	</h2>
