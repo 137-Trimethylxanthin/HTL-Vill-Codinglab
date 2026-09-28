@@ -239,8 +239,12 @@
 	class="grid h-full grid-rows-[auto_minmax(0,1fr)] gap-4 bg-sky p-4 portrait:gap-3 portrait:p-3"
 >
 	<header class="flex items-center gap-3 rounded-3xl bg-card px-3 py-3 shadow-sm">
-		<Button variant="ghost" class="h-14 press rounded-2xl px-4 text-lg" onclick={() => onBack()}
-			><MapIcon class="size-7" />{t.workspace.back}</Button
+		<Button
+			variant="ghost"
+			class="h-14 min-w-14 shrink-0 press rounded-2xl px-4 text-lg"
+			aria-label={t.workspace.back}
+			onclick={() => onBack()}
+			><MapIcon class="size-7" /><span class="max-md:hidden">{t.workspace.back}</span></Button
 		>
 		<span class="rounded-xl bg-drone px-3 py-1 font-display text-xl font-bold text-drone-foreground"
 			>{mission.id}</span
@@ -251,9 +255,11 @@
 		</div>
 		<Button
 			variant="ghost"
-			class="h-14 press rounded-2xl px-4 text-lg"
+			class="h-14 min-w-14 shrink-0 press rounded-2xl px-4 text-lg"
+			aria-label={t.workspace.skip}
 			disabled={ctrl.status === 'running'}
-			onclick={() => onSkip()}>{t.workspace.skip}<SkipForward class="size-6" /></Button
+			onclick={() => onSkip()}
+			><span class="max-md:hidden">{t.workspace.skip}</span><SkipForward class="size-6" /></Button
 		>
 	</header>
 
