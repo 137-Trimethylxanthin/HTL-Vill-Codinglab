@@ -148,4 +148,29 @@ describe('MissionRun', () => {
 		await vi.advanceTimersByTimeAsync(10000);
 		await running;
 	});
+	it('reports its result after success', async () => {
+		vi.useFakeTimers();
+		const ctrl = new MissionRun(m11, solvedRunner());
+		build(ctrl);
+		const running = ctrl.run();
+		await vi.advanceTimersByTimeAsync(10000);
+		await running;
+		const result = ctrl.result();
+		expect(result).toMatchObject({ id: '1.1', stars: 3, runs: 1, blocks: 3, skipped: false });
+		expect(result.seconds).toBeGreaterThanOrEqual(0);
+		expect(result.path.at(-1)).toBe('2,0');
+	});
+
+	it('dispose stops playback even right after start', async () => {
+		vi.useFakeTimers();
+		const ctrl = new MissionRun(m11, solvedRunner());
+		build(ctrl);
+		const running = ctrl.run();
+		await vi.advanceTimersByTimeAsync(50);
+		ctrl.dispose();
+		expect(ctrl.player.playing).toBe(false);
+		await vi.advanceTimersByTimeAsync(10000);
+		await running;
+		expect(ctrl.status).toBe('idle');
+	});
 });

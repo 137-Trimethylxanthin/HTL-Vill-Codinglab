@@ -27,6 +27,7 @@
 		"@tailwindcss/vite": "^4.3.0",
 		"@tauri-apps/cli": "^2.12.0",
 		"@types/node": "^24",
+		"@types/qrcode": "^1.5.6",
 		"cn": "^0.4.0",
 		"eslint": "^10.4.1",
 		"eslint-config-prettier": "^10.1.8",
@@ -52,6 +53,7 @@
 		"@lucide/svelte": "^1.48.0",
 		"@tauri-apps/api": "^2.12.0",
 		"pyodide": "^314.0.7",
+		"qrcode": "^1.5.4",
 		"zod": "^4.6.5"
 	}
 }

@@ -18,6 +18,7 @@ import { isGoalReached } from '$lib/missions/goal';
 import type { Mission } from '$lib/missions/schema';
 import { calcStars, type Stars } from '$lib/missions/stars';
 import type { PythonRunner } from '$lib/runtime/client';
+import type { MissionResult } from '$lib/session/types';
 import type { RunResult } from '$lib/sim/result';
 import { Player } from '$lib/stage/player.svelte';
 import { buildTimeline, startPose } from '$lib/stage/timeline';
@@ -44,6 +45,7 @@ export class MissionRun {
 	stars = $state<Stars>(0);
 	speed = $state<1 | 2>(1);
 	readonly player = new Player();
+	private readonly startedAt = Date.now();
 	private runStartedAt = 0;
 	python = $derived(toPython(this.program));
 	numberTargets = $derived(numberLines(this.program, this.python));
@@ -107,6 +109,25 @@ export class MissionRun {
 
 	toggleSpeed() {
 		this.speed = this.speed === 1 ? 2 : 1;
+	}
+
+	result(): MissionResult {
+		return {
+			id: this.mission.id,
+			stars: this.stars,
+			runs: this.runs,
+			blocks: countBlocks(this.program),
+			seconds: Math.round((Date.now() - this.startedAt) / 1000),
+			skipped: false,
+			path: [...this.player.visited]
+		};
+	}
+
+	/** Leaving the mission (navigation, idle reset): stop at once, no double-tap guard. */
+	dispose() {
+		this.player.stop();
+		this.status = 'idle';
+		this.message = null;
 	}
 
 	resetStage() {
