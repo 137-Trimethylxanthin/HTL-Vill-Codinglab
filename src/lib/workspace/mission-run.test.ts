@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { MAX_BLOCKS } from '$lib/blocks/edit';
 import { t } from '$lib/i18n/de';
 import { SHOWCASE } from '$lib/missions';
 import type { RunResult } from '$lib/sim/result';
@@ -6,8 +7,9 @@ import { World } from '$lib/sim/world';
 import { MissionRun } from './mission-run.svelte';
 
 const m11 = SHOWCASE[0];
+const m21 = SHOWCASE.find((m) => m.id === '2.1')!;
+const m32 = SHOWCASE.find((m) => m.id === '3.2')!;
 
-/** Fake runner that answers like the real one, using the world directly. */
 function solvedRunner() {
 	return {
 		run: async (): Promise<RunResult> => {
@@ -22,10 +24,9 @@ function solvedRunner() {
 
 function build(ctrl: MissionRun) {
 	ctrl.add('takeoff');
-	ctrl.add('forward');
+	const forward = ctrl.add('forward')!;
 	ctrl.add('land');
-	const forward = ctrl.program[1];
-	ctrl.step(forward.id, 3);
+	ctrl.step(forward, 3);
 }
 
 afterEach(() => {
@@ -53,26 +54,83 @@ describe('MissionRun', () => {
 		expect(ctrl.message).toBe(t.app.loadFailed);
 	});
 
-	it('goes back to idle when the animation is cancelled', async () => {
+	it('goes back to idle when stopped', async () => {
 		vi.useFakeTimers();
 		const ctrl = new MissionRun(m11, solvedRunner());
 		build(ctrl);
 		const running = ctrl.run();
 		await vi.advanceTimersByTimeAsync(600);
-		ctrl.resetStage();
+		ctrl.stop();
+		expect(ctrl.status).toBe('idle');
 		await vi.advanceTimersByTimeAsync(10000);
 		await running;
 		expect(ctrl.status).toBe('idle');
+		expect(ctrl.player.playing).toBe(false);
 	});
 
-	it('ignores edits while running', async () => {
+	it('refuses edits and drops while running', async () => {
 		vi.useFakeTimers();
 		const ctrl = new MissionRun(m11, solvedRunner());
 		build(ctrl);
 		const running = ctrl.run();
-		ctrl.add('land');
+		expect(ctrl.add('land')).toBeNull();
+		expect(
+			ctrl.canDrop({ kind: 'palette', type: 'land' }, { parent: null, slot: 'body', index: 0 })
+		).toBe(false);
 		expect(ctrl.program).toHaveLength(3);
 		await vi.advanceTimersByTimeAsync(10000);
 		await running;
+	});
+
+	it('inserts into a loop body and moves blocks', () => {
+		const ctrl = new MissionRun(m21, solvedRunner());
+		const loop = ctrl.add('repeat')!;
+		const fwd = ctrl.insert('forward', { parent: loop, slot: 'body', index: 0 });
+		expect(fwd).not.toBeNull();
+		expect(ctrl.python.code).toContain('for i in range(2):\n    forward(1)');
+		ctrl.move(fwd!, { parent: null, slot: 'body', index: 0 });
+		expect(ctrl.program[0].id).toBe(fwd);
+	});
+
+	it('explains why a full program refuses more blocks', () => {
+		const ctrl = new MissionRun(m11, solvedRunner());
+		for (let i = 0; i < MAX_BLOCKS; i++) ctrl.add('forward');
+		expect(ctrl.add('forward')).toBeNull();
+		expect(ctrl.notice).toBe(t.workspace.full);
+		ctrl.remove(ctrl.program[0].id);
+		expect(ctrl.notice).toBeNull();
+	});
+
+	it('knows which drops are allowed', () => {
+		const ctrl = new MissionRun(m21, solvedRunner());
+		const loop = ctrl.add('repeat')!;
+		expect(
+			ctrl.canDrop({ kind: 'palette', type: 'land' }, { parent: loop, slot: 'body', index: 0 })
+		).toBe(true);
+		expect(
+			ctrl.canDrop({ kind: 'palette', type: 'land' }, { parent: loop, slot: 'else', index: 0 })
+		).toBe(false);
+		expect(
+			ctrl.canDrop({ kind: 'program', id: loop }, { parent: loop, slot: 'body', index: 0 })
+		).toBe(false);
+		expect(
+			ctrl.canDrop({ kind: 'program', id: 'nope' }, { parent: null, slot: 'body', index: 0 })
+		).toBe(false);
+	});
+
+	it('starts from the mission starter program and maps editable numbers', () => {
+		const ctrl = new MissionRun(m32, solvedRunner());
+		expect(ctrl.program.map((n) => n.type)[0]).toBe('takeoff');
+		expect(ctrl.program).toHaveLength(9);
+		const forwardLines = Object.keys(ctrl.numberTargets).map(Number);
+		expect(forwardLines).toEqual([4, 7, 10]);
+	});
+
+	it('toggles the speed', () => {
+		const ctrl = new MissionRun(m11, solvedRunner());
+		ctrl.toggleSpeed();
+		expect(ctrl.speed).toBe(2);
+		ctrl.toggleSpeed();
+		expect(ctrl.speed).toBe(1);
 	});
 });

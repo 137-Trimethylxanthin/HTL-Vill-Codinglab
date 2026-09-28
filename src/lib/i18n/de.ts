@@ -9,13 +9,22 @@ export const de = {
 		program: 'Dein Programm',
 		python: 'Python',
 		start: 'Start',
+		stop: 'Stopp',
+		speed: 'Schneller',
 		reset: 'Zurück',
-		emptyProgram: 'Tippe auf einen Befehl, um ihn hinzuzufügen.',
+		emptyProgram: 'Tippe oder zieh einen Befehl hierher.',
 		remove: 'Entfernen',
 		more: 'Mehr',
 		less: 'Weniger',
 		success: 'Geschafft!',
-		full: 'Dein Programm ist voll.'
+		full: 'Dein Programm ist voll. Lösch einen Block.',
+		else: 'sonst',
+		dropHere: 'Hier hineinziehen',
+		trashHint: 'Zieh Blöcke hierher. Dann sind sie weg.',
+		next: 'Weiter',
+		prevMission: 'Vorige Mission',
+		nextMission: 'Nächste Mission',
+		editNumber: 'Tippe auf eine Zahl. Dann kannst du sie ändern.'
 	},
 	blocks: {
 		takeoff: 'Abheben',
@@ -32,6 +41,9 @@ export const de = {
 	stage: {
 		label: 'Karte mit Drohne'
 	},
+	coach: {
+		ask: 'Hilf mir'
+	},
 	stops: {
 		edge: 'Hoppla – hier ist die Karte zu Ende!',
 		building: 'Autsch! Da steht ein Gebäude.',
@@ -43,7 +55,7 @@ export const de = {
 		badNumber: 'Diese Zahl passt hier nicht.',
 		unknownCommand: 'Diesen Befehl kennt die Drohne nicht.',
 		tooManySteps: 'Deine Drohne fliegt endlos im Kreis!',
-		timeout: 'Dein Programm läuft zu lange.'
+		timeout: 'Deine Drohne fliegt endlos im Kreis!'
 	},
 	pyErrors: {
 		SyntaxError: 'Da stimmt die Schreibweise nicht.',
@@ -55,7 +67,7 @@ export const de = {
 	},
 	outcome: {
 		stillFlying: 'Fast! Vergiss nicht zu landen.',
-		missed: 'Knapp daneben – versuch es nochmal.'
+		missed: 'Knapp daneben. Probier es nochmal.'
 	}
 };
 
