@@ -1,0 +1,23 @@
+{
+	"id": "1.1",
+	"level": 1,
+	"title": "Erster Flug",
+	"goalText": "Flieg zum Landeplatz und lande dort.",
+	"map": {
+		"rows": ["..P..", "B...B", ".....", ".B...", "....."],
+		"start": { "x": 2, "y": 4, "dir": "N" }
+	},
+	"blocks": ["takeoff", "forward", "land"],
+	"goal": { "type": "landOn" },
+	"stars": { "optimalBlocks": 3, "maxRunsFor3": 3 },
+	"hints": [
+		"Eine Drohne muss zuerst abheben.",
+		"Der Landeplatz ist 4 Felder vor dir.",
+		"Abheben, Vorwärts 4, Landen."
+	],
+	"solution": [
+		{ "id": "s1", "type": "takeoff" },
+		{ "id": "s2", "type": "forward", "n": 4 },
+		{ "id": "s3", "type": "land" }
+	]
+}
