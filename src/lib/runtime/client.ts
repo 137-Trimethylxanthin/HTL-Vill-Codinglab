@@ -29,6 +29,8 @@ export class PythonRunner {
 	private readyPromise!: Promise<void>;
 	private nextId = 1;
 	private pending = new Map<number, (result: RunResult) => void>();
+	private disposed = false;
+	private timers = new Set<ReturnType<typeof setTimeout>>();
 
 	constructor(
 		private readonly factory: WorkerFactory = defaultWorkerFactory,
@@ -48,12 +50,15 @@ export class PythonRunner {
 		const id = this.nextId++;
 		return new Promise((resolve) => {
 			const timer = setTimeout(() => {
+				this.timers.delete(timer);
 				this.pending.delete(id);
 				this.worker.terminate();
 				this.spawn();
 				resolve(timeoutResult(mission));
 			}, this.timeoutMs);
+			this.timers.add(timer);
 			this.pending.set(id, (result) => {
+				this.timers.delete(timer);
 				clearTimeout(timer);
 				resolve(result);
 			});
@@ -62,11 +67,15 @@ export class PythonRunner {
 	}
 
 	dispose() {
-		this.worker.terminate();
+		this.disposed = true;
+		for (const timer of this.timers) clearTimeout(timer);
+		this.timers.clear();
 		this.pending.clear();
+		this.worker.terminate();
 	}
 
 	private spawn() {
+		if (this.disposed) return;
 		const worker = this.factory();
 		this.worker = worker;
 		this.readyPromise = new Promise((resolve, reject) => {

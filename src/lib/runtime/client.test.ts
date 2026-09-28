@@ -83,4 +83,20 @@ describe('PythonRunner', () => {
 		expect(workers[0].terminated).toBe(true);
 		expect(workers).toHaveLength(2);
 	});
+	it('does not respawn after dispose, even with a run in flight', async () => {
+		vi.useFakeTimers();
+		const workers: FakeWorker[] = [];
+		const runner = new PythonRunner(() => {
+			const w = new FakeWorker();
+			workers.push(w);
+			return w;
+		}, 2000);
+		workers[0].emit({ type: 'ready' });
+		void runner.run('while True: pass', m11);
+		await vi.advanceTimersByTimeAsync(10);
+		runner.dispose();
+		await vi.advanceTimersByTimeAsync(5000);
+		expect(workers).toHaveLength(1);
+		expect(workers[0].terminated).toBe(true);
+	});
 });
