@@ -1,0 +1,52 @@
+{
+	"id": "3.2",
+	"level": 3,
+	"title": "Rettungsflug",
+	"goalText": "Bring die Erste Hilfe zum Wanderer. Dann lande.",
+	"map": {
+		"rows": [".D..P", ".....", "B.B.B", ".....", ".K..."],
+		"start": { "x": 0, "y": 4, "dir": "E" }
+	},
+	"editablePython": true,
+	"blocks": [
+		"takeoff",
+		"forward",
+		"turn_left",
+		"turn_right",
+		"pick_up",
+		"drop",
+		"photo",
+		"repeat",
+		"if_obstacle",
+		"land"
+	],
+	"goal": { "type": "complete" },
+	"stars": { "optimalBlocks": 9, "maxRunsFor3": 4 },
+	"hints": [
+		"Tippe im Python-Code auf eine Zahl.",
+		"Zähle die Felder bis zum Wanderer.",
+		"Die richtigen Zahlen sind 4 und 3."
+	],
+	"starter": [
+		{ "id": "p1", "type": "takeoff" },
+		{ "id": "p2", "type": "forward", "n": 1 },
+		{ "id": "p3", "type": "pick_up" },
+		{ "id": "p4", "type": "turn_left" },
+		{ "id": "p5", "type": "forward", "n": 2 },
+		{ "id": "p6", "type": "drop" },
+		{ "id": "p7", "type": "turn_right" },
+		{ "id": "p8", "type": "forward", "n": 1 },
+		{ "id": "p9", "type": "land" }
+	],
+	"solution": [
+		{ "id": "s1", "type": "takeoff" },
+		{ "id": "s2", "type": "forward", "n": 1 },
+		{ "id": "s3", "type": "pick_up" },
+		{ "id": "s4", "type": "turn_left" },
+		{ "id": "s5", "type": "forward", "n": 4 },
+		{ "id": "s6", "type": "drop" },
+		{ "id": "s7", "type": "turn_right" },
+		{ "id": "s8", "type": "forward", "n": 3 },
+		{ "id": "s9", "type": "land" }
+	]
+}

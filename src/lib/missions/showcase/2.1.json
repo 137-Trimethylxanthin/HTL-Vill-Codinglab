@@ -1,0 +1,31 @@
+{
+	"id": "2.1",
+	"level": 2,
+	"title": "Runde drehen",
+	"goalText": "Flieg durch alle Ringe zurück zum Start.",
+	"map": {
+		"rows": [".....", ".C.C.", "..B..", ".P.C.", "....."],
+		"start": { "x": 1, "y": 3, "dir": "N" }
+	},
+	"blocks": ["takeoff", "forward", "turn_left", "turn_right", "repeat", "land"],
+	"goal": { "type": "complete" },
+	"stars": { "optimalBlocks": 5, "maxRunsFor3": 3 },
+	"hints": [
+		"Die Runde hat 4 gleiche Seiten.",
+		"Mit Wiederhole sparst du viele Blöcke.",
+		"Wiederhole 4: Vorwärts 2, Rechts drehen."
+	],
+	"solution": [
+		{ "id": "s1", "type": "takeoff" },
+		{
+			"id": "s2",
+			"type": "repeat",
+			"n": 4,
+			"children": [
+				{ "id": "s3", "type": "forward", "n": 2 },
+				{ "id": "s4", "type": "turn_right" }
+			]
+		},
+		{ "id": "s5", "type": "land" }
+	]
+}

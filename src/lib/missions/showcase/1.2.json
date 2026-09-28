@@ -1,0 +1,25 @@
+{
+	"id": "1.2",
+	"level": 1,
+	"title": "Um die Ecke",
+	"goalText": "Flieg um die Häuser zum Landeplatz.",
+	"map": {
+		"rows": ["....P", ".BBB.", ".BBB.", ".BBB.", "....."],
+		"start": { "x": 0, "y": 4, "dir": "N" }
+	},
+	"blocks": ["takeoff", "forward", "turn_left", "turn_right", "land"],
+	"goal": { "type": "complete" },
+	"stars": { "optimalBlocks": 5, "maxRunsFor3": 3 },
+	"hints": [
+		"Du musst einmal abbiegen.",
+		"Flieg zuerst ganz nach oben.",
+		"Abheben, Vorwärts 4, Rechts drehen, Vorwärts 4, Landen."
+	],
+	"solution": [
+		{ "id": "s1", "type": "takeoff" },
+		{ "id": "s2", "type": "forward", "n": 4 },
+		{ "id": "s3", "type": "turn_right" },
+		{ "id": "s4", "type": "forward", "n": 4 },
+		{ "id": "s5", "type": "land" }
+	]
+}

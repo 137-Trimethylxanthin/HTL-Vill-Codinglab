@@ -1,0 +1,36 @@
+{
+	"id": "3.1",
+	"level": 3,
+	"title": "Nebel",
+	"goalText": "Im Nebel siehst du wenig. Nutze den Sensor.",
+	"map": {
+		"rows": ["....", ".BBP", ".BB.", "...."],
+		"start": { "x": 0, "y": 3, "dir": "N" }
+	},
+	"fog": true,
+	"blocks": ["takeoff", "forward", "turn_left", "turn_right", "repeat", "if_obstacle", "land"],
+	"goal": { "type": "complete" },
+	"stars": { "optimalBlocks": 6, "maxRunsFor3": 4 },
+	"hints": [
+		"Ist vor dir ein Hindernis? Dann dreh dich.",
+		"Sonst flieg einen Schritt vorwärts.",
+		"Wiederhole 9: Wenn Hindernis, Rechts drehen. Sonst Vorwärts."
+	],
+	"solution": [
+		{ "id": "s1", "type": "takeoff" },
+		{
+			"id": "s2",
+			"type": "repeat",
+			"n": 9,
+			"children": [
+				{
+					"id": "s3",
+					"type": "if_obstacle",
+					"children": [{ "id": "s4", "type": "turn_right" }],
+					"else": [{ "id": "s5", "type": "forward", "n": 1 }]
+				}
+			]
+		},
+		{ "id": "s6", "type": "land" }
+	]
+}

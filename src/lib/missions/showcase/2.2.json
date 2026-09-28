@@ -1,0 +1,32 @@
+{
+	"id": "2.2",
+	"level": 2,
+	"title": "Solarpark-Inspektion",
+	"goalText": "Fotografiere alle Solarzellen. Dann lande.",
+	"map": {
+		"rows": ["........", ".SSSSSSP", "........"],
+		"start": { "x": 0, "y": 1, "dir": "E" }
+	},
+	"blocks": ["takeoff", "forward", "turn_left", "turn_right", "repeat", "photo", "land"],
+	"goal": { "type": "complete" },
+	"stars": { "optimalBlocks": 6, "maxRunsFor3": 3 },
+	"hints": [
+		"Über jeder Solarzelle brauchst du ein Foto.",
+		"Vorwärts und Foto wiederholen sich.",
+		"Wiederhole 6: Vorwärts 1, Foto."
+	],
+	"solution": [
+		{ "id": "s1", "type": "takeoff" },
+		{
+			"id": "s2",
+			"type": "repeat",
+			"n": 6,
+			"children": [
+				{ "id": "s3", "type": "forward", "n": 1 },
+				{ "id": "s4", "type": "photo" }
+			]
+		},
+		{ "id": "s5", "type": "forward", "n": 1 },
+		{ "id": "s6", "type": "land" }
+	]
+}
