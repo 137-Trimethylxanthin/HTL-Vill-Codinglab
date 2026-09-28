@@ -79,11 +79,17 @@ export class Session {
 		this.screen = 'mission';
 	}
 
-	complete(result: MissionResult) {
+	/** Stores a solved mission (best stars win) without leaving it — the kid may still tap "Karte". */
+	record(result: MissionResult) {
 		if (this.screen !== 'mission' || result.id !== this.currentId) return;
 		const previous = this.results[result.id];
 		const keep = previous !== undefined && !previous.skipped && previous.stars >= result.stars;
 		this.results = { ...this.results, [result.id]: keep ? previous : result };
+	}
+
+	complete(result: MissionResult) {
+		if (this.screen !== 'mission' || result.id !== this.currentId) return;
+		this.record(result);
 		this.lastResult = result;
 		this.screen = 'complete';
 	}
@@ -117,6 +123,11 @@ export class Session {
 
 	finish() {
 		if (this.screen === 'map' && this.canFinish) this.screen = 'finale';
+	}
+
+	/** Idle reset: walking away from the finale still counts as finished. */
+	timeout(): SessionSummary | null {
+		return this.reset(this.screen === 'finale' ? 'finale' : 'idle');
 	}
 
 	/** Back to the attract screen. Returns what this visitor did, or null if nobody started. */

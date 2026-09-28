@@ -155,4 +155,28 @@ describe('Session', () => {
 	it('returns no summary when nobody started', () => {
 		expect(new Session(SHOWCASE).reset('idle')).toBeNull();
 	});
+
+	it('records a solved mission without leaving it', () => {
+		const { s } = atMap();
+		s.open('1.1');
+		s.record(result('1.1', 2));
+		expect(s.screen).toBe('mission');
+		expect(s.isSolved('1.1')).toBe(true);
+		s.backToMap();
+		expect(s.results['1.1'].stars).toBe(2);
+		s.open('1.1');
+		s.skip();
+		expect(s.results['1.1'].stars).toBe(2);
+	});
+
+	it('counts a timeout on the finale as finished, elsewhere as idle', () => {
+		const { s } = atMap();
+		s.open('1.1');
+		s.complete(result('1.1', 1));
+		s.backToMap();
+		s.finish();
+		expect(s.timeout()?.endedBy).toBe('finale');
+		const other = atMap().s;
+		expect(other.timeout()?.endedBy).toBe('idle');
+	});
 });

@@ -1,14 +1,15 @@
-const ADJECTIVES = [
+// Every adjective + noun pair must fit MAX_NAME (tested).
+export const ADJECTIVES = [
 	'Flinke',
 	'Mutige',
 	'Schlaue',
 	'Wilde',
 	'Coole',
 	'Schnelle',
-	'Fröhliche',
+	'Frohe',
 	'Tapfere'
 ];
-const NOUNS = ['Hummel', 'Möwe', 'Rakete', 'Libelle', 'Schwalbe', 'Drohne', 'Eule', 'Biene'];
+export const NOUNS = ['Hummel', 'Möwe', 'Rakete', 'Libelle', 'Taube', 'Drohne', 'Eule', 'Biene'];
 
 export const MAX_NAME = 16;
 
@@ -20,10 +21,12 @@ export function randomPilotName(rng: () => number = Math.random): string {
 }
 
 export function sanitizeName(raw: string): string {
-	return raw
+	const name = raw
 		.replace(/[^A-Za-zÄÖÜäöüß -]/g, '')
 		.replace(/\s+/g, ' ')
-		.trim()
+		.replace(/^[\s-]+|[\s-]+$/g, '')
 		.slice(0, MAX_NAME)
-		.trim();
+		.replace(/[\s-]+$/g, '');
+	// A name needs at least one letter ("----" is not a name).
+	return /\p{L}/u.test(name) ? name : '';
 }

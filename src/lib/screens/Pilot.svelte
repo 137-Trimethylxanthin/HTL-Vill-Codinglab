@@ -21,7 +21,7 @@
 <main class="flex h-full flex-col items-center justify-center gap-8 bg-sky p-8">
 	<h1 class="text-5xl font-bold">{t.pilot.title}</h1>
 	<div
-		class="min-w-[min(24rem,90vw)] rounded-3xl bg-card px-10 py-6 text-center font-display text-5xl font-bold shadow-lg"
+		class="max-w-full min-w-[min(24rem,90vw)] rounded-3xl bg-card px-10 py-6 text-center font-display text-5xl font-bold break-all shadow-lg portrait:px-6 portrait:text-3xl"
 	>
 		{#if name}{name}{:else}<span class="text-muted-foreground">{t.pilot.placeholder}</span>{/if}
 	</div>

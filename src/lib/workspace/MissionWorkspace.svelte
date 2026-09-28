@@ -9,6 +9,7 @@
 		Star
 	} from '@lucide/svelte';
 	import type { MissionResult } from '$lib/session/types';
+	import { untrack } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { findBlock, type Slot } from '$lib/blocks/edit';
@@ -35,16 +36,24 @@
 		runner,
 		onBack,
 		onSkip,
+		onSolved,
 		onDone
 	}: {
 		mission: Mission;
 		runner: PythonRunner;
 		onBack: () => void;
 		onSkip: () => void;
+		/** Called as soon as a run succeeds, so leaving via "Karte" keeps the stars. */
+		onSolved: (result: MissionResult) => void;
 		onDone: (result: MissionResult) => void;
 	} = $props();
 
 	let tab = $state<'program' | 'python'>('program');
+
+	// Only the status is tracked: recording reads and writes session state.
+	$effect(() => {
+		if (ctrl.status === 'success') untrack(() => onSolved(ctrl.result()));
+	});
 
 	// The page re-creates this component per mission ({#key}), so these live for one mission.
 	const ctrl = $derived(new MissionRun(mission, runner));

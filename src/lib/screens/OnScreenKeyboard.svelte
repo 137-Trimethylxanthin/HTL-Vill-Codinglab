@@ -30,9 +30,11 @@
 
 <svelte:window onkeydown={onKey} />
 
-<div class="flex flex-col items-center gap-2 rounded-3xl bg-card p-4 shadow-xl">
+<div
+	class="flex max-w-full flex-col items-center gap-2 rounded-3xl bg-card p-4 shadow-xl portrait:p-2"
+>
 	{#each ROWS as row (row)}
-		<div class="flex gap-2">
+		<div class="flex max-w-full flex-wrap justify-center gap-2">
 			{#each [...row] as ch (ch)}
 				<button
 					class="grid size-14 press place-items-center rounded-xl bg-muted font-display text-2xl font-bold"
@@ -41,7 +43,7 @@
 			{/each}
 		</div>
 	{/each}
-	<div class="flex gap-2">
+	<div class="flex max-w-full flex-wrap justify-center gap-2">
 		<button class="h-14 w-16 press rounded-xl bg-muted text-2xl font-bold" onclick={() => type('-')}
 			>-</button
 		>

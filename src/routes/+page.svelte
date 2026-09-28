@@ -16,7 +16,7 @@
 	import MissionWorkspace from '$lib/workspace/MissionWorkspace.svelte';
 
 	const session = new Session(SHOWCASE);
-	const idle = new IdleTimer(() => session.reset('idle'));
+	const idle = new IdleTimer(() => session.timeout());
 	const demo = SHOWCASE.find((m) => m.id === '2.1') ?? SHOWCASE[0];
 
 	let runner = $state<PythonRunner | null>(null);
@@ -37,6 +37,17 @@
 		idle.stop();
 	});
 
+	// After every screen change, ignore input briefly: the second tap of a double tap
+	// would otherwise hit whatever button now sits under the finger.
+	const SETTLE_MS = 350;
+	let settling = $state(false);
+	$effect(() => {
+		void session.screen;
+		settling = true;
+		const timer = setTimeout(() => (settling = false), SETTLE_MS);
+		return () => clearTimeout(timer);
+	});
+
 	// The idle timer runs on every screen except the attract loop.
 	$effect(() => {
 		if (session.screen === 'attract') idle.stop();
@@ -52,44 +63,47 @@
 
 <svelte:window onpointerdown={() => idle.activity()} onkeydown={() => idle.activity()} />
 
-{#if phase !== 'ready' || !runner}
-	<main class="grid h-full place-items-center bg-sky">
-		<p
-			class={cn(
-				'font-display text-3xl font-bold',
-				phase === 'failed' ? 'text-destructive' : 'animate-pulse'
-			)}
-		>
-			{phase === 'failed' ? t.app.loadFailed : t.app.loading}
-		</p>
-	</main>
-{:else if session.screen === 'attract'}
-	<Attract {demo} onStart={() => session.begin()} />
-{:else if session.screen === 'pilot'}
-	<Pilot onDone={(name) => session.setPilot(name)} />
-{:else if session.screen === 'map'}
-	<MissionMap {session} onOpen={(id) => session.open(id)} onFinish={() => session.finish()} />
-{:else if session.screen === 'mission' && session.current}
-	{#key session.current.id}
-		<MissionWorkspace
-			mission={session.current}
-			{runner}
-			onBack={() => session.backToMap()}
-			onSkip={() => session.skip()}
-			onDone={(result) => session.complete(result)}
+<div class="contents" inert={settling}>
+	{#if phase !== 'ready' || !runner}
+		<main class="grid h-full place-items-center bg-sky">
+			<p
+				class={cn(
+					'font-display text-3xl font-bold',
+					phase === 'failed' ? 'text-destructive' : 'animate-pulse'
+				)}
+			>
+				{phase === 'failed' ? t.app.loadFailed : t.app.loading}
+			</p>
+		</main>
+	{:else if session.screen === 'attract'}
+		<Attract {demo} onStart={() => session.begin()} />
+	{:else if session.screen === 'pilot'}
+		<Pilot onDone={(name) => session.setPilot(name)} />
+	{:else if session.screen === 'map'}
+		<MissionMap {session} onOpen={(id) => session.open(id)} onFinish={() => session.finish()} />
+	{:else if session.screen === 'mission' && session.current}
+		{#key session.current.id}
+			<MissionWorkspace
+				mission={session.current}
+				{runner}
+				onBack={() => session.backToMap()}
+				onSkip={() => session.skip()}
+				onSolved={(result) => session.record(result)}
+				onDone={(result) => session.complete(result)}
+			/>
+		{/key}
+	{:else if session.screen === 'complete' && session.lastResult}
+		<MissionComplete
+			result={session.lastResult}
+			{promo}
+			hasNext={session.nextAfter(session.currentId) !== null}
+			onNext={() => session.continue()}
+			onMap={() => session.backToMap()}
 		/>
-	{/key}
-{:else if session.screen === 'complete' && session.lastResult}
-	<MissionComplete
-		result={session.lastResult}
-		{promo}
-		hasNext={session.nextAfter(session.currentId) !== null}
-		onNext={() => session.continue()}
-		onMap={() => session.backToMap()}
-	/>
-{:else if session.screen === 'finale'}
-	<Finale {session} onDone={() => session.reset('finale')} />
-{/if}
+	{:else if session.screen === 'finale'}
+		<Finale {session} onDone={() => session.reset('finale')} />
+	{/if}
+</div>
 
 {#if idle.warning}
 	<IdleOverlay remaining={idle.remaining} onContinue={() => idle.activity()} />

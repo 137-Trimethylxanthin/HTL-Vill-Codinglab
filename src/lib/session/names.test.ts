@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_NAME, randomPilotName, sanitizeName } from './names';
+import { ADJECTIVES, MAX_NAME, NOUNS, randomPilotName, sanitizeName } from './names';
 
 describe('randomPilotName', () => {
 	it('combines an adjective and a noun', () => {
 		expect(randomPilotName(() => 0)).toBe('Flinke Hummel');
 		expect(randomPilotName(() => 0.999)).toBe('Tapfere Biene');
+	});
+
+	it('never produces a name longer than the limit', () => {
+		for (const a of ADJECTIVES)
+			for (const n of NOUNS) expect(`${a} ${n}`.length).toBeLessThanOrEqual(MAX_NAME);
 	});
 
 	it('uses Math.random by default', () => {
@@ -28,5 +33,11 @@ describe('sanitizeName', () => {
 
 	it('returns an empty string for nothing usable', () => {
 		expect(sanitizeName('1234 !!')).toBe('');
+		expect(sanitizeName('----')).toBe('');
+		expect(sanitizeName(' - - ')).toBe('');
+	});
+
+	it('strips hyphens at the edges', () => {
+		expect(sanitizeName('-Lea-')).toBe('Lea');
 	});
 });

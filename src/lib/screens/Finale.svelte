@@ -26,12 +26,14 @@
 </script>
 
 <main
-	class="grid h-full grid-cols-[1.2fr_1fr] gap-6 bg-sky p-8 portrait:grid-cols-1 portrait:overflow-y-auto"
+	class="grid h-full grid-cols-[1.2fr_1fr] gap-6 overflow-y-auto bg-sky p-8 portrait:grid-cols-1 portrait:grid-rows-[auto_auto] portrait:p-4"
 >
 	<section
-		class="relative flex flex-col items-center justify-center gap-6 overflow-hidden rounded-3xl bg-card p-8 text-center shadow-lg"
+		class="relative flex flex-col items-center justify-center gap-6 overflow-hidden rounded-3xl bg-card p-8 text-center shadow-lg portrait:min-h-max portrait:p-5"
 	>
-		<h1 class="text-6xl font-bold">{t.finale.title(session.pilotName)}</h1>
+		<h1 class="text-6xl font-bold break-words portrait:text-4xl">
+			{t.finale.title(session.pilotName)}
+		</h1>
 		<p class="flex items-center gap-3 font-display text-5xl font-bold">
 			<Star class="size-14 fill-yellow-300 text-yellow-400" />{session.totalStars} / {session.maxStars}
 		</p>
