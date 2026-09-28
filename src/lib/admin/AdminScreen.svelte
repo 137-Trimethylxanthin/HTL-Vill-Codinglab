@@ -11,6 +11,7 @@
 		type Platform
 	} from '$lib/platform/types';
 	import { IdleTimer } from '$lib/session/idle.svelte';
+	import Logbook from './Logbook.svelte';
 	import PinPad from './PinPad.svelte';
 
 	let {
@@ -225,6 +226,26 @@
 				<label class="flex flex-col gap-1"
 					>{t.admin.qrUrl}<input class={field} bind:value={form.qrUrl} /></label
 				>
+				<label class="flex flex-col gap-1"
+					>{t.logbook.retention}<input
+						class={field}
+						type="number"
+						min="1"
+						max="365"
+						bind:value={form.nameRetentionDays}
+					/></label
+				>
+				<label class="flex flex-col gap-1"
+					>{t.logbook.manualPeers}<input
+						class={field}
+						value={form.manualPeers.join(', ')}
+						onchange={(e) =>
+							(form.manualPeers = e.currentTarget.value
+								.split(',')
+								.map((s) => s.trim())
+								.filter(Boolean))}
+					/></label
+				>
 			</section>
 
 			<section class="flex flex-col gap-3">
@@ -309,6 +330,8 @@
 					</div>
 				</section>
 			{/if}
+
+			<Logbook {platform} {pin} />
 
 			<section class="flex flex-col gap-3">
 				<h2 class="text-2xl font-bold">{t.admin.changePin}</h2>

@@ -106,6 +106,40 @@ export const de = {
 		invalid: 'Diese Adresse stimmt nicht.',
 		failed: 'Senden ging nicht. Frag bitte am Stand.'
 	},
+	leaderboard: {
+		button: 'Bestenliste',
+		title: 'Bestenliste von heute',
+		empty: 'Du bist heute die Nummer 1!',
+		you: 'Du',
+		close: 'Schließen',
+		minutes: (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} min`
+	},
+	logbook: {
+		title: 'Logbuch',
+		visitors: (n: number, finished: number) => `${n} Besuche, ${finished} bis zum Ende`,
+		perDay: 'Pro Tag',
+		perYear: 'Pro Jahr',
+		perMission: 'Missionen',
+		missionRow: (m: {
+			id: string;
+			attempts: number;
+			solved: number;
+			avgStars: number;
+			avgSeconds: number;
+		}) =>
+			`${m.id}: ${m.solved}/${m.attempts} geschafft · Ø ${m.avgStars} Sterne · Ø ${m.avgSeconds} s`,
+		dropOff: 'Hier hören Besucher auf',
+		peers: 'Stationen im Netz',
+		noPeers: 'Keine anderen Stationen gefunden.',
+		peerRow: (name: string, address: string, ok: boolean) =>
+			`${name || '?'} · ${address} · ${ok ? 'verbunden' : 'wartet'}`,
+		retention: 'Namen löschen nach Tagen',
+		manualPeers: 'Stationen von Hand (IP[:Port], mit Komma)',
+		export: 'Verlauf als CSV exportieren',
+		delete: 'Verlauf dieser Station löschen',
+		deleteConfirm: 'Wirklich? Nochmal tippen. Andere Stationen behalten ihre Kopie.',
+		deleted: (n: number) => `${n} Einträge gelöscht.`
+	},
 	workspace: {
 		palette: 'Befehle',
 		program: 'Dein Programm',

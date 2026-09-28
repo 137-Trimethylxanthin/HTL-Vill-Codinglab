@@ -1,16 +1,19 @@
 <script lang="ts">
-	import { FileDown, Mail, RotateCcw, Star } from '@lucide/svelte';
+	import { FileDown, Mail, RotateCcw, Star, Trophy } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { HTL_URL } from '$lib/config/defaults';
 	import { t } from '$lib/i18n/de';
+	import { toRecord } from '$lib/history/record';
+	import { leaderboard as rank, type LeaderboardEntry } from '$lib/history/stats';
 	import { certificateData } from '$lib/platform/data';
 	import { PlatformError, type Platform, type PublicConfig } from '$lib/platform/types';
 	import { qrDataUrl } from '$lib/session/qr';
 	import type { Session } from '$lib/session/session.svelte';
 	import Confetti from '$lib/workspace/Confetti.svelte';
 	import EmailDialog from './EmailDialog.svelte';
+	import Leaderboard from './Leaderboard.svelte';
 	import PathThumbnail from './PathThumbnail.svelte';
 
 	let {
@@ -60,6 +63,29 @@
 		emailBusy = false;
 	}
 
+	let board = $state<LeaderboardEntry[] | null>(null);
+
+	async function openBoard() {
+		const records = await platform.listRecords().catch(() => []);
+		const preview = toRecord(
+			{
+				pilotName: session.pilotName,
+				startedAt: Date.now() - 1,
+				finishedAt: Date.now(),
+				endedBy: 'finale',
+				totalStars: session.totalStars,
+				results: Object.values(session.results)
+			},
+			config,
+			'current'
+		);
+		board = rank([...records, preview], {
+			period: 'today',
+			now: new Date(),
+			event: config.eventCode
+		});
+	}
+
 	onMount(() => {
 		qrDataUrl(config.qrUrl || HTL_URL).then((url) => (qr = url));
 	});
@@ -95,24 +121,25 @@
 			{#if qr}<img src={qr} alt={config.qrUrl || HTL_URL} class="size-full" />{/if}
 		</div>
 		<p class="text-xl text-muted-foreground">{t.finale.qrHint}</p>
-		{#if platform.features.certificate || (platform.features.email && config.smtpReady)}
-			<div class="flex flex-wrap justify-center gap-3">
-				{#if platform.features.certificate}
-					<Button
-						variant="secondary"
-						class="h-16 press rounded-2xl px-6 text-xl"
-						onclick={saveCertificate}><FileDown class="size-6" />{t.certificate.button}</Button
-					>
-				{/if}
-				{#if platform.features.email && config.smtpReady}
-					<Button
-						variant="secondary"
-						class="h-16 press rounded-2xl px-6 text-xl"
-						onclick={() => (emailOpen = true)}><Mail class="size-6" />{t.email.button}</Button
-					>
-				{/if}
-			</div>
-		{/if}
+		<div class="flex flex-wrap justify-center gap-3">
+			<Button variant="secondary" class="h-16 press rounded-2xl px-6 text-xl" onclick={openBoard}
+				><Trophy class="size-6" />{t.leaderboard.button}</Button
+			>
+			{#if platform.features.certificate}
+				<Button
+					variant="secondary"
+					class="h-16 press rounded-2xl px-6 text-xl"
+					onclick={saveCertificate}><FileDown class="size-6" />{t.certificate.button}</Button
+				>
+			{/if}
+			{#if platform.features.email && config.smtpReady}
+				<Button
+					variant="secondary"
+					class="h-16 press rounded-2xl px-6 text-xl"
+					onclick={() => (emailOpen = true)}><Mail class="size-6" />{t.email.button}</Button
+				>
+			{/if}
+		</div>
 		{#if notice}<p class="text-xl font-bold">{notice}</p>{/if}
 		<Button
 			class="h-20 press rounded-3xl bg-drone px-12 font-display text-3xl font-bold text-drone-foreground"
@@ -128,4 +155,8 @@
 		onSend={sendEmail}
 		onCancel={() => (emailOpen = false)}
 	/>
+{/if}
+
+{#if board}
+	<Leaderboard entries={board} ownId="current" onClose={() => (board = null)} />
 {/if}

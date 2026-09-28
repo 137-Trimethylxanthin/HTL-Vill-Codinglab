@@ -2,6 +2,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import AdminScreen from '$lib/admin/AdminScreen.svelte';
 	import { StationStore } from '$lib/config/station.svelte';
+	import { toRecord } from '$lib/history/record';
 	import { t } from '$lib/i18n/de';
 	import { SHOWCASE } from '$lib/missions';
 	import { getPlatform } from '$lib/platform';
@@ -16,13 +17,18 @@
 	import { IdleTimer } from '$lib/session/idle.svelte';
 	import { installKioskGuards } from '$lib/session/kiosk';
 	import { Session } from '$lib/session/session.svelte';
+	import type { SessionSummary } from '$lib/session/types';
 	import { cn } from '$lib/utils';
 	import MissionWorkspace from '$lib/workspace/MissionWorkspace.svelte';
 
 	const platform = getPlatform();
 	const station = new StationStore();
 	let session = $state(new Session(SHOWCASE));
-	const idle = new IdleTimer(() => session.timeout());
+	/** Every visit becomes a record, also abandoned ones (spec 4.6). */
+	function store(summary: SessionSummary | null) {
+		if (summary) void platform.saveSession(toRecord(summary, station.config)).catch(() => {});
+	}
+	const idle = new IdleTimer(() => store(session.timeout()));
 	const demo = SHOWCASE.find((m) => m.id === '2.1') ?? SHOWCASE[0];
 
 	let runner = $state<PythonRunner | null>(null);
@@ -32,7 +38,7 @@
 	/** Settings changed (or first loaded): new idle time, mission selection, fresh session. */
 	function applyConfig() {
 		idle.setIdleMs(station.config.idleSeconds * 1000);
-		session.reset('quit');
+		store(session.reset('quit'));
 		session = new Session(missionsFor(SHOWCASE, station.config.enabledMissions));
 	}
 
@@ -127,7 +133,12 @@
 			onMap={() => session.backToMap()}
 		/>
 	{:else if session.screen === 'finale'}
-		<Finale {session} {platform} config={station.config} onDone={() => session.reset('finale')} />
+		<Finale
+			{session}
+			{platform}
+			config={station.config}
+			onDone={() => store(session.reset('finale'))}
+		/>
 	{/if}
 </div>
 
