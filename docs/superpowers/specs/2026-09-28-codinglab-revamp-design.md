@@ -151,8 +151,15 @@ The app must feel bouncy and reactive. Implemented with Svelte 5 `Spring`/`Tween
 
 ### 3.6 Texts and language
 
-- UI is German. All strings in one file (`src/lib/i18n/de.ts`), typed keys, so texts are easy to shorten and English can be added later.
-- Style rules: max ~12 words per sentence, "du"-form, no jargon without an icon or animation beside it.
+- **German first.** The audience is young German speakers with limited reading skills, so all texts are written in *Einfache Sprache* (plain German):
+  - max ~10 words per sentence, one statement per sentence, no subordinate clauses
+  - everyday words; technical terms (Schleife, Bedingung, Python) only with an icon or animation beside them and a one-line explanation the first time
+  - active voice, "du"-form, positive wording ("Probier es nochmal" instead of "Falsch")
+  - never more than one sentence of instruction on screen at a time
+- **English afterwards** (after UP6): the UI and mission texts are prepared for translation from UP1 on, so adding English needs no code changes:
+  - UI strings live in `src/lib/i18n/de.ts`; its type `Messages` is the contract every other language file (`en.ts`) must fulfil, checked by TypeScript.
+  - Mission texts (title, goalText, hints) live in the mission JSON in German; translations are overlay files (`missions/showcase/en/1.1.json`) containing only those text fields, validated against the same ids.
+  - Language switch in the admin screen (station default) and a flag button on the attract screen.
 
 ---
 

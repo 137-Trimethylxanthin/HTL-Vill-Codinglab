@@ -13,4 +13,4 @@ Phase 1 is delivered in six update points (UP). Each UP ends with a version you 
 | 5 | Schwarm (swarm) | Peer-to-peer sync: stations find each other automatically (mDNS) and share all session records; shared leaderboard; permanent anonymous history with Logbuch statistics page and CSV export; name retention. | written after UP4 |
 | 6 | Überall (everywhere) | Android/iOS/web builds, new icons & splash, strict CSP, CI (lint, tests, builds, updater artifacts, `updates.json`), README, Playwright E2E smoke, final product name + rename, version 1.0.0. | written after UP5 |
 
-Phase 2 (Lern mode) follows after UP6 with its own spec.
+After UP6: **English translation** (`en.ts` + mission text overlays + language switch; see spec 3.6). Phase 2 (Lern mode) follows with its own spec.

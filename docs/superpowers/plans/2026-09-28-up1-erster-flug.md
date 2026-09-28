@@ -15,7 +15,7 @@
 - Tauri 2 (latest 2.x); app identifier stays `at.htlvillach.codinglab`; `mainBinaryName` stays `codinglab`; keep the updater `pubkey` and `endpoints` in `tauri.conf.json` unchanged.
 - Nothing from the old frontend is retained (`src/`, `static/`, `src-tauri/python/` are deleted).
 - Svelte 5 runes only (`$state`, `$derived`, `$props`); no Svelte 4 stores or `export let`.
-- UI text is German, "du"-form, max ~12 words per sentence; all UI strings live in `src/lib/i18n/de.ts` (mission texts live in mission JSON).
+- UI text is German in *Einfache Sprache* (spec 3.6): "du"-form, max ~10 words per sentence, no subordinate clauses, positive wording; all UI strings live in `src/lib/i18n/de.ts` (mission texts live in mission JSON).
 - No typing required in the mission workspace; tap targets ≥ 56 px.
 - Pyodide assets are bundled locally (served from `/pyodide/`), never loaded from a CDN.
 - Safety limits: max 500 drone events per run, 2 s wall-clock timeout per run.
@@ -95,7 +95,7 @@ Tests sit next to their modules as `*.test.ts`.
 - Modify: `src-tauri/Cargo.toml`, `src-tauri/src/main.rs`, `src-tauri/tauri.conf.json`, `src-tauri/.gitignore`, `.gitignore`, `src/routes/layout.css`, `vite.config.ts`, `package.json`
 
 **Interfaces:**
-- Produces: `t` (German strings object) from `$lib/i18n/de`; shadcn `Button` from `$lib/components/ui/button/index.js`; `cn()` from `$lib/utils`; Tailwind colour utilities `bg-drone`, `text-drone-foreground`, `bg-sky`; npm scripts `dev`, `build`, `check`, `lint`, `format`, `test`, `tauri`.
+- Produces: `t: Messages` (German strings) and `type Messages`, `type StopCode` from `$lib/i18n/de`; shadcn `Button` from `$lib/components/ui/button/index.js`; `cn()` from `$lib/utils`; Tailwind colour utilities `bg-drone`, `text-drone-foreground`, `bg-sky`; npm scripts `dev`, `build`, `check`, `lint`, `format`, `test`, `tauri`.
 
 - [ ] **Step 1: Delete the old app**
 
@@ -364,10 +364,12 @@ export const de = {
 		stillFlying: 'Fast! Vergiss nicht zu landen.',
 		missed: 'Knapp daneben – versuch es nochmal.'
 	}
-} as const;
+};
 
-export const t = de;
-export type StopCode = keyof typeof de.stops;
+/** Contract for every language file (en.ts is added after UP6 and must satisfy this type). */
+export type Messages = typeof de;
+export const t: Messages = de;
+export type StopCode = keyof Messages['stops'];
 ```
 
 - [ ] **Step 10: Minimal Tauri backend**
