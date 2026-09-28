@@ -1,11 +1,30 @@
 <script lang="ts">
+	import { Minus, Plus } from '@lucide/svelte';
 	import { t } from '$lib/i18n/de';
 	import { cn } from '$lib/utils';
 	import { tokenizeLine, type TokenKind } from './highlight';
 
-	let { code, activeLine }: { code: string; activeLine: number | null } = $props();
+	let {
+		code,
+		activeLine,
+		numberTargets = {},
+		onNumber
+	}: {
+		code: string;
+		activeLine: number | null;
+		numberTargets?: Record<number, string>;
+		onNumber?: (blockId: string, delta: number) => void;
+	} = $props();
 
+	let selected = $state<number | null>(null);
 	const lines = $derived(code.replace(/\n$/, '').split('\n'));
+	const editable = $derived(onNumber !== undefined);
+	const selectedValue = $derived(
+		selected === null
+			? null
+			: (tokenizeLine(lines[selected - 1] ?? '').find((token) => token.kind === 'number')?.text ??
+					null)
+	);
 	const COLORS: Record<TokenKind, string> = {
 		keyword: 'text-fuchsia-400',
 		call: 'text-sky-300',
@@ -14,6 +33,11 @@
 		comment: 'text-slate-500',
 		text: 'text-slate-100'
 	};
+
+	function change(delta: number) {
+		const id = selected === null ? undefined : numberTargets[selected];
+		if (id) onNumber?.(id, delta);
+	}
 </script>
 
 <section class="flex min-h-0 flex-col gap-3">
@@ -26,8 +50,34 @@
 						'-mx-2 rounded-lg px-2 transition-colors',
 						activeLine === i + 1 && 'bg-drone/40'
 					)}><span class="mr-4 inline-block w-6 text-right text-slate-500 select-none">{i + 1}</span
-					>{#each tokenizeLine(line) as token, j (j)}<span class={COLORS[token.kind]}
-							>{token.text}</span
-						>{/each}</div>{/each}</code
+					>{#each tokenizeLine(line) as token, j (j)}{#if editable && token.kind === 'number' && numberTargets[i + 1]}<button
+								class={cn(
+									'rounded-md bg-amber-300/20 px-1 text-amber-300 underline decoration-dotted underline-offset-4',
+									selected === i + 1 && 'ring-2 ring-amber-300'
+								)}
+								onclick={() => (selected = selected === i + 1 ? null : i + 1)}>{token.text}</button
+							>{:else}<span class={COLORS[token.kind]}>{token.text}</span
+							>{/if}{/each}</div>{/each}</code
 		></pre>
+	{#if editable}
+		{#if selected !== null && numberTargets[selected]}
+			<div class="flex items-center justify-center gap-3 rounded-2xl bg-slate-800 p-2">
+				<button
+					class="grid size-14 press place-items-center rounded-xl bg-slate-700 text-white"
+					aria-label={t.workspace.less}
+					onclick={() => change(-1)}><Minus class="size-6" /></button
+				>
+				<span class="w-10 text-center font-mono text-3xl text-amber-300 tabular-nums"
+					>{selectedValue}</span
+				>
+				<button
+					class="grid size-14 press place-items-center rounded-xl bg-slate-700 text-white"
+					aria-label={t.workspace.more}
+					onclick={() => change(1)}><Plus class="size-6" /></button
+				>
+			</div>
+		{:else}
+			<p class="text-center text-sm text-muted-foreground">{t.workspace.editNumber}</p>
+		{/if}
+	{/if}
 </section>

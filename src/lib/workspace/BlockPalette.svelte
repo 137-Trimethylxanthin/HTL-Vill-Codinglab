@@ -7,8 +7,14 @@
 	let {
 		blocks,
 		disabled = false,
+		onGrab,
 		onAdd
-	}: { blocks: BlockType[]; disabled?: boolean; onAdd: (type: BlockType) => void } = $props();
+	}: {
+		blocks: BlockType[];
+		disabled?: boolean;
+		onGrab: (type: BlockType, e: PointerEvent) => void;
+		onAdd: (type: BlockType) => void;
+	} = $props();
 </script>
 
 <section class="flex flex-col gap-3">
@@ -17,11 +23,18 @@
 	</h2>
 	{#each blocks as type (type)}
 		<button
-			class="text-left transition-transform active:scale-95 disabled:opacity-50"
+			class="press touch-none text-left disabled:opacity-50"
 			{disabled}
-			onclick={() => onAdd(type)}
+			onpointerdown={(e) => onGrab(type, e)}
+			onkeydown={(e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					onAdd(type);
+				}
+			}}
 		>
 			<BlockTile {type} n={BLOCKS[type].param?.default} />
 		</button>
 	{/each}
+	<p class="mt-2 text-center text-sm text-muted-foreground">{t.workspace.trashHint}</p>
 </section>
