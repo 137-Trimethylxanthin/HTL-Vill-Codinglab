@@ -13,6 +13,7 @@ export interface EditableConfig {
 	eventCode: string;
 	syncEnabled: boolean;
 	idleSeconds: number;
+	fullscreen: boolean;
 	/** null = all missions */
 	enabledMissions: string[] | null;
 	qrUrl: string;
@@ -73,6 +74,7 @@ export const editableOf = (c: PublicConfig): EditableConfig => ({
 	eventCode: c.eventCode,
 	syncEnabled: c.syncEnabled,
 	idleSeconds: c.idleSeconds,
+	fullscreen: c.fullscreen,
 	enabledMissions: c.enabledMissions,
 	qrUrl: c.qrUrl,
 	nameRetentionDays: c.nameRetentionDays,

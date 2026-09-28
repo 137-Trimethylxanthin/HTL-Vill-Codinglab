@@ -21,6 +21,7 @@ const defaults = (): Stored => {
 			eventCode: '',
 			syncEnabled: false,
 			idleSeconds: 90,
+			fullscreen: true,
 			enabledMissions: null,
 			qrUrl: HTL_URL,
 			nameRetentionDays: 7,

@@ -63,6 +63,7 @@ export const de = {
 		eventCode: 'Event-Code (auf allen Stationen gleich)',
 		eventHint: 'Ohne Event-Code tauschen die Stationen keine Ergebnisse aus.',
 		idleSeconds: 'Zurücksetzen nach Sekunden ohne Eingabe',
+		fullscreen: 'Vollbild (Kiosk-Modus)',
 		missions: 'Missionen',
 		qrUrl: 'Link im QR-Code',
 		mail: 'E-Mail',

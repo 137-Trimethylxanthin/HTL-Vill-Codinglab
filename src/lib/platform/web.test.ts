@@ -36,6 +36,16 @@ const code = async (p: Promise<unknown>) => {
 };
 
 describe('web platform', () => {
+	it('stores the fullscreen choice', async () => {
+		const storage = new MemoryStorage();
+		const p = createWebPlatform(storage);
+		await p.setPin(null, '2468');
+		const cfg = await p.getConfig();
+		expect(cfg.fullscreen).toBe(true);
+		const saved = await p.saveConfig('2468', { ...cfg, fullscreen: false });
+		expect(saved.fullscreen).toBe(false);
+	});
+
 	it('starts with defaults and no PIN', async () => {
 		const p = createWebPlatform(new MemoryStorage());
 		const cfg = await p.getConfig();

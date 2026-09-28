@@ -226,6 +226,10 @@
 						bind:value={form.idleSeconds}
 					/></label
 				>
+				<label class="flex items-center gap-3 text-lg"
+					><input type="checkbox" class="size-6" bind:checked={form.fullscreen} />{t.admin
+						.fullscreen}</label
+				>
 				<label class="flex flex-col gap-1"
 					>{t.admin.qrUrl}<input class={field} bind:value={form.qrUrl} /></label
 				>

@@ -66,12 +66,21 @@ pub fn set_pin(state: State<'_, AppState>, old_pin: Option<String>, new_pin: Str
     config::save(&state.dir, &cfg)
 }
 
+/// The main window follows the kiosk setting (a no-op on phones, where it is ignored).
+pub fn apply_window(app: &AppHandle, cfg: &StationConfig) {
+    use tauri::Manager;
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.set_fullscreen(cfg.fullscreen);
+    }
+}
+
 #[tauri::command]
-pub fn save_config(state: State<'_, AppState>, pin: String, config: EditableConfig) -> AppResult<PublicConfig> {
+pub fn save_config(app: AppHandle, state: State<'_, AppState>, pin: String, config: EditableConfig) -> AppResult<PublicConfig> {
     let mut cfg = state.config()?;
     admin::require_pin(cfg.pin_hash.as_deref(), &pin)?;
     cfg.apply(config);
     config::save(&state.dir, &cfg)?;
+    apply_window(&app, &cfg);
     state.public(&cfg)
 }
 

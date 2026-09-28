@@ -22,6 +22,8 @@ pub struct StationConfig {
     pub event_code: String,
     pub sync_enabled: bool,
     pub idle_seconds: u32,
+    /// Kiosk mode: the window covers the whole screen.
+    pub fullscreen: bool,
     pub enabled_missions: Option<Vec<String>>,
     pub qr_url: String,
     pub name_retention_days: u32,
@@ -39,6 +41,7 @@ pub struct EditableConfig {
     pub event_code: String,
     pub sync_enabled: bool,
     pub idle_seconds: u32,
+    pub fullscreen: bool,
     pub enabled_missions: Option<Vec<String>>,
     pub qr_url: String,
     pub name_retention_days: u32,
@@ -71,6 +74,7 @@ impl Default for StationConfig {
             event_code: String::new(),
             sync_enabled: true,
             idle_seconds: 90,
+            fullscreen: true,
             enabled_missions: None,
             qr_url: "https://www.htl-villach.at".into(),
             name_retention_days: 7,
@@ -88,6 +92,7 @@ impl StationConfig {
             event_code: self.event_code.clone(),
             sync_enabled: self.sync_enabled,
             idle_seconds: self.idle_seconds,
+            fullscreen: self.fullscreen,
             enabled_missions: self.enabled_missions.clone(),
             qr_url: self.qr_url.clone(),
             name_retention_days: self.name_retention_days,
@@ -101,6 +106,7 @@ impl StationConfig {
         self.event_code = e.event_code.trim().to_string();
         self.sync_enabled = e.sync_enabled;
         self.idle_seconds = e.idle_seconds.clamp(30, 600);
+        self.fullscreen = e.fullscreen;
         // An empty selection would leave visitors with nothing to play: treat it as "all".
         self.enabled_missions = e.enabled_missions.filter(|list| !list.is_empty());
         self.qr_url = e.qr_url.trim().to_string();
@@ -286,6 +292,16 @@ mod tests {
         assert_eq!(loaded.station_id, cfg.station_id);
         assert_eq!(loaded.event_code, "TDOT");
     }
+    #[test]
+    fn is_fullscreen_by_default_and_can_be_turned_off() {
+        let mut cfg = StationConfig::default();
+        assert!(cfg.fullscreen);
+        let mut e = cfg.editable();
+        e.fullscreen = false;
+        cfg.apply(e);
+        assert!(!cfg.fullscreen);
+    }
+
     #[test]
     fn has_retention_and_manual_peer_defaults() {
         let cfg = StationConfig::default();
