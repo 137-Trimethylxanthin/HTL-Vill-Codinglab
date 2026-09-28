@@ -24,6 +24,11 @@ export function createTauriPlatform(): Platform {
 		testMail: (pin, to) => call('test_mail', { pin, to }),
 		emailCount: (pin) => call('email_count', { pin }),
 		exportEmails: (pin) => call('export_emails', { pin }),
-		deleteEmails: (pin) => call('delete_emails', { pin })
+		deleteEmails: (pin) => call('delete_emails', { pin }),
+		saveSession: (record) => call('save_session', { record }),
+		listRecords: () => call('list_records'),
+		peers: () => call('peers'),
+		deleteHistory: (pin) => call('delete_history', { pin }),
+		saveTextFile: (pin, fileName, contents) => call('save_text_file', { pin, fileName, contents })
 	};
 }

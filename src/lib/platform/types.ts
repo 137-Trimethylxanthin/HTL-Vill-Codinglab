@@ -1,3 +1,5 @@
+import type { PeerInfo, SessionRecord } from '$lib/history/types';
+
 export interface SmtpSettings {
 	host: string;
 	port: number;
@@ -59,6 +61,11 @@ export interface Platform {
 	emailCount(pin: string): Promise<number>;
 	exportEmails(pin: string): Promise<string | null>;
 	deleteEmails(pin: string): Promise<number>;
+	saveSession(record: SessionRecord): Promise<void>;
+	listRecords(): Promise<SessionRecord[]>;
+	peers(): Promise<PeerInfo[]>;
+	deleteHistory(pin: string): Promise<number>;
+	saveTextFile(pin: string, fileName: string, contents: string): Promise<string | null>;
 }
 
 export const editableOf = (c: PublicConfig): EditableConfig => ({

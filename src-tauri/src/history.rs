@@ -79,6 +79,7 @@ impl History {
         Self::with(Connection::open(path).map_err(db)?)
     }
 
+    #[cfg(test)]
     pub fn in_memory() -> AppResult<Self> {
         Self::with(Connection::open_in_memory().map_err(db)?)
     }
@@ -142,6 +143,7 @@ impl History {
         Ok(self.page("SELECT seq, json FROM sessions ORDER BY seq", &[], 0)?.0)
     }
 
+    #[cfg(test)]
     pub fn count(&self) -> AppResult<usize> {
         let n: i64 = self.conn()?.query_row("SELECT COUNT(*) FROM sessions", [], |r| r.get(0)).map_err(db)?;
         Ok(n as usize)

@@ -238,11 +238,10 @@ impl Peers {
     }
 
     fn ok(&self, station: &str) {
-        if let Ok(mut map) = self.map.lock() {
-            if let Some((p, _)) = map.get_mut(station) {
+        if let Ok(mut map) = self.map.lock()
+            && let Some((p, _)) = map.get_mut(station) {
                 p.last_ok_ms = Some(now_ms());
             }
-        }
     }
 
     pub fn list(&self) -> Vec<PeerInfo> {
@@ -267,15 +266,14 @@ fn round(shared: &Shared, peers: &Peers) {
     let manual = shared.config.lock().map(|c| c.manual_peers.clone()).unwrap_or_default();
     for address in manual {
         let base = if address.contains(':') { address.clone() } else { format!("{address}:{SYNC_PORT}") };
-        if let Ok(reply) = ureq::get(&format!("http://{base}/health")).timeout(Duration::from_secs(3)).call() {
-            if let Ok(body) = reply.into_json::<serde_json::Value>() {
+        if let Ok(reply) = ureq::get(&format!("http://{base}/health")).timeout(Duration::from_secs(3)).call()
+            && let Ok(body) = reply.into_json::<serde_json::Value>() {
                 let peer = body["station"].as_str().unwrap_or_default();
                 let peer_event = body["event"].as_str().unwrap_or_default();
                 if !peer.is_empty() && peer != station && body["v"] == PROTOCOL {
                     peers.seen(peer, &base, &base, peer_event);
                 }
             }
-        }
     }
     for peer in peers.targets(&event) {
         if peer.station == station {
@@ -466,8 +464,7 @@ mod tests {
     use std::sync::{Arc, Mutex};
 
     fn shared(event: &str) -> Arc<Shared> {
-        let mut cfg = StationConfig::default();
-        cfg.event_code = event.into();
+        let cfg = StationConfig { event_code: event.into(), ..Default::default() };
         Arc::new(Shared { history: Arc::new(History::in_memory().unwrap()), config: Arc::new(Mutex::new(cfg)) })
     }
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { SessionRecord } from '$lib/history/types';
 import type { EditableConfig } from './types';
 import { PlatformError } from './types';
 import { createWebPlatform } from './web';
@@ -80,5 +81,29 @@ describe('web platform', () => {
 		const cfg = await p.getConfig();
 		expect(cfg.nameRetentionDays).toBe(7);
 		expect(cfg.manualPeers).toEqual([]);
+	});
+	it('stores session records locally', async () => {
+		const storage = new MemoryStorage();
+		const p = createWebPlatform(storage);
+		const record: SessionRecord = {
+			id: 'r1',
+			v: 1,
+			event: '',
+			station: 's',
+			mode: 'showcase',
+			startedAt: '2026-10-10T10:00:00.000Z',
+			finishedAt: '2026-10-10T10:10:00.000Z',
+			pilotName: 'Lea',
+			totalStars: 3,
+			missions: [],
+			endedBy: 'finale'
+		};
+		await p.saveSession(record);
+		await p.saveSession(record);
+		expect(await createWebPlatform(storage).listRecords()).toHaveLength(1);
+		expect(await p.peers()).toEqual([]);
+		await p.setPin(null, '2468');
+		expect(await p.deleteHistory('2468')).toBe(1);
+		expect(await p.listRecords()).toHaveLength(0);
 	});
 });

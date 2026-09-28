@@ -19,8 +19,10 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let dir = app.path().app_data_dir()?;
-            let config = config::load(&dir)?;
-            app.manage(AppState { emails: emails::EmailStore::new(&dir), config: Mutex::new(config), dir });
+            let config = std::sync::Arc::new(Mutex::new(config::load(&dir)?));
+            let history = std::sync::Arc::new(history::History::open(&dir.join("history.sqlite"))?);
+            let peers = sync::start(std::sync::Arc::new(sync::Shared { history: history.clone(), config: config.clone() }));
+            app.manage(AppState { emails: emails::EmailStore::new(&dir), config, dir, history, peers });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -35,6 +37,11 @@ pub fn run() {
             commands::email_count,
             commands::export_emails,
             commands::delete_emails,
+            commands::save_session,
+            commands::list_records,
+            commands::peers,
+            commands::delete_history,
+            commands::save_text_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running CodingLab");

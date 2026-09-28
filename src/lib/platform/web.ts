@@ -1,7 +1,9 @@
 import { HTL_URL } from '$lib/config/defaults';
+import type { SessionRecord } from '$lib/history/types';
 import { PlatformError, type EditableConfig, type Platform, type PublicConfig } from './types';
 
 const KEY = 'codinglab.station';
+const HISTORY_KEY = 'codinglab.history';
 
 interface Stored {
 	stationId: string;
@@ -57,6 +59,14 @@ export function createWebPlatform(storage: Storage): Platform {
 		return fresh;
 	};
 	const write = (s: Stored) => storage.setItem(KEY, JSON.stringify(s));
+	const readHistory = (): SessionRecord[] => {
+		try {
+			return JSON.parse(storage.getItem(HISTORY_KEY) ?? '[]');
+		} catch {
+			return [];
+		}
+	};
+
 	const publicOf = (s: Stored): PublicConfig => ({
 		...s.config,
 		stationId: s.stationId,
@@ -119,6 +129,30 @@ export function createWebPlatform(storage: Storage): Platform {
 		deleteEmails: async (pin) => {
 			await check(read(), pin);
 			return 0;
+		},
+		saveSession: async (record) => {
+			const list = readHistory();
+			if (!list.some((r) => r.id === record.id)) {
+				list.push(record);
+				storage.setItem(HISTORY_KEY, JSON.stringify(list));
+			}
+		},
+		listRecords: async () => readHistory(),
+		peers: async () => [],
+		deleteHistory: async (pin) => {
+			await check(read(), pin);
+			const n = readHistory().length;
+			storage.removeItem(HISTORY_KEY);
+			return n;
+		},
+		saveTextFile: async (pin, fileName, contents) => {
+			await check(read(), pin);
+			if (typeof document === 'undefined') return null;
+			const url = URL.createObjectURL(new Blob([contents], { type: 'text/csv;charset=utf-8' }));
+			const a = Object.assign(document.createElement('a'), { href: url, download: fileName });
+			a.click();
+			URL.revokeObjectURL(url);
+			return fileName;
 		}
 	};
 }

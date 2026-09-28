@@ -4,7 +4,10 @@ use crate::config::{self, EditableConfig, PublicConfig, StationConfig};
 use crate::emails::{EmailEntry, EmailStore};
 use crate::error::{AppError, AppResult};
 use crate::mail;
+use crate::history::{History, SessionRecord};
 use crate::secrets::{self, SMTP_SECRET};
+use crate::sync::{PeerInfo, Peers};
+use std::sync::Arc;
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
 use tauri::{AppHandle, State};
@@ -12,8 +15,10 @@ use tauri_plugin_dialog::DialogExt;
 
 pub struct AppState {
     pub dir: PathBuf,
-    pub config: Mutex<StationConfig>,
+    pub config: Arc<Mutex<StationConfig>>,
     pub emails: EmailStore,
+    pub history: Arc<History>,
+    pub peers: Arc<Peers>,
 }
 
 impl AppState {
@@ -138,4 +143,33 @@ pub async fn export_emails(app: AppHandle, state: State<'_, AppState>, pin: Stri
 pub fn delete_emails(state: State<'_, AppState>, pin: String) -> AppResult<usize> {
     state.require_pin(&pin)?;
     state.emails.delete_all()
+}
+
+#[tauri::command]
+pub fn save_session(state: State<'_, AppState>, record: SessionRecord) -> AppResult<()> {
+    let retention = state.config()?.name_retention_days;
+    state.history.insert(&record, retention, chrono::Utc::now().timestamp_millis())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn list_records(state: State<'_, AppState>) -> AppResult<Vec<SessionRecord>> {
+    state.history.all()
+}
+
+#[tauri::command]
+pub fn peers(state: State<'_, AppState>) -> AppResult<Vec<PeerInfo>> {
+    Ok(state.peers.list())
+}
+
+#[tauri::command]
+pub fn delete_history(state: State<'_, AppState>, pin: String) -> AppResult<usize> {
+    state.require_pin(&pin)?;
+    state.history.delete_all()
+}
+
+#[tauri::command]
+pub async fn save_text_file(app: AppHandle, state: State<'_, AppState>, pin: String, file_name: String, contents: String) -> AppResult<Option<String>> {
+    state.require_pin(&pin)?;
+    save_with_dialog(&app, &file_name, ("CSV", &["csv"]), contents.into_bytes()).await
 }
