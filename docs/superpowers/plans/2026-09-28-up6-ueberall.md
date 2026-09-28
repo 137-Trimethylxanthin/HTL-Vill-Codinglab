@@ -449,9 +449,8 @@ Claude-Session: https://claude.ai/code/session_017xQ3M6V9aXLpfdmRQgnmbU"
       <circle cx="-210" cy="210" r="118"/><circle cx="210" cy="210" r="118"/>
     </g>
     <g fill="#334155">
-      <rect x="-110" y="-218" width="220" height="16" rx="8"/><rect x="100" y="-218" width="220" height="16" rx="8"/>
-      <rect x="-320" y="-218" width="220" height="16" rx="8"/><rect x="-320" y="202" width="220" height="16" rx="8"/>
-      <rect x="100" y="202" width="220" height="16" rx="8"/>
+      <rect x="-310" y="-218" width="200" height="16" rx="8"/><rect x="110" y="-218" width="200" height="16" rx="8"/>
+      <rect x="-310" y="202" width="200" height="16" rx="8"/><rect x="110" y="202" width="200" height="16" rx="8"/>
     </g>
     <rect x="-130" y="-130" width="260" height="260" rx="72" fill="#f97316"/>
     <circle cx="0" cy="-70" r="30" fill="#ffffff"/>
