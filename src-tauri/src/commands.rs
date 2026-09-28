@@ -31,14 +31,6 @@ impl AppState {
     }
 }
 
-fn file_name_part(name: &str) -> String {
-    let safe: String = name
-        .chars()
-        .map(|c| if c.is_alphanumeric() || c == '-' { c } else { '_' })
-        .collect();
-    if safe.is_empty() { "Pilot".into() } else { safe }
-}
-
 async fn save_with_dialog(app: &AppHandle, file_name: &str, filter: (&str, &[&str]), bytes: Vec<u8>) -> AppResult<Option<String>> {
     let picked = app.dialog().file().set_file_name(file_name).add_filter(filter.0, filter.1).blocking_save_file();
     let Some(picked) = picked else { return Ok(None) };
@@ -85,10 +77,9 @@ pub fn set_smtp_password(state: State<'_, AppState>, pin: String, password: Stri
 }
 
 #[tauri::command]
-pub async fn save_certificate(app: AppHandle, data: CertificateData) -> AppResult<Option<String>> {
-    let pdf = certificate::build_pdf(&data)?;
-    let file = format!("Zertifikat-{}.pdf", file_name_part(&data.pilot_name));
-    save_with_dialog(&app, &file, ("PDF", &["pdf"]), pdf).await
+pub fn save_certificate(state: State<'_, AppState>, data: CertificateData) -> AppResult<Option<String>> {
+    let path = certificate::write_certificate(&state.dir, &data, chrono::Utc::now().timestamp_millis())?;
+    Ok(Some(path.display().to_string()))
 }
 
 #[tauri::command]

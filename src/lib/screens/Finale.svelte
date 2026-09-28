@@ -45,6 +45,8 @@
 	}
 
 	async function sendEmail(email: string, consent: boolean) {
+		// The keyboard's "Fertig" key and Enter can fire again while a send is running.
+		if (emailBusy) return;
 		emailBusy = true;
 		emailError = null;
 		try {

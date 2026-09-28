@@ -25,6 +25,8 @@ pub struct StationConfig {
     pub enabled_missions: Option<Vec<String>>,
     pub qr_url: String,
     pub smtp: SmtpSettings,
+    /// Kept in its own file (`admin.pin`), so a broken config never removes the PIN.
+    #[serde(default, skip_serializing)]
     pub pin_hash: Option<String>,
 }
 
@@ -114,34 +116,62 @@ impl StationConfig {
     }
 }
 
-pub fn load(dir: &Path) -> AppResult<StationConfig> {
-    let path = dir.join(CONFIG_FILE);
-    match std::fs::read_to_string(&path) {
-        Ok(text) => match serde_json::from_str::<StationConfig>(&text) {
-            Ok(cfg) => Ok(cfg),
-            Err(_) => {
-                // Keep the broken file for inspection and start fresh.
-                std::fs::rename(&path, dir.join("station.json.bak"))?;
-                let cfg = StationConfig::default();
-                save(dir, &cfg)?;
-                Ok(cfg)
-            }
-        },
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-            let cfg = StationConfig::default();
-            save(dir, &cfg)?;
-            Ok(cfg)
-        }
-        Err(e) => Err(e.into()),
-    }
+pub const LAST_GOOD_FILE: &str = "station.last-good.json";
+pub const PIN_FILE: &str = "admin.pin";
+
+fn read_config(path: &Path) -> Option<StationConfig> {
+    serde_json::from_str(&std::fs::read_to_string(path).ok()?).ok()
 }
 
-/// Atomic save: write a temp file, then rename over the old one.
+/// Loads the station config. A broken file falls back to the last good copy, then to defaults;
+/// the PIN lives in its own file and survives either way.
+pub fn load(dir: &Path) -> AppResult<StationConfig> {
+    let path = dir.join(CONFIG_FILE);
+    let (mut cfg, needs_save) = if path.exists() {
+        match read_config(&path) {
+            Some(cfg) => (cfg, false),
+            None => {
+                // Keep the broken file for inspection.
+                let _ = std::fs::rename(&path, dir.join("station.json.bak"));
+                (read_config(&dir.join(LAST_GOOD_FILE)).unwrap_or_default(), true)
+            }
+        }
+    } else {
+        (StationConfig::default(), true)
+    };
+    match crate::secrets::read_secret(dir, PIN_FILE)? {
+        Some(hash) if !hash.trim().is_empty() => cfg.pin_hash = Some(hash.trim().to_string()),
+        // Older config files stored the hash inline: move it to its own file.
+        _ if cfg.pin_hash.is_some() => {}
+        _ => cfg.pin_hash = None,
+    }
+    if needs_save || cfg.pin_hash.is_some() {
+        save(dir, &cfg)?;
+    }
+    Ok(cfg)
+}
+
+fn write_atomic(dir: &Path, name: &str, bytes: &[u8]) -> AppResult<()> {
+    use std::io::Write;
+    let tmp = dir.join(format!("{name}.tmp"));
+    let mut file = std::fs::File::create(&tmp)?;
+    file.write_all(bytes)?;
+    file.sync_all()?;
+    std::fs::rename(tmp, dir.join(name))?;
+    Ok(())
+}
+
+/// Atomic, flushed save of the config plus a last-good copy; the PIN goes to its own file.
 pub fn save(dir: &Path, cfg: &StationConfig) -> AppResult<()> {
     std::fs::create_dir_all(dir)?;
-    let tmp = dir.join("station.json.tmp");
-    std::fs::write(&tmp, serde_json::to_vec_pretty(cfg)?)?;
-    std::fs::rename(tmp, dir.join(CONFIG_FILE))?;
+    let bytes = serde_json::to_vec_pretty(cfg)?;
+    write_atomic(dir, CONFIG_FILE, &bytes)?;
+    write_atomic(dir, LAST_GOOD_FILE, &bytes)?;
+    if let Some(hash) = &cfg.pin_hash
+        && crate::secrets::read_secret(dir, PIN_FILE)?.as_deref() != Some(hash.as_str())
+    {
+        crate::secrets::write_secret(dir, PIN_FILE, hash)?;
+    }
     Ok(())
 }
 
@@ -215,5 +245,29 @@ mod tests {
         assert!(public.smtp_ready);
         assert!(json.contains("\"stationName\""));
         assert!(!StationConfig::default().public(false).smtp_ready);
+    }
+
+    #[test]
+    fn keeps_the_pin_when_the_config_file_breaks() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut cfg = load(dir.path()).unwrap();
+        cfg.pin_hash = Some("$argon2id$fake".into());
+        save(dir.path(), &cfg).unwrap();
+        assert!(!std::fs::read_to_string(dir.path().join(CONFIG_FILE)).unwrap().contains("argon2"));
+        std::fs::write(dir.path().join(CONFIG_FILE), "{ broken").unwrap();
+        let loaded = load(dir.path()).unwrap();
+        assert_eq!(loaded.pin_hash.as_deref(), Some("$argon2id$fake"));
+    }
+
+    #[test]
+    fn falls_back_to_the_last_good_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut cfg = load(dir.path()).unwrap();
+        cfg.event_code = "TDOT".into();
+        save(dir.path(), &cfg).unwrap();
+        std::fs::write(dir.path().join(CONFIG_FILE), "{ broken").unwrap();
+        let loaded = load(dir.path()).unwrap();
+        assert_eq!(loaded.station_id, cfg.station_id);
+        assert_eq!(loaded.event_code, "TDOT");
     }
 }

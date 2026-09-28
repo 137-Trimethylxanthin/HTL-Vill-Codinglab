@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { DEFAULT_PUBLIC_CONFIG, type StationStore } from '$lib/config/station.svelte';
 	import { t } from '$lib/i18n/de';
@@ -10,6 +10,7 @@
 		type EditableConfig,
 		type Platform
 	} from '$lib/platform/types';
+	import { IdleTimer } from '$lib/session/idle.svelte';
 	import PinPad from './PinPad.svelte';
 
 	let {
@@ -35,8 +36,28 @@
 	let status = $state<string | null>(null);
 	let busy = $state(false);
 
+	// An unlocked admin screen must not wait for the next visitor: lock after 2 minutes.
+	const ADMIN_IDLE_MS = 120_000;
+	const autoLock = new IdleTimer(
+		() => {
+			stage = 'locked';
+			pin = '';
+			entry = '';
+			status = null;
+		},
+		ADMIN_IDLE_MS,
+		1_000
+	);
+
 	onMount(() => {
 		stage = store.config.hasPin ? 'locked' : 'setup';
+	});
+
+	onDestroy(() => autoLock.stop());
+
+	$effect(() => {
+		if (stage === 'open') autoLock.start();
+		else autoLock.stop();
 	});
 
 	const message = (e: unknown) => (e instanceof PlatformError ? e.message : String(e));
@@ -146,6 +167,8 @@
 		form.enabledMissions === null || form.enabledMissions.includes(id);
 	const field = 'h-12 w-full rounded-xl border bg-background px-3 text-lg select-text';
 </script>
+
+<svelte:window onpointerdown={() => autoLock.activity()} onkeydown={() => autoLock.activity()} />
 
 <div class="fixed inset-0 z-50 overflow-y-auto bg-background">
 	{#if stage !== 'open'}

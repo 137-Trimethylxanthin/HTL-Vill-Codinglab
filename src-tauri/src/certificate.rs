@@ -163,6 +163,24 @@ pub fn build_pdf(data: &CertificateData) -> AppResult<Vec<u8>> {
     Ok(doc.save(&PdfSaveOptions::default(), &mut warnings))
 }
 
+pub fn file_name_part(name: &str) -> String {
+    let safe: String = name.chars().map(|c| if c.is_alphanumeric() || c == '-' { c } else { '_' }).collect();
+    if safe.is_empty() { "Pilot".into() } else { safe }
+}
+
+/// Saves the certificate inside the app data dir. Visitors never see a file dialog
+/// (a native dialog on a kiosk is an escape hatch to the desktop); staff print from this folder.
+pub fn write_certificate(dir: &std::path::Path, data: &CertificateData, now_ms: i64) -> AppResult<std::path::PathBuf> {
+    let folder = dir.join("certificates");
+    std::fs::create_dir_all(&folder)?;
+    let stamp = chrono::DateTime::from_timestamp_millis(now_ms)
+        .map(|t| t.with_timezone(&chrono::Local).format("%Y-%m-%d_%H-%M-%S").to_string())
+        .unwrap_or_else(|| now_ms.to_string());
+    let path = folder.join(format!("Zertifikat-{}-{stamp}.pdf", file_name_part(&data.pilot_name)));
+    std::fs::write(&path, build_pdf(data)?)?;
+    Ok(path)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -207,5 +225,14 @@ mod tests {
         let out = std::env::temp_dir().join("codinglab-certificate.pdf");
         std::fs::write(&out, build_pdf(&sample()).unwrap()).unwrap();
         println!("{}", out.display());
+    }
+
+    #[test]
+    fn writes_into_the_certificates_folder_without_a_dialog() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = write_certificate(dir.path(), &sample(), 1_790_000_000_000).unwrap();
+        assert!(path.starts_with(dir.path().join("certificates")));
+        assert!(path.file_name().unwrap().to_string_lossy().starts_with("Zertifikat-J"));
+        assert!(std::fs::read(&path).unwrap().starts_with(b"%PDF"));
     }
 }

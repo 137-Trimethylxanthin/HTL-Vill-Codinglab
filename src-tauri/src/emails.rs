@@ -46,7 +46,8 @@ impl EmailStore {
 
     /// Semicolon CSV (opens directly in German Excel).
     pub fn export_csv(&self) -> AppResult<String> {
-        let mut out = String::from("Name;E-Mail;Datum\n");
+        // The BOM makes Excel read the file as UTF-8 (umlauts).
+        let mut out = String::from("\u{FEFF}Name;E-Mail;Datum\n");
         for e in self.all()? {
             out.push_str(&format!("{};{};{}\n", csv_field(&e.name), csv_field(&e.email), csv_field(&e.created_at)));
         }
@@ -100,7 +101,7 @@ mod tests {
         store.append(&entry("Lea; \"die Große\"", "lea@example.org")).unwrap();
         let csv = store.export_csv().unwrap();
         let lines: Vec<&str> = csv.lines().collect();
-        assert_eq!(lines[0], "Name;E-Mail;Datum");
+        assert_eq!(lines[0], "\u{FEFF}Name;E-Mail;Datum");
         assert_eq!(lines[1], "\"Lea; \"\"die Große\"\"\";lea@example.org;2026-10-10T10:00:00+02:00");
     }
 
@@ -125,5 +126,12 @@ mod tests {
         )
         .unwrap();
         assert_eq!(store.count().unwrap(), 1);
+    }
+
+    #[test]
+    fn starts_with_a_bom_for_excel() {
+        let dir = tempfile::tempdir().unwrap();
+        let csv = EmailStore::new(dir.path()).export_csv().unwrap();
+        assert!(csv.starts_with('\u{FEFF}'));
     }
 }

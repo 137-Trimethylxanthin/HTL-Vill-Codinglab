@@ -92,7 +92,7 @@ export const de = {
 	},
 	certificate: {
 		button: 'Zertifikat speichern',
-		saved: 'Zertifikat gespeichert.',
+		saved: 'Gespeichert! Frag am Stand nach dem Ausdruck.',
 		failed: 'Das Zertifikat ging nicht. Frag bitte am Stand.'
 	},
 	email: {

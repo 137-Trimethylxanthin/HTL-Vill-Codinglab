@@ -35,7 +35,7 @@
 			value={email}
 			mode="email"
 			onChange={(v) => (email = v)}
-			onDone={() => valid && onSend(email, consent)}
+			onDone={() => valid && !busy && onSend(email, consent)}
 		/>
 		<button
 			class="flex min-h-14 press items-center gap-4 rounded-2xl px-4 text-left text-xl"
