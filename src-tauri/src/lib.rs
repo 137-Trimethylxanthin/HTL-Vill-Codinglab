@@ -7,6 +7,7 @@ mod error;
 mod history;
 mod mail;
 mod secrets;
+mod sync;
 
 use commands::AppState;
 use std::sync::Mutex;
