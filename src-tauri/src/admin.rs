@@ -67,4 +67,10 @@ mod tests {
         assert!(matches!(require_pin(Some(&hash), "0000"), Err(AppError::WrongPin)));
         assert!(require_pin(Some(&hash), "2468").is_ok());
     }
+
+    #[test]
+    #[ignore = "prints a PIN hash for manual checks: cargo test print_pin_hash -- --ignored --nocapture"]
+    fn print_pin_hash() {
+        println!("{}", hash_pin("2468").unwrap());
+    }
 }

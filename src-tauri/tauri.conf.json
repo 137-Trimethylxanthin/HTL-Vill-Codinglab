@@ -2,7 +2,7 @@
 	"$schema": "https://schema.tauri.app/config/2",
 	"productName": "codinglab",
 	"mainBinaryName": "codinglab",
-	"version": "0.9.0",
+	"version": "1.0.0",
 	"identifier": "at.htlvillach.codinglab",
 	"build": {
 		"beforeDevCommand": "npm run dev",
@@ -24,7 +24,7 @@
 			}
 		],
 		"security": {
-			"csp": null
+			"csp": "default-src 'self' ipc: http://ipc.localhost; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; worker-src 'self' blob:; connect-src 'self' ipc: http://ipc.localhost"
 		}
 	},
 	"bundle": {
@@ -38,13 +38,14 @@
 			"icons/128x128@2x.png",
 			"icons/icon.icns",
 			"icons/icon.ico"
-		]
+		],
+		"createUpdaterArtifacts": true
 	},
 	"plugins": {
 		"updater": {
 			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENENzlBMEFENTZENzExNzkKUldSNUVkZFdyYUI1elgrdmQwZzVLNUNVdUxQMm1wYURzR3dQd0MrUFhuVE9SdWF1cXMvLzdNR1oK",
 			"endpoints": [
-				"https://gitlab.com/tuer_offen/programmier-trainer/-/raw/main/updates/updates.json"
+				"https://github.com/137-Trimethylxanthin/HTL-Vill-Codinglab/releases/latest/download/latest.json"
 			]
 		}
 	}
