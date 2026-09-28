@@ -14,8 +14,24 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+thiserror = "2"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+argon2 = "0.5"
+# OsRng for PIN salts (argon2 0.5 uses rand_core 0.6).
+rand_core = { version = "0.6", features = ["getrandom"] }
+printpdf = "0.9"
+lettre = { version = "0.11", default-features = false, features = ["builder", "hostname", "smtp-transport", "rustls-tls"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+# argon2 is slow without optimisation; keep debug builds and tests fast.
+[profile.dev.package.argon2]
+opt-level = 3
 
 [profile.release]
 codegen-units = 1
