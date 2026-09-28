@@ -26,7 +26,8 @@ export const de = {
 		pick_up: 'Paket nehmen',
 		drop: 'Paket abgeben',
 		photo: 'Foto',
-		repeat: 'Wiederhole'
+		repeat: 'Wiederhole',
+		if_obstacle: 'Wenn Hindernis'
 	},
 	stops: {
 		edge: 'Hoppla – hier ist die Karte zu Ende!',

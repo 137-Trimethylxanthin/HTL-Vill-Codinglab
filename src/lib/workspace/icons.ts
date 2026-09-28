@@ -6,6 +6,7 @@ import {
 	PackageOpen,
 	PlaneLanding,
 	PlaneTakeoff,
+	Radar,
 	Repeat,
 	RotateCcw,
 	RotateCw
@@ -21,5 +22,6 @@ export const BLOCK_ICONS: Record<BlockType, Component> = {
 	pick_up: Package,
 	drop: PackageOpen,
 	photo: Camera,
-	repeat: Repeat
+	repeat: Repeat,
+	if_obstacle: Radar
 };

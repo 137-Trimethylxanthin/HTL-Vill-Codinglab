@@ -18,23 +18,31 @@ export function toPython(program: BlockNode[]): PythonOutput {
 	const lineOf: Record<string, number> = {};
 	const blockAt: Record<number, string> = {};
 
+	const body = (nodes: BlockNode[], depth: number) => {
+		if (nodes.length === 0) lines.push(`${'    '.repeat(depth)}pass`);
+		else emit(nodes, depth);
+	};
+
 	const emit = (nodes: BlockNode[], depth: number) => {
 		const indent = '    '.repeat(depth);
 		for (const node of nodes) {
 			const spec = BLOCKS[node.type];
 			const n = node.n ?? spec.param?.default;
-			if (spec.container) {
-				const loopVar = LOOP_VARS[depth] ?? `i${depth}`;
-				lines.push(`${indent}for ${loopVar} in range(${n}):`);
+			if (node.type === 'repeat') {
+				lines.push(`${indent}for ${LOOP_VARS[depth] ?? `i${depth}`} in range(${n}):`);
+			} else if (node.type === 'if_obstacle') {
+				lines.push(`${indent}if obstacle_ahead():`);
 			} else {
 				lines.push(`${indent}${spec.call}(${spec.param ? n : ''})`);
 			}
 			lineOf[node.id] = lines.length;
 			blockAt[lines.length] = node.id;
 			if (spec.container) {
-				const body = node.children ?? [];
-				if (body.length === 0) lines.push(`${indent}    pass`);
-				else emit(body, depth + 1);
+				body(node.children ?? [], depth + 1);
+				if (spec.hasElse && (node.else?.length ?? 0) > 0) {
+					lines.push(`${indent}else:`);
+					emit(node.else ?? [], depth + 1);
+				}
 			}
 		}
 	};
@@ -44,5 +52,22 @@ export function toPython(program: BlockNode[]): PythonOutput {
 }
 
 export function countBlocks(program: BlockNode[]): number {
-	return program.reduce((sum, node) => sum + 1 + countBlocks(node.children ?? []), 0);
+	return program.reduce(
+		(sum, node) => sum + 1 + countBlocks(node.children ?? []) + countBlocks(node.else ?? []),
+		0
+	);
+}
+
+/** Python line → id of the block whose number appears on that line (for editing numbers in Python). */
+export function numberLines(program: BlockNode[], output: PythonOutput): Record<number, string> {
+	const result: Record<number, string> = {};
+	const visit = (nodes: BlockNode[]) => {
+		for (const node of nodes) {
+			if (BLOCKS[node.type].param) result[output.lineOf[node.id]] = node.id;
+			visit(node.children ?? []);
+			visit(node.else ?? []);
+		}
+	};
+	visit(program);
+	return result;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { countBlocks, PY_HEADER, toPython } from './generator';
+import { countBlocks, numberLines, PY_HEADER, toPython } from './generator';
 import type { BlockNode } from './types';
 
 const b = (id: string, type: BlockNode['type'], extra: Partial<BlockNode> = {}): BlockNode => ({
@@ -46,15 +46,52 @@ describe('toPython', () => {
 			`${PY_HEADER}\n\nfor i in range(3):\n    pass\n`
 		);
 	});
+
+	it('emits if/else with the sensor', () => {
+		const program = [
+			b('r', 'repeat', {
+				n: 9,
+				children: [
+					b('i', 'if_obstacle', {
+						children: [b('t', 'turn_right')],
+						else: [b('f', 'forward', { n: 1 })]
+					})
+				]
+			})
+		];
+		const out = toPython(program);
+		expect(out.code).toBe(
+			`${PY_HEADER}\n\nfor i in range(9):\n    if obstacle_ahead():\n        turn_right()\n    else:\n        forward(1)\n`
+		);
+		expect(out.lineOf).toEqual({ r: 3, i: 4, t: 5, f: 7 });
+	});
+
+	it('omits an empty else and fills an empty if with pass', () => {
+		expect(toPython([b('i', 'if_obstacle', { children: [], else: [] })]).code).toBe(
+			`${PY_HEADER}\n\nif obstacle_ahead():\n    pass\n`
+		);
+	});
 });
 
 describe('countBlocks', () => {
-	it('counts containers and their children', () => {
+	it('counts containers, bodies and else branches', () => {
 		expect(
 			countBlocks([
 				b('a', 'takeoff'),
-				b('r', 'repeat', { children: [b('f', 'forward'), b('t', 'turn_left')] })
+				b('r', 'repeat', { children: [b('f', 'forward'), b('t', 'turn_left')] }),
+				b('i', 'if_obstacle', { children: [b('x', 'land')], else: [b('y', 'land')] })
 			])
-		).toBe(4);
+		).toBe(7);
+	});
+});
+
+describe('numberLines', () => {
+	it('maps Python lines to blocks that carry a number', () => {
+		const program = [
+			b('a', 'takeoff'),
+			b('f', 'forward', { n: 2 }),
+			b('r', 'repeat', { n: 3, children: [b('t', 'turn_left'), b('g', 'forward', { n: 1 })] })
+		];
+		expect(numberLines(program, toPython(program))).toEqual({ 4: 'f', 5: 'r', 7: 'g' });
 	});
 });

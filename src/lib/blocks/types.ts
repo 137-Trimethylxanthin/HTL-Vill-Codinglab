@@ -7,7 +7,8 @@ export const BLOCK_TYPES = [
 	'pick_up',
 	'drop',
 	'photo',
-	'repeat'
+	'repeat',
+	'if_obstacle'
 ] as const;
 
 export type BlockType = (typeof BLOCK_TYPES)[number];
@@ -17,6 +18,8 @@ export interface BlockNode {
 	type: BlockType;
 	/** Parameter value for blocks that take a number (steps, repetitions). */
 	n?: number;
-	/** Body of container blocks such as `repeat`. */
+	/** Body of container blocks (`repeat`, `if_obstacle`). */
 	children?: BlockNode[];
+	/** "sonst" branch of `if_obstacle`. */
+	else?: BlockNode[];
 }

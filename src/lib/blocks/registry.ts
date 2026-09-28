@@ -5,6 +5,8 @@ export interface BlockSpec {
 	call: string;
 	param?: { min: number; max: number; default: number };
 	container?: boolean;
+	/** Container with a second "sonst" branch. */
+	hasElse?: boolean;
 }
 
 export const BLOCKS: Record<BlockType, BlockSpec> = {
@@ -16,5 +18,6 @@ export const BLOCKS: Record<BlockType, BlockSpec> = {
 	pick_up: { call: 'pick_up' },
 	drop: { call: 'drop' },
 	photo: { call: 'photo' },
-	repeat: { call: 'range', param: { min: 2, max: 9, default: 2 }, container: true }
+	repeat: { call: 'range', param: { min: 2, max: 9, default: 2 }, container: true },
+	if_obstacle: { call: 'obstacle_ahead', container: true, hasElse: true }
 };
