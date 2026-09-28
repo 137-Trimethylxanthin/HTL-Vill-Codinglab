@@ -1,64 +1,8 @@
 <script lang="ts">
-    import SMTPCredentialsModal from '../components/SMTPCredentialsModal.svelte';
-    import { invoke } from '@tauri-apps/api/core';
-	import { message } from '@tauri-apps/plugin-dialog';
-	import { nameStore } from '../utils/stores';
-	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
-    import { randomName } from '../utils/lib';
-
- 
-
-    let showSMTPCredentialsModal = false;
-
-    onMount(async () => {
-        const isPromptDisabled = await invoke<boolean>('is_smtp_prompt_disabled');
-        if (isPromptDisabled) {
-            return;
-        }
-
-        const hasCredentials = await invoke<boolean>('has_smtp_credentials');
-        if (!hasCredentials) {
-            showSMTPCredentialsModal = true;
-        }
-    });
-
-    function handleCloseModal() {
-        showSMTPCredentialsModal = false;
-    }
-
-    async function handleIgnoreModal() {
-        await invoke('disable_smtp_prompt');
-        showSMTPCredentialsModal = false;
-    }
-
-    function setupUser(e: SubmitEvent) {
-        let name = (e.target as any).vorname.value;
-        if (!name) {
-            name = `NoUser_${randomName()}`;
-        }
-        invoke('setup_user', { name }).then((res) => {
-            if (res) {
-                nameStore.set(name.startsWith('NoUser_') ? undefined : name);
-                goto('/home');
-            } else {
-                message("User konnte nicht erstellt werden, bereits eingeloggt?");
-            }
-        })
-    }
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { t } from '$lib/i18n/de';
 </script>
 
-<div class="loginContainer" >
-    <h1>Willkommen im Coding Lab!</h1>
-    <p>Gib bitte deinen Namen ein.</p>
-    <form on:submit|preventDefault={setupUser}>
-        <label for="vorname">Vorname:</label><br />
-        <input type="text" id="name" name="vorname" placeholder="Vorname (optional)" autocomplete="off"/><br />
-        <button class="loginButton" type="submit">Starten</button>
-    </form>
-    {#if showSMTPCredentialsModal}
-        <SMTPCredentialsModal on:close={handleCloseModal} on:ignore={handleIgnoreModal} />
-    {/if}
-</div>
-
-
+<main class="grid h-full place-items-center bg-sky">
+	<Button class="h-16 bg-drone px-10 text-2xl text-drone-foreground">{t.app.name}</Button>
+</main>

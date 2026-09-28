@@ -13,12 +13,15 @@ beispiele in python code.
 (aufgabe von lehrererin: dynamisch 3 level neu in vs code öffnen können aber wir kennan neue sachen hinzufügen)
 
 # Anleitung
+
 Einmalig:
+
 1. [Rust](https://www.rust-lang.org/tools/install) und [Node.js](https://nodejs.org/en/download/) installieren
 2. `npm i`
 
 Immer:
-- `npm run dev`  
+
+- `npm run dev`
 
 oder
 

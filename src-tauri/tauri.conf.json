@@ -1,69 +1,51 @@
 {
-  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
-  "build": {
-    "beforeBuildCommand": "npm run sveltekit:build",
-    "beforeDevCommand": "npm run sveltekit:dev",
-    "frontendDist": "../build",
-    "devUrl": "http://localhost:5173",
-    "removeUnusedCommands": true
-  },
-  "bundle": {
-    "active": true,
-    "copyright": "2026 HTL Villach",
-    "longDescription": "Coding Lab 2026 HTL Villach Abteilung Informatik",
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
-    "targets": "all",
-    "shortDescription": "",
-    "externalBin": [],
-    "macOS": {
-      "entitlements": null,
-      "exceptionDomain": "",
-      "frameworks": [],
-      "providerShortName": null,
-      "signingIdentity": null
-    },
-    "resources": [
-      "./python/*"
-    ],
-    "linux": {
-      "deb": {
-        "depends": []
-      }
-    },
-    "createUpdaterArtifacts": "v1Compatible"
-  },
-  "productName": "codinglab",
-  "mainBinaryName": "codinglab",
-  "version": "0.2.4",
-  "identifier": "at.htlvillach.codinglab",
-  "plugins": {
-    "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENENzlBMEFENTZENzExNzkKUldSNUVkZFdyYUI1elgrdmQwZzVLNUNVdUxQMm1wYURzR3dQd0MrUFhuVE9SdWF1cXMvLzdNR1oK",
-      "endpoints": [
-        "https://gitlab.com/tuer_offen/programmier-trainer/-/raw/main/updates/updates.json"
-      ]
-    }
-  },
-  "app": {
-    "windows": [
-      {
-        "fullscreen": false,
-        "resizable": true,
-        "title": "HTL Villach Informatik Coding Lab",
-        "height": 600,
-        "width": 800,
-        "minHeight": 400,
-        "minWidth": 500
-      }
-    ],
-    "security": {
-      "csp": null
-    }
-  }
+	"$schema": "https://schema.tauri.app/config/2",
+	"productName": "codinglab",
+	"mainBinaryName": "codinglab",
+	"version": "0.9.0",
+	"identifier": "at.htlvillach.codinglab",
+	"build": {
+		"beforeDevCommand": "npm run dev",
+		"beforeBuildCommand": "npm run build",
+		"devUrl": "http://localhost:5173",
+		"frontendDist": "../build"
+	},
+	"app": {
+		"windows": [
+			{
+				"label": "main",
+				"title": "CodingLab – HTL Villach",
+				"width": 1280,
+				"height": 800,
+				"minWidth": 1024,
+				"minHeight": 700,
+				"resizable": true,
+				"fullscreen": false
+			}
+		],
+		"security": {
+			"csp": null
+		}
+	},
+	"bundle": {
+		"active": true,
+		"targets": "all",
+		"copyright": "2026 HTL Villach",
+		"shortDescription": "Programmier eine Drohne – mit echtem Python.",
+		"icon": [
+			"icons/32x32.png",
+			"icons/128x128.png",
+			"icons/128x128@2x.png",
+			"icons/icon.icns",
+			"icons/icon.ico"
+		]
+	},
+	"plugins": {
+		"updater": {
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENENzlBMEFENTZENzExNzkKUldSNUVkZFdyYUI1elgrdmQwZzVLNUNVdUxQMm1wYURzR3dQd0MrUFhuVE9SdWF1cXMvLzdNR1oK",
+			"endpoints": [
+				"https://gitlab.com/tuer_offen/programmier-trainer/-/raw/main/updates/updates.json"
+			]
+		}
+	}
 }
