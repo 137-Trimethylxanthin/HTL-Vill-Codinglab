@@ -1,5 +1,7 @@
 mod admin;
+mod certificate;
 mod config;
+mod emails;
 mod error;
 mod secrets;
 
