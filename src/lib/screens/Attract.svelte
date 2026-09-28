@@ -8,7 +8,24 @@
 	import { Player } from '$lib/stage/player.svelte';
 	import { buildTimeline, startPose } from '$lib/stage/timeline';
 
-	let { demo, onStart }: { demo: Mission; onStart: () => void } = $props();
+	let { demo, onStart, onAdmin }: { demo: Mission; onStart: () => void; onAdmin: () => void } =
+		$props();
+
+	// Operator entrance: hold the school name for 3 s (touch kiosks have no keyboard).
+	let holdTimer: ReturnType<typeof setTimeout> | undefined;
+	let held = false;
+	function holdStart(e: PointerEvent) {
+		e.stopPropagation();
+		held = false;
+		clearTimeout(holdTimer);
+		holdTimer = setTimeout(() => {
+			held = true;
+			onAdmin();
+		}, 3000);
+	}
+	function holdEnd() {
+		clearTimeout(holdTimer);
+	}
 
 	const player = new Player();
 	let alive = true;
@@ -41,7 +58,18 @@
 	onclick={onStart}
 >
 	<div>
-		<p class="text-xl font-bold tracking-widest text-htl uppercase">{t.attract.school}</p>
+		<!-- svelte-ignore a11y_no_noninteractive_element_interactions, a11y_click_events_have_key_events -->
+		<p
+			class="mx-auto w-fit p-3 text-xl font-bold tracking-widest text-htl uppercase"
+			onpointerdown={holdStart}
+			onpointerup={holdEnd}
+			onpointerleave={holdEnd}
+			onclick={(e) => {
+				if (held) e.stopPropagation();
+			}}
+		>
+			{t.attract.school}
+		</p>
 		<h1 class="text-6xl font-bold portrait:text-5xl">{t.attract.title}</h1>
 		<p class="mt-2 text-2xl text-muted-foreground">{t.attract.subtitle}</p>
 	</div>
