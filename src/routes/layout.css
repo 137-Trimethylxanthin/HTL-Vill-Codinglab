@@ -278,3 +278,11 @@
 		transition-duration: 1ms !important;
 	}
 }
+
+/* Kiosk: content may scroll, but no scrollbars are drawn. */
+* {
+	scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+	display: none;
+}
