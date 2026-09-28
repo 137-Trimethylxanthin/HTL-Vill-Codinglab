@@ -10,7 +10,7 @@ export class IdleTimer {
 
 	constructor(
 		private readonly onTimeout: () => void,
-		private readonly idleMs = IDLE_MS,
+		private idleMs = IDLE_MS,
 		private readonly warnMs = WARN_MS
 	) {}
 
@@ -30,6 +30,11 @@ export class IdleTimer {
 		if (!this.running) return;
 		this.warning = false;
 		this.arm();
+	}
+
+	setIdleMs(ms: number) {
+		this.idleMs = ms;
+		if (this.running && !this.warning) this.arm();
 	}
 
 	private arm() {

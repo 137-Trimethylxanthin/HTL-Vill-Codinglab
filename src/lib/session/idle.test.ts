@@ -57,4 +57,12 @@ describe('IdleTimer', () => {
 		vi.advanceTimersByTime(5000);
 		expect(timeout).not.toHaveBeenCalled();
 	});
+	it('uses a new idle time from the next restart', () => {
+		const timeout = vi.fn();
+		const idle = new IdleTimer(timeout, 90_000, 10_000);
+		idle.start();
+		idle.setIdleMs(30_000);
+		vi.advanceTimersByTime(30_000);
+		expect(idle.warning).toBe(true);
+	});
 });
