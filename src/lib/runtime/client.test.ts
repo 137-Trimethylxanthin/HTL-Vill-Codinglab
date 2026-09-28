@@ -5,6 +5,7 @@ import type { WorkerRequest, WorkerResponse } from './protocol';
 
 class FakeWorker implements WorkerLike {
 	onmessage: ((e: { data: WorkerResponse }) => void) | null = null;
+	onerror: ((e: unknown) => void) | null = null;
 	sent: WorkerRequest[] = [];
 	terminated = false;
 	postMessage(msg: WorkerRequest) {
@@ -37,6 +38,21 @@ describe('PythonRunner', () => {
 		const runner = new PythonRunner(() => worker);
 		worker.emit({ type: 'failed', message: 'boom' });
 		await expect(runner.ready()).rejects.toThrow('boom');
+	});
+
+	it('rejects ready when the worker script itself errors', async () => {
+		const worker = new FakeWorker();
+		const runner = new PythonRunner(() => worker);
+		worker.onerror?.(new Error('module failed'));
+		await expect(runner.ready()).rejects.toThrow();
+	});
+
+	it('rejects ready when the worker never answers', async () => {
+		vi.useFakeTimers();
+		const runner = new PythonRunner(() => new FakeWorker(), 2000, 500, 30000);
+		const ready = expect(runner.ready()).rejects.toThrow();
+		await vi.advanceTimersByTimeAsync(30000);
+		await ready;
 	});
 
 	it('returns the result for the matching request id', async () => {

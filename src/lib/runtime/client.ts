@@ -7,6 +7,7 @@ export interface WorkerLike {
 	postMessage(msg: WorkerRequest): void;
 	terminate(): void;
 	onmessage: ((e: { data: WorkerResponse }) => void) | null;
+	onerror: ((e: unknown) => void) | null;
 }
 
 export type WorkerFactory = () => WorkerLike;
@@ -32,7 +33,8 @@ export class PythonRunner {
 	constructor(
 		private readonly factory: WorkerFactory = defaultWorkerFactory,
 		private readonly timeoutMs = 2000,
-		private readonly maxEvents = 500
+		private readonly maxEvents = 500,
+		private readonly readyTimeoutMs = 30000
 	) {
 		this.spawn();
 	}
@@ -68,9 +70,19 @@ export class PythonRunner {
 		const worker = this.factory();
 		this.worker = worker;
 		this.readyPromise = new Promise((resolve, reject) => {
+			const timer = setTimeout(
+				() => reject(new Error('Python worker did not start in time')),
+				this.readyTimeoutMs
+			);
+			const settle = (error?: Error) => {
+				clearTimeout(timer);
+				if (error) reject(error);
+				else resolve();
+			};
+			worker.onerror = (e) => settle(new Error(`Python worker failed: ${String(e)}`));
 			worker.onmessage = ({ data }) => {
-				if (data.type === 'ready') resolve();
-				else if (data.type === 'failed') reject(new Error(data.message));
+				if (data.type === 'ready') settle();
+				else if (data.type === 'failed') settle(new Error(data.message));
 				else {
 					const done = this.pending.get(data.id);
 					this.pending.delete(data.id);

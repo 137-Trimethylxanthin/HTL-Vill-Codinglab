@@ -33,19 +33,19 @@
 	<span class="grid size-10 shrink-0 place-items-center rounded-xl bg-drone text-drone-foreground">
 		<Icon class="size-6" />
 	</span>
-	<span class="grow">{t.blocks[type]}</span>
+	<span class="min-w-0 grow truncate">{t.blocks[type]}</span>
 	{#if spec.param && n !== undefined}
 		{#if onStep}
-			<div class="flex items-center gap-1">
+			<div class="flex shrink-0 items-center gap-1">
 				<button
-					class="grid size-11 place-items-center rounded-xl bg-muted active:scale-90"
+					class="grid size-14 shrink-0 place-items-center rounded-xl bg-muted active:scale-90"
 					aria-label={t.workspace.less}
 					onclick={() => onStep(-1)}
 					disabled={n <= spec.param.min}><Minus class="size-5" /></button
 				>
 				<span class="w-8 text-center text-2xl tabular-nums">{n}</span>
 				<button
-					class="grid size-11 place-items-center rounded-xl bg-muted active:scale-90"
+					class="grid size-14 shrink-0 place-items-center rounded-xl bg-muted active:scale-90"
 					aria-label={t.workspace.more}
 					onclick={() => onStep(1)}
 					disabled={n >= spec.param.max}><Plus class="size-5" /></button
@@ -57,7 +57,7 @@
 	{/if}
 	{#if onRemove}
 		<button
-			class="grid size-11 place-items-center rounded-xl text-muted-foreground active:scale-90"
+			class="grid size-14 shrink-0 place-items-center rounded-xl text-muted-foreground active:scale-90"
 			aria-label={t.workspace.remove}
 			onclick={onRemove}><X class="size-5" /></button
 		>

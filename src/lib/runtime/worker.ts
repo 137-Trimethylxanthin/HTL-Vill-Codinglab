@@ -8,7 +8,7 @@ const scope = self as unknown as {
 	location: Location;
 };
 
-const executor = loadPyodide({ indexURL: new URL('/pyodide/', scope.location.origin).href }).then(
+const executor = loadPyodide({ indexURL: new URL('/pyodide/', scope.location.href).href }).then(
 	(py) => createExecutor(py)
 );
 
