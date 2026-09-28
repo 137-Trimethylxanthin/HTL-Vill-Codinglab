@@ -35,7 +35,7 @@ export function isBlockedKey(e: KeyLike, dev = false): boolean {
 	if (['f3', 'f5', 'f7', 'contextmenu'].includes(k)) return true;
 	if (k === 'f12') return !dev;
 	if (e.altKey && ['arrowleft', 'arrowright', 'home'].includes(k)) return true;
-	if (ctrl && e.shiftKey) return (DEVTOOLS.has(k) && !dev) || k === 'r' || k === 'delete';
+	if (ctrl && e.shiftKey && ((DEVTOOLS.has(k) && !dev) || k === 'r' || k === 'delete')) return true;
 	return ctrl && CTRL_BLOCKED.has(k);
 }
 

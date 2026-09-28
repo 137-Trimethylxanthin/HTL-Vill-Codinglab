@@ -87,7 +87,10 @@
 	}
 
 	onMount(() => {
-		qrDataUrl(config.qrUrl || HTL_URL).then((url) => (qr = url));
+		qrDataUrl(config.qrUrl || HTL_URL).then(
+			(url) => (qr = url),
+			() => (qr = '')
+		);
 	});
 </script>
 
@@ -118,7 +121,11 @@
 	>
 		<h2 class="text-3xl font-bold">{t.finale.qrTitle}</h2>
 		<div class="grid size-64 place-items-center rounded-2xl bg-white p-3 shadow-md">
-			{#if qr}<img src={qr} alt={config.qrUrl || HTL_URL} class="size-full" />{/if}
+			{#if qr}<img src={qr} alt={config.qrUrl || HTL_URL} class="size-full" />{:else}<p
+					class="text-center font-mono text-lg break-all"
+				>
+					{config.qrUrl || HTL_URL}
+				</p>{/if}
 		</div>
 		<p class="text-xl text-muted-foreground">{t.finale.qrHint}</p>
 		<div class="flex flex-wrap justify-center gap-3">

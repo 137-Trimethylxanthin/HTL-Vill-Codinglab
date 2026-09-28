@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import AdminScreen from '$lib/admin/AdminScreen.svelte';
-	import { StationStore } from '$lib/config/station.svelte';
+	import { configKey, StationStore } from '$lib/config/station.svelte';
 	import { toRecord } from '$lib/history/record';
 	import { t } from '$lib/i18n/de';
 	import { SHOWCASE } from '$lib/missions';
@@ -36,10 +36,13 @@
 	let adminOpen = $state(false);
 
 	/** Settings changed (or first loaded): new idle time, mission selection, fresh session. */
+	let lastConfig = '';
+
 	function applyConfig() {
 		idle.setIdleMs(station.config.idleSeconds * 1000);
 		store(session.reset('quit'));
 		session = new Session(missionsFor(SHOWCASE, station.config.enabledMissions));
+		lastConfig = configKey(station.config);
 	}
 
 	onMount(() => {
@@ -153,7 +156,8 @@
 		missions={SHOWCASE}
 		onClose={() => {
 			adminOpen = false;
-			applyConfig();
+			// Only a real settings change resets the visitor.
+			if (configKey(station.config) !== lastConfig) applyConfig();
 		}}
 	/>
 {/if}

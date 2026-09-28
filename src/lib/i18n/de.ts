@@ -33,7 +33,7 @@ export const de = {
 		map: 'Zur Karte',
 		promoTitle: 'An der HTL Villach',
 		promo: [
-			'Du lernst, echte Maschinen zu steuern.',
+			'Du steuerst hier echte Maschinen.',
 			'Hier baust du Roboter, Apps und Spiele.',
 			'Sensoren, Drohnen, Elektronik: Das ist dein Alltag hier.'
 		]

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createWebPlatform } from '$lib/platform/web';
-import { DEFAULT_PUBLIC_CONFIG, StationStore } from './station.svelte';
+import { configKey, DEFAULT_PUBLIC_CONFIG, StationStore } from './station.svelte';
 
 const storage = () => {
 	const data = new Map<string, string>();
@@ -29,5 +29,17 @@ describe('StationStore', () => {
 		await store.load({ getConfig: () => Promise.reject(new Error('down')) } as never);
 		expect(store.loaded).toBe(true);
 		expect(store.config.idleSeconds).toBe(90);
+	});
+});
+
+describe('configKey', () => {
+	it('changes only when settings change', () => {
+		const a = { ...DEFAULT_PUBLIC_CONFIG };
+		expect(configKey(a)).toBe(configKey({ ...a }));
+		expect(configKey(a)).not.toBe(configKey({ ...a, idleSeconds: 30 }));
+	});
+
+	it('defaults to "no PIN yet" so a failed load still allows setup', () => {
+		expect(DEFAULT_PUBLIC_CONFIG.hasPin).toBe(false);
 	});
 });

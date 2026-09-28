@@ -36,6 +36,12 @@ describe('isBlockedKey', () => {
 		expect(isBlockedKey(key('I', { ctrlKey: true, shiftKey: true }), true)).toBe(false);
 		expect(isBlockedKey(key('F12'), true)).toBe(false);
 	});
+	it('blocks ctrl+shift browser shortcuts too', () => {
+		for (const k of ['W', 'N', 'T', 'P', '+']) {
+			expect(isBlockedKey(key(k, { ctrlKey: true, shiftKey: true })), k).toBe(true);
+		}
+		expect(isBlockedKey(key('A', { ctrlKey: true, shiftKey: true }))).toBe(false);
+	});
 });
 
 describe('installKioskGuards', () => {

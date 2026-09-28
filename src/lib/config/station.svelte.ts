@@ -12,7 +12,7 @@ export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
 	nameRetentionDays: 7,
 	manualPeers: [],
 	smtp: { host: '', port: 587, username: '', from: '', starttls: true },
-	hasPin: true,
+	hasPin: false,
 	smtpReady: false
 };
 
@@ -33,4 +33,9 @@ export class StationStore {
 	set(config: PublicConfig) {
 		this.config = config;
 	}
+}
+
+/** Compare settings cheaply (admin closed without changes must not reset the visitor). */
+export function configKey(config: PublicConfig): string {
+	return JSON.stringify(config);
 }

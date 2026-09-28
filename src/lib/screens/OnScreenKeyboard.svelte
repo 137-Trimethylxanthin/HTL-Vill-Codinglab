@@ -20,7 +20,7 @@
 			? ['1234567890', 'qwertzuiop', 'asdfghjkl', 'yxcvbnm']
 			: ['QWERTZUIOPÜ', 'ASDFGHJKLÖÄ', 'YXCVBNMß']
 	);
-	const EXTRA = $derived(mode === 'email' ? ['@', '.', '-', '_'] : ['-']);
+	const EXTRA = $derived(mode === 'email' ? ['@', '.', '-', '_', '+'] : ['-']);
 	const MAX = $derived(mode === 'email' ? 64 : MAX_NAME);
 	const ALLOWED = $derived(mode === 'email' ? /^[a-z0-9@._+-]$/ : /^[A-Za-zÄÖÜäöüß -]$/);
 	const upper = $derived(

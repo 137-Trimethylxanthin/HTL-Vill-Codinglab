@@ -27,7 +27,14 @@ impl EmailStore {
         if let Some(dir) = self.path.parent() {
             std::fs::create_dir_all(dir)?;
         }
-        let mut file = std::fs::OpenOptions::new().create(true).append(true).open(&self.path)?;
+        let mut options = std::fs::OpenOptions::new();
+        options.create(true).append(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let mut file = options.open(&self.path)?;
         writeln!(file, "{}", serde_json::to_string(entry)?)?;
         Ok(())
     }
@@ -133,5 +140,14 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let csv = EmailStore::new(dir.path()).export_csv().unwrap();
         assert!(csv.starts_with('\u{FEFF}'));
+    }
+    #[cfg(unix)]
+    #[test]
+    fn email_file_is_private() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        EmailStore::new(dir.path()).append(&entry("Lea", "lea@example.org")).unwrap();
+        let mode = std::fs::metadata(dir.path().join("emails.jsonl")).unwrap().permissions().mode();
+        assert_eq!(mode & 0o077, 0);
     }
 }
