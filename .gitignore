@@ -13,3 +13,5 @@ vite.config.ts.timestamp-*
 *.log
 .vscode/*
 /.superpowers/
+/test-results
+/playwright-report
