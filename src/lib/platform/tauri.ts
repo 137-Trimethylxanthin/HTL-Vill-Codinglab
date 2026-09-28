@@ -20,6 +20,20 @@ export function createTauriPlatform(): Platform {
 			// Phones have no place to save the PDF yet.
 			if (info?.mobile) features.certificate = false;
 		},
+		appVersion: async () => (await import('@tauri-apps/api/app')).getVersion(),
+		checkUpdate: async () => {
+			const { check } = await import('@tauri-apps/plugin-updater');
+			const update = await check().catch(() => null);
+			return update?.version ?? null;
+		},
+		installUpdate: async () => {
+			const { check } = await import('@tauri-apps/plugin-updater');
+			const { relaunch } = await import('@tauri-apps/plugin-process');
+			const update = await check();
+			if (!update) return;
+			await update.downloadAndInstall();
+			await relaunch();
+		},
 		getConfig: () => call('get_config'),
 		verifyPin: (pin) => call('verify_pin', { pin }),
 		setPin: (oldPin, newPin) => call('set_pin', { oldPin, newPin }),

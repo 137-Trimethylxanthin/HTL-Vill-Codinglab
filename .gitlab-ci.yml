@@ -1,0 +1,59 @@
+stages: [check, test, build]
+
+default:
+  image: node:22
+  cache:
+    key: npm
+    paths: [.npm/]
+  before_script:
+    - npm ci --cache .npm --prefer-offline
+
+lint:
+  stage: check
+  script:
+    - npm run check
+    - npm run lint
+
+unit:
+  stage: test
+  script:
+    - npm test
+
+rust:
+  stage: test
+  image: rust:1
+  before_script:
+    - apt-get update && apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf nodejs npm
+    - npm ci
+    - rustup component add clippy
+  script:
+    - cd src-tauri && cargo test && cargo clippy --all-targets -- -D warnings
+
+e2e:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.63.0-noble
+  script:
+    - npx playwright test
+  artifacts:
+    when: on_failure
+    paths: [playwright-report/]
+
+web:
+  stage: build
+  script:
+    - npm run build
+  artifacts:
+    paths: [build/]
+    expire_in: 30 days
+
+linux:
+  stage: build
+  image: rust:1
+  before_script:
+    - apt-get update && apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf nodejs npm
+    - npm ci
+  script:
+    - npm run tauri build -- --no-bundle
+  artifacts:
+    paths: [src-tauri/target/release/codinglab]
+    expire_in: 30 days

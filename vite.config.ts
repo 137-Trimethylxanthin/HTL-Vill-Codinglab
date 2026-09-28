@@ -17,6 +17,7 @@ export default defineConfig({
 			adapter: adapter({ fallback: 'index.html' })
 		})
 	],
+	define: { __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.0.0') },
 	clearScreen: false,
 	server: {
 		port: 5173,

@@ -18,6 +18,11 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            #[cfg(desktop)]
+            {
+                app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+                app.handle().plugin(tauri_plugin_process::init())?;
+            }
             let dir = app.path().app_data_dir()?;
             let config = std::sync::Arc::new(Mutex::new(config::load(&dir)?));
             let history = std::sync::Arc::new(history::History::open(&dir.join("history.sqlite"))?);

@@ -85,6 +85,9 @@ export function createWebPlatform(storage: Storage): Platform {
 		kind: 'web',
 		features: { certificate: false, email: false },
 		init: async () => {},
+		appVersion: async () => __APP_VERSION__,
+		checkUpdate: async () => null,
+		installUpdate: unsupported,
 		getConfig: async () => publicOf(read()),
 		verifyPin: async (pin) => {
 			const s = read();

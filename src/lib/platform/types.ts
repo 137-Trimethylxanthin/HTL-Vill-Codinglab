@@ -53,6 +53,11 @@ export interface Platform {
 	features: { certificate: boolean; email: boolean };
 	/** Ask the backend what this device can do; call once before use. */
 	init(): Promise<void>;
+	appVersion(): Promise<string>;
+	/** The newer version on offer, or null. */
+	checkUpdate(): Promise<string | null>;
+	/** Download, install and restart. */
+	installUpdate(): Promise<void>;
 	getConfig(): Promise<PublicConfig>;
 	verifyPin(pin: string): Promise<boolean>;
 	setPin(oldPin: string | null, newPin: string): Promise<void>;

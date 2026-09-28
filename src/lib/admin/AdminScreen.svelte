@@ -36,6 +36,8 @@
 	let confirmDelete = $state(false);
 	let status = $state<string | null>(null);
 	let busy = $state(false);
+	let version = $state('');
+	let update = $state<string | null>(null);
 
 	// An unlocked admin screen must not wait for the next visitor: lock after 2 minutes.
 	const ADMIN_IDLE_MS = 120_000;
@@ -103,6 +105,7 @@
 		form = editableOf(store.config);
 		stage = 'open';
 		emailCount = await platform.emailCount(pin).catch(() => null);
+		version = await platform.appVersion().catch(() => '');
 	}
 
 	async function run(action: () => Promise<string | null>) {
@@ -124,6 +127,18 @@
 			smtpPassword = '';
 			store.set(hadPassword ? await platform.getConfig() : saved);
 			return t.admin.saved;
+		});
+
+	const checkUpdate = () =>
+		run(async () => {
+			update = await platform.checkUpdate();
+			return update ? t.admin.updateFound(update) : t.admin.noUpdate;
+		});
+
+	const installUpdate = () =>
+		run(async () => {
+			await platform.installUpdate();
+			return null;
 		});
 
 	const testMail = () =>
@@ -359,6 +374,24 @@
 					>
 				</div>
 			</section>
+
+			{#if platform.kind === 'tauri'}
+				<section class="flex flex-col gap-3">
+					<h2 class="text-2xl font-bold">{t.admin.updates}</h2>
+					{#if version}<p class="text-lg">{t.admin.version(version)}</p>{/if}
+					<div class="flex gap-3">
+						<Button
+							variant="secondary"
+							class="h-12 rounded-xl px-6"
+							disabled={busy}
+							onclick={checkUpdate}>{t.admin.checkUpdate}</Button
+						>
+						{#if update}<Button class="h-12 rounded-xl px-6" disabled={busy} onclick={installUpdate}
+								>{t.admin.installUpdate}</Button
+							>{/if}
+					</div>
+				</section>
+			{/if}
 		</div>
 	{/if}
 </div>

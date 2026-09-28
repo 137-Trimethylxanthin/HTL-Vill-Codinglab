@@ -36,6 +36,12 @@ const code = async (p: Promise<unknown>) => {
 };
 
 describe('web platform', () => {
+	it('reports a version and never offers updates', async () => {
+		const p = createWebPlatform(new MemoryStorage());
+		expect(await p.appVersion()).toMatch(/^\d+\.\d+\.\d+/);
+		expect(await p.checkUpdate()).toBeNull();
+	});
+
 	it('has a no-op init', async () => {
 		const p = createWebPlatform(new MemoryStorage());
 		await p.init();
