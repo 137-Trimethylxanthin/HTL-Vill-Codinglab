@@ -179,4 +179,11 @@ describe('Session', () => {
 		const other = atMap().s;
 		expect(other.timeout()?.endedBy).toBe('idle');
 	});
+
+	it('exposes when the visit started', () => {
+		const { s } = atMap();
+		expect(s.startedAtMs).toBe(1000);
+		s.reset('quit');
+		expect(s.startedAtMs).toBe(0);
+	});
 });

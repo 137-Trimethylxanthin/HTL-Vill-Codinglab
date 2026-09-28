@@ -214,6 +214,9 @@
 				<label class="flex flex-col gap-1"
 					>{t.admin.eventCode}<input class={field} bind:value={form.eventCode} /></label
 				>
+				{#if !form.eventCode.trim()}<p class="font-bold text-warn-foreground">
+						{t.admin.eventHint}
+					</p>{/if}
 				<label class="flex flex-col gap-1"
 					>{t.admin.idleSeconds}<input
 						class={field}

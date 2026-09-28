@@ -16,37 +16,48 @@ pub trait Remote {
     fn push(&self, records: &[SessionRecord]) -> AppResult<usize>;
 }
 
+pub const MAX_PAGES_PER_ROUND: usize = 20;
+
 /// One sync round with one peer: pull everything new from it, then push our own new records.
-/// Marks are advanced only after a page was stored, so an interrupted round resumes safely.
-pub fn sync_with(local: &History, own_station: &str, remote: &dyn Remote, retention_days: u32, now_ms: i64) -> AppResult<SyncReport> {
+/// Only records of our event are exchanged; broken or implausible records are skipped.
+/// Marks are advanced only after a page was stored, so an interrupted round resumes safely;
+/// a peer that never ends (or lies about progress) is cut off after MAX_PAGES_PER_ROUND pages.
+pub fn sync_with(
+    local: &History,
+    own_station: &str,
+    event: &str,
+    remote: &dyn Remote,
+    retention_days: u32,
+    now_ms: i64,
+) -> AppResult<SyncReport> {
     let peer = remote.station().to_string();
     let mut report = SyncReport::default();
 
     let mut after = local.mark(&peer, "pull")?;
-    loop {
+    for _ in 0..MAX_PAGES_PER_ROUND {
         let (records, last) = remote.pull(after)?;
-        for r in &records {
-            if local.insert(r, retention_days, now_ms)? {
+        if records.is_empty() || last <= after {
+            break;
+        }
+        for r in records.iter().filter(|r| r.event == event) {
+            if let Ok(true) = local.insert(r, retention_days, now_ms) {
                 report.pulled += 1;
             }
-        }
-        if last <= after {
-            break;
         }
         local.set_mark(&peer, "pull", last)?;
         after = last;
     }
 
     let mut pushed_to = local.mark(&peer, "push")?;
-    loop {
+    for _ in 0..MAX_PAGES_PER_ROUND {
         let (own, last) = local.own_after(own_station, pushed_to, MAX_PAGE)?;
-        if own.is_empty() {
-            if last > pushed_to {
-                local.set_mark(&peer, "push", last)?;
-            }
+        if last <= pushed_to {
             break;
         }
-        report.pushed += remote.push(&own)?;
+        let own: Vec<SessionRecord> = own.into_iter().filter(|r| r.event == event).collect();
+        if !own.is_empty() {
+            report.pushed += remote.push(&own)?;
+        }
         local.set_mark(&peer, "push", last)?;
         pushed_to = last;
     }
@@ -68,6 +79,21 @@ pub const SYNC_PORT: u16 = 47800;
 pub const SERVICE_TYPE: &str = "_codinglab._tcp.local.";
 pub const PROTOCOL: &str = "1";
 const ROUND: Duration = Duration::from_secs(30);
+pub const MAX_PEERS: usize = 32;
+const PEER_EXPIRY: Duration = Duration::from_secs(600);
+const STICKY_MS: i64 = 90_000;
+const MAX_BODY_BYTES: usize = 256 * 1024;
+const MAX_REPLY_BYTES: u64 = 2 * 1024 * 1024;
+
+/// The event code is the swarm's shared secret: it is never sent in the clear.
+/// mDNS and /health only carry this short hash so stations can group by event.
+pub fn event_hash(code: &str) -> String {
+    use sha2::{Digest, Sha256};
+    if code.is_empty() {
+        return String::new();
+    }
+    Sha256::digest(format!("codinglab-event:{code}").as_bytes())[..6].iter().map(|b| format!("{b:02x}")).collect()
+}
 
 pub struct Shared {
     pub history: Arc<History>,
@@ -77,7 +103,9 @@ pub struct Shared {
 impl Shared {
     fn identity(&self) -> Option<(String, String, u32, bool)> {
         let cfg = self.config.lock().ok()?;
-        Some((cfg.station_id.clone(), cfg.event_code.clone(), cfg.name_retention_days, cfg.sync_enabled))
+        // Without an event code there is no secret, so the station neither serves nor syncs.
+        let enabled = cfg.sync_enabled && !cfg.event_code.is_empty();
+        Some((cfg.station_id.clone(), cfg.event_code.clone(), cfg.name_retention_days, enabled))
     }
 }
 
@@ -107,7 +135,7 @@ fn same_swarm(shared: &Shared, headers: &HeaderMap) -> Result<u32, StatusCode> {
 
 async fn health(State(shared): State<Arc<Shared>>) -> Result<Json<serde_json::Value>, StatusCode> {
     let (station, event, _, _) = shared.identity().ok_or(StatusCode::SERVICE_UNAVAILABLE)?;
-    Ok(Json(serde_json::json!({ "station": station, "event": event, "v": PROTOCOL })))
+    Ok(Json(serde_json::json!({ "station": station, "eh": event_hash(&event), "v": PROTOCOL })))
 }
 
 async fn get_records(
@@ -129,6 +157,7 @@ async fn post_records(
     body: Result<Json<Vec<serde_json::Value>>, axum::extract::rejection::JsonRejection>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
     let retention = same_swarm(&shared, &headers)?;
+    let event = shared.identity().map(|(_, e, _, _)| e).unwrap_or_default();
     let Json(values) = body.map_err(|_| StatusCode::BAD_REQUEST)?;
     if values.len() > MAX_PAGE {
         return Err(StatusCode::PAYLOAD_TOO_LARGE);
@@ -137,6 +166,9 @@ async fn post_records(
     for value in values {
         // One broken record must not block the others.
         let Ok(record) = serde_json::from_value::<SessionRecord>(value) else { continue };
+        if record.event != event {
+            continue;
+        }
         if shared.history.insert(&record, retention, now_ms()).unwrap_or(false) {
             accepted += 1;
         }
@@ -148,6 +180,7 @@ pub fn router(shared: Arc<Shared>) -> Router {
     Router::new()
         .route("/health", get(health))
         .route("/records", get(get_records).post(post_records))
+        .layer(axum::extract::DefaultBodyLimit::max(MAX_BODY_BYTES))
         .with_state(shared)
 }
 
@@ -174,35 +207,39 @@ fn net(e: impl std::fmt::Display) -> AppError {
     AppError::Other(format!("Sync: {e}"))
 }
 
+/// Replies from peers are read with a size cap (a peer must not fill our memory).
+fn read_json<T: serde::de::DeserializeOwned>(reply: ureq::Response) -> AppResult<T> {
+    use std::io::Read;
+    serde_json::from_reader(reply.into_reader().take(MAX_REPLY_BYTES)).map_err(net)
+}
+
 impl Remote for HttpRemote {
     fn station(&self) -> &str {
         &self.station
     }
 
     fn pull(&self, after: i64) -> AppResult<(Vec<SessionRecord>, i64)> {
-        let page: Page = self
+        let page = self
             .agent
             .get(&format!("{}/records", self.base_url))
             .set("x-codinglab-event", &self.event)
             .set("x-codinglab-v", PROTOCOL)
             .query("after", &after.to_string())
             .call()
-            .map_err(net)?
-            .into_json()
             .map_err(net)?;
+        let page: Page = read_json(page)?;
         Ok((page.records, page.last))
     }
 
     fn push(&self, records: &[SessionRecord]) -> AppResult<usize> {
-        let reply: serde_json::Value = self
+        let reply = self
             .agent
             .post(&format!("{}/records", self.base_url))
             .set("x-codinglab-event", &self.event)
             .set("x-codinglab-v", PROTOCOL)
             .send_json(records)
-            .map_err(net)?
-            .into_json()
             .map_err(net)?;
+        let reply: serde_json::Value = read_json(reply)?;
         Ok(reply["accepted"].as_u64().unwrap_or(0) as usize)
     }
 }
@@ -217,43 +254,88 @@ pub struct PeerInfo {
     pub last_ok_ms: Option<i64>,
 }
 
-/// Stations seen on the network (mDNS) or configured by hand.
+struct PeerEntry {
+    info: PeerInfo,
+    event_hash: String,
+    seen_at: Instant,
+}
+
+/// Stations seen on the network (mDNS) or configured by hand. Small, self-cleaning,
+/// and a peer that works is not replaced by someone else announcing the same id.
 #[derive(Default)]
 pub struct Peers {
-    map: Mutex<HashMap<String, (PeerInfo, String)>>, // station → (info, event)
+    map: Mutex<HashMap<String, PeerEntry>>,
 }
 
 impl Peers {
-    fn seen(&self, station: &str, name: &str, address: &str, event: &str) {
-        if let Ok(mut map) = self.map.lock() {
-            let last_ok = map.get(station).and_then(|(p, _)| p.last_ok_ms);
-            map.insert(
-                station.into(),
-                (
-                    PeerInfo { station: station.into(), name: name.into(), address: address.into(), last_seen_ms: now_ms(), last_ok_ms: last_ok },
-                    event.into(),
-                ),
-            );
+    fn seen(&self, station: &str, name: &str, address: &str, event_hash: &str) {
+        let Ok(mut map) = self.map.lock() else { return };
+        let now = Instant::now();
+        map.retain(|_, e| now.duration_since(e.seen_at) < PEER_EXPIRY);
+        if let Some(entry) = map.get_mut(station) {
+            let working = entry.info.last_ok_ms.is_some_and(|t| now_ms() - t < STICKY_MS);
+            if working && entry.info.address != address {
+                return;
+            }
+            entry.info.name = name.into();
+            entry.info.address = address.into();
+            entry.info.last_seen_ms = now_ms();
+            entry.event_hash = event_hash.into();
+            entry.seen_at = now;
+            return;
         }
+        if map.len() >= MAX_PEERS
+            && let Some(oldest) = map.iter().min_by_key(|(_, e)| e.seen_at).map(|(k, _)| k.clone()) {
+                map.remove(&oldest);
+            }
+        map.insert(
+            station.into(),
+            PeerEntry {
+                info: PeerInfo { station: station.into(), name: name.into(), address: address.into(), last_seen_ms: now_ms(), last_ok_ms: None },
+                event_hash: event_hash.into(),
+                seen_at: now,
+            },
+        );
     }
 
     fn ok(&self, station: &str) {
         if let Ok(mut map) = self.map.lock()
-            && let Some((p, _)) = map.get_mut(station) {
-                p.last_ok_ms = Some(now_ms());
-            }
+            && let Some(entry) = map.get_mut(station)
+        {
+            entry.info.last_ok_ms = Some(now_ms());
+        }
     }
 
     pub fn list(&self) -> Vec<PeerInfo> {
-        self.map.lock().map(|m| m.values().map(|(p, _)| p.clone()).collect()).unwrap_or_default()
-    }
-
-    fn targets(&self, event: &str) -> Vec<PeerInfo> {
+        let now = Instant::now();
         self.map
             .lock()
-            .map(|m| m.values().filter(|(_, e)| e == event).map(|(p, _)| p.clone()).collect())
+            .map(|m| m.values().filter(|e| now.duration_since(e.seen_at) < PEER_EXPIRY).map(|e| e.info.clone()).collect())
             .unwrap_or_default()
     }
+
+    fn targets(&self, event_hash: &str) -> Vec<PeerInfo> {
+        let now = Instant::now();
+        self.map
+            .lock()
+            .map(|m| {
+                m.values()
+                    .filter(|e| e.event_hash == event_hash && now.duration_since(e.seen_at) < PEER_EXPIRY)
+                    .map(|e| e.info.clone())
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+}
+
+/// Asks a peer who it is. Used before trusting an address announced via mDNS.
+fn health_of(base: &str) -> Option<(String, String)> {
+    let reply = ureq::get(&format!("http://{base}/health")).timeout(Duration::from_secs(3)).call().ok()?;
+    let body: serde_json::Value = read_json(reply).ok()?;
+    if body["v"] != PROTOCOL {
+        return None;
+    }
+    Some((body["station"].as_str()?.to_string(), body["eh"].as_str().unwrap_or_default().to_string()))
 }
 
 /// One round: sync with every known peer of our event. Errors stay per peer.
@@ -263,54 +345,63 @@ fn round(shared: &Shared, peers: &Peers) {
     if !enabled {
         return;
     }
+    let hash = event_hash(&event);
     let manual = shared.config.lock().map(|c| c.manual_peers.clone()).unwrap_or_default();
     for address in manual {
         let base = if address.contains(':') { address.clone() } else { format!("{address}:{SYNC_PORT}") };
-        if let Ok(reply) = ureq::get(&format!("http://{base}/health")).timeout(Duration::from_secs(3)).call()
-            && let Ok(body) = reply.into_json::<serde_json::Value>() {
-                let peer = body["station"].as_str().unwrap_or_default();
-                let peer_event = body["event"].as_str().unwrap_or_default();
-                if !peer.is_empty() && peer != station && body["v"] == PROTOCOL {
-                    peers.seen(peer, &base, &base, peer_event);
-                }
-            }
+        if let Some((peer, peer_hash)) = health_of(&base)
+            && !peer.is_empty()
+            && peer != station
+        {
+            peers.seen(&peer, &base, &base, &peer_hash);
+        }
     }
-    for peer in peers.targets(&event) {
+    for peer in peers.targets(&hash) {
         if peer.station == station {
             continue;
         }
         let remote = HttpRemote::new(&peer.station, &format!("http://{}", peer.address), &event);
-        if sync_with(&shared.history, &station, &remote, retention, now_ms()).is_ok() {
+        if sync_with(&shared.history, &station, &event, &remote, retention, now_ms()).is_ok() {
             peers.ok(&peer.station);
         }
     }
 }
 
-fn discover(shared: &Shared, peers: Arc<Peers>) -> Result<mdns_sd::ServiceDaemon, mdns_sd::Error> {
-    let daemon = mdns_sd::ServiceDaemon::new()?;
-    if let Some((station, event, _, _)) = shared.identity() {
-        let name = shared.config.lock().map(|c| c.station_name.clone()).unwrap_or_default();
-        let host = format!("codinglab-{}.local.", &station[..8.min(station.len())]);
-        let props = [("station", station.as_str()), ("event", event.as_str()), ("v", PROTOCOL), ("name", name.as_str())];
-        #[cfg(desktop)]
-        {
-            let info = mdns_sd::ServiceInfo::new(SERVICE_TYPE, &station, &host, "", SYNC_PORT, &props[..])?.enable_addr_auto();
-            daemon.register(info)?;
-        }
-        let _ = (&host, &props);
+/// Announces this station (desktop only). Returns the registered name and event hash.
+fn register(daemon: &mdns_sd::ServiceDaemon, shared: &Shared) -> Option<(String, String)> {
+    let (station, event, _, enabled) = shared.identity()?;
+    let hash = event_hash(&event);
+    if !cfg!(desktop) || !enabled {
+        return Some((String::new(), hash));
     }
+    let name = shared.config.lock().map(|c| c.station_name.clone()).unwrap_or_default();
+    let short: String = station.chars().filter(char::is_ascii_alphanumeric).take(8).collect();
+    let host = format!("codinglab-{short}.local.");
+    let props = [("station", station.as_str()), ("eh", hash.as_str()), ("v", PROTOCOL), ("name", name.as_str())];
+    let info = mdns_sd::ServiceInfo::new(SERVICE_TYPE, &station, &host, "", SYNC_PORT, &props[..]).ok()?.enable_addr_auto();
+    let fullname = info.get_fullname().to_string();
+    daemon.register(info).ok()?;
+    Some((fullname, hash))
+}
+
+fn discover(peers: Arc<Peers>) -> Result<mdns_sd::ServiceDaemon, mdns_sd::Error> {
+    let daemon = mdns_sd::ServiceDaemon::new()?;
     let receiver = daemon.browse(SERVICE_TYPE)?;
     std::thread::spawn(move || {
         while let Ok(event) = receiver.recv() {
-            if let mdns_sd::ServiceEvent::ServiceResolved(info) = event {
-                let station = info.get_property_val_str("station").unwrap_or_default().to_string();
-                let peer_event = info.get_property_val_str("event").unwrap_or_default().to_string();
-                let name = info.get_property_val_str("name").unwrap_or_default().to_string();
-                let v = info.get_property_val_str("v").unwrap_or_default();
-                let Some(ip) = info.addresses.iter().map(|a| a.to_ip_addr()).find(|ip| ip.is_ipv4()) else { continue };
-                if !station.is_empty() && v == PROTOCOL {
-                    peers.seen(&station, &name, &format!("{ip}:{}", info.port), &peer_event);
-                }
+            let mdns_sd::ServiceEvent::ServiceResolved(info) = event else { continue };
+            let station = info.get_property_val_str("station").unwrap_or_default().to_string();
+            let name = info.get_property_val_str("name").unwrap_or_default().to_string();
+            if station.is_empty() || info.get_property_val_str("v") != Some(PROTOCOL) {
+                continue;
+            }
+            let Some(ip) = info.addresses.iter().map(|a| a.to_ip_addr()).find(|ip| ip.is_ipv4()) else { continue };
+            let address = format!("{ip}:{}", info.port);
+            // Trust the address only if the station there confirms the announced id.
+            if let Some((confirmed, hash)) = health_of(&address)
+                && confirmed == station
+            {
+                peers.seen(&station, &name, &address, &hash);
             }
         }
     });
@@ -336,13 +427,23 @@ pub fn start(shared: Arc<Shared>) -> Arc<Peers> {
         });
     }
 
-    let daemon = discover(&shared, peers.clone()).map_err(|e| eprintln!("mDNS not available: {e}")).ok();
+    let daemon = discover(peers.clone()).map_err(|e| eprintln!("mDNS not available: {e}")).ok();
     let loop_peers = peers.clone();
     std::thread::spawn(move || {
-        let _keep_daemon = daemon;
+        let mut registered: Option<(String, String)> = daemon.as_ref().and_then(|d| register(d, &shared));
         let mut next = Instant::now();
         loop {
             if Instant::now() >= next {
+                // A new event code in admin is announced without a restart.
+                if let Some(d) = daemon.as_ref() {
+                    let hash = shared.identity().map(|(_, e, _, _)| event_hash(&e)).unwrap_or_default();
+                    if registered.as_ref().map(|(_, h)| h) != Some(&hash) {
+                        if let Some((name, _)) = registered.take().filter(|(n, _)| !n.is_empty()) {
+                            let _ = d.unregister(&name);
+                        }
+                        registered = register(d, &shared);
+                    }
+                }
                 round(&shared, &loop_peers);
                 next = Instant::now() + ROUND;
             }
@@ -398,7 +499,7 @@ mod tests {
         let b = History::in_memory().unwrap();
         a.insert(&record("a1", "A", NOW, None), 7, now_ms()).unwrap();
         b.insert(&record("b1", "B", NOW, None), 7, now_ms()).unwrap();
-        let report = sync_with(&a, "A", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
+        let report = sync_with(&a, "A", "", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
         assert_eq!(report, SyncReport { pulled: 1, pushed: 1 });
         assert_eq!(ids(&a), vec!["a1", "b1"]);
         assert_eq!(ids(&b), vec!["a1", "b1"]);
@@ -409,8 +510,8 @@ mod tests {
         let a = History::in_memory().unwrap();
         let b = History::in_memory().unwrap();
         a.insert(&record("a1", "A", NOW, None), 7, now_ms()).unwrap();
-        sync_with(&a, "A", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
-        let again = sync_with(&a, "A", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
+        sync_with(&a, "A", "", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
+        let again = sync_with(&a, "A", "", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
         assert_eq!(again, SyncReport::default());
     }
 
@@ -420,8 +521,8 @@ mod tests {
         let b = History::in_memory().unwrap();
         let c = History::in_memory().unwrap();
         c.insert(&record("c1", "C", NOW, None), 7, now_ms()).unwrap();
-        sync_with(&b, "B", &Local { id: "C", history: &c }, 7, now_ms()).unwrap();
-        sync_with(&a, "A", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
+        sync_with(&b, "B", "", &Local { id: "C", history: &c }, 7, now_ms()).unwrap();
+        sync_with(&a, "A", "", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
         assert_eq!(ids(&a), vec!["c1"]);
     }
 
@@ -429,13 +530,13 @@ mod tests {
     fn catches_up_after_being_offline() {
         let a = History::in_memory().unwrap();
         let b = History::in_memory().unwrap();
-        sync_with(&a, "A", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
+        sync_with(&a, "A", "", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
         // offline: both collect visitors
         for i in 0..3 {
             a.insert(&record(&format!("a{i}"), "A", NOW, None), 7, now_ms()).unwrap();
             b.insert(&record(&format!("b{i}"), "B", NOW, None), 7, now_ms()).unwrap();
         }
-        sync_with(&a, "A", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
+        sync_with(&a, "A", "", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
         assert_eq!(ids(&a).len(), 6);
         assert_eq!(ids(&b).len(), 6);
         assert_eq!(a.count().unwrap(), 6);
@@ -448,7 +549,7 @@ mod tests {
         for i in 0..(MAX_PAGE + 20) {
             b.insert(&record(&format!("b{i:04}"), "B", NOW, None), 7, now_ms()).unwrap();
         }
-        let report = sync_with(&a, "A", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
+        let report = sync_with(&a, "A", "", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
         assert_eq!(report.pulled, MAX_PAGE + 20);
     }
 
@@ -457,7 +558,7 @@ mod tests {
         let a = History::in_memory().unwrap();
         let b = History::in_memory().unwrap();
         a.insert(&record("c1", "C", NOW, None), 7, now_ms()).unwrap();
-        let report = sync_with(&a, "A", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
+        let report = sync_with(&a, "A", "", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
         assert_eq!(report.pushed, 0);
     }
     use crate::config::StationConfig;
@@ -478,13 +579,19 @@ mod tests {
     #[tokio::test(flavor = "multi_thread")]
     async fn syncs_over_http() {
         let server = shared("TDOT");
-        server.history.insert(&record("s1", "SERVER", NOW, Some("Lea")), 7, now_ms()).unwrap();
+        // The server checks timestamps against the real clock.
+        let real_now = chrono::Utc::now().to_rfc3339();
+        let mut s1 = record("s1", "SERVER", &real_now, Some("Lea"));
+        s1.event = "TDOT".into();
+        server.history.insert(&s1, 7, chrono::Utc::now().timestamp_millis()).unwrap();
         let url = serve(server.clone()).await;
         let client = History::in_memory().unwrap();
-        client.insert(&record("c1", "CLIENT", NOW, None), 7, now_ms()).unwrap();
+        let mut c1 = record("c1", "CLIENT", &real_now, None);
+        c1.event = "TDOT".into();
+        client.insert(&c1, 7, chrono::Utc::now().timestamp_millis()).unwrap();
         let report = tokio::task::spawn_blocking(move || {
             let remote = HttpRemote::new("SERVER", &url, "TDOT");
-            let r = sync_with(&client, "CLIENT", &remote, 7, now_ms()).unwrap();
+            let r = sync_with(&client, "CLIENT", "TDOT", &remote, 7, chrono::Utc::now().timestamp_millis()).unwrap();
             (r, client.count().unwrap())
         })
         .await
@@ -508,16 +615,16 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread")]
     async fn rejects_bad_bodies() {
-        let url = serve(shared("")).await;
+        let url = serve(shared("TDOT")).await;
         let (bad, too_many) = tokio::task::spawn_blocking(move || {
             let bad = ureq::post(&format!("{url}/records"))
-                .set("x-codinglab-event", "")
+                .set("x-codinglab-event", "TDOT")
                 .set("x-codinglab-v", PROTOCOL)
                 .set("content-type", "application/json")
                 .send_string("{ nope");
             let many: Vec<SessionRecord> = (0..(MAX_PAGE + 1)).map(|i| record(&format!("r{i}"), "X", NOW, None)).collect();
             let too_many = ureq::post(&format!("{url}/records"))
-                .set("x-codinglab-event", "")
+                .set("x-codinglab-event", "TDOT")
                 .set("x-codinglab-v", PROTOCOL)
                 .send_json(&many);
             (bad.err().map(|e| e.to_string()), too_many.err().map(|e| e.to_string()))
@@ -539,7 +646,69 @@ mod tests {
         .await
         .unwrap();
         assert_eq!(body["station"], station.as_str());
-        assert_eq!(body["event"], "TDOT");
+        assert!(body.get("event").is_none(), "the event code must not be public");
+        assert_eq!(body["eh"], event_hash("TDOT").as_str());
         assert_eq!(body["v"], PROTOCOL);
+    }
+
+    struct Stalling;
+    impl Remote for Stalling {
+        fn station(&self) -> &str {
+            "EVIL"
+        }
+        fn pull(&self, after: i64) -> AppResult<(Vec<SessionRecord>, i64)> {
+            Ok((vec![], after + 1))
+        }
+        fn push(&self, _records: &[SessionRecord]) -> AppResult<usize> {
+            Ok(0)
+        }
+    }
+
+    #[test]
+    fn stops_on_a_stalling_peer() {
+        let a = History::in_memory().unwrap();
+        let report = sync_with(&a, "A", "", &Stalling, 7, now_ms()).unwrap();
+        assert_eq!(report, SyncReport::default());
+        assert_eq!(a.mark("EVIL", "pull").unwrap(), 0);
+    }
+
+    #[test]
+    fn skips_bad_records_and_other_events() {
+        let a = History::in_memory().unwrap();
+        let b = History::in_memory().unwrap();
+        b.insert(&record("good", "B", NOW, None), 7, now_ms()).unwrap();
+        let mut other = record("other-event", "B", NOW, None);
+        other.event = "ELSEWHERE".into();
+        b.insert(&other, 7, now_ms()).unwrap();
+        let report = sync_with(&a, "A", "", &Local { id: "B", history: &b }, 7, now_ms()).unwrap();
+        assert_eq!(report.pulled, 1);
+        assert_eq!(ids(&a), vec!["good"]);
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn refuses_to_serve_without_an_event_code() {
+        let url = serve(shared("")).await;
+        let err = tokio::task::spawn_blocking(move || HttpRemote::new("S", &url, "").pull(0).err().map(|e| e.to_string()))
+            .await
+            .unwrap();
+        assert!(err.unwrap_or_default().contains("403"));
+    }
+
+    #[test]
+    fn a_stranger_cannot_take_over_a_working_peer() {
+        let peers = Peers::default();
+        peers.seen("B", "Halle", "10.0.0.2:47800", "h");
+        peers.ok("B");
+        peers.seen("B", "fake", "10.0.0.66:47800", "h");
+        assert_eq!(peers.list()[0].address, "10.0.0.2:47800");
+    }
+
+    #[test]
+    fn keeps_the_peer_list_small() {
+        let peers = Peers::default();
+        for i in 0..100 {
+            peers.seen(&format!("s{i}"), "", &format!("10.0.0.{i}:47800"), "h");
+        }
+        assert_eq!(peers.list().len(), MAX_PEERS);
     }
 }

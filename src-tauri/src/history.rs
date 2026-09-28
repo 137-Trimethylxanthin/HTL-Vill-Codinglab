@@ -5,6 +5,11 @@ use std::path::Path;
 use std::sync::Mutex;
 
 pub const MAX_PAGE: usize = 500;
+/// A station cannot plausibly finish more visits than this on one day (flood protection).
+pub const MAX_PER_STATION_DAY: usize = 2000;
+const MAX_MISSIONS: usize = 7;
+const MAX_SESSION_MS: i64 = 2 * 60 * 60 * 1000;
+const MAX_NAME: usize = 16;
 const DAY_MS: i64 = 24 * 60 * 60 * 1000;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -49,6 +54,60 @@ fn parse_ms(ts: &str) -> AppResult<i64> {
         .map_err(|_| AppError::Other(format!("Ungültige Zeit: {ts}")))
 }
 
+/// Same rules as the app's name field: letters, spaces, hyphens; max 16; needs a letter.
+pub fn sanitize_name(raw: &str) -> Option<String> {
+    let kept: String = raw.chars().filter(|c| c.is_alphabetic() || *c == ' ' || *c == '-').collect();
+    let collapsed = kept.split_whitespace().collect::<Vec<_>>().join(" ");
+    let trimmed = collapsed.trim_matches(|c: char| c == ' ' || c == '-');
+    let cut: String = trimmed.chars().take(MAX_NAME).collect();
+    let cut = cut.trim_end_matches([' ', '-']).to_string();
+    cut.chars().any(char::is_alphabetic).then_some(cut)
+}
+
+fn valid_id(s: &str) -> bool {
+    (1..=64).contains(&s.len()) && s.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+}
+
+fn invalid(why: &str) -> AppError {
+    AppError::Other(format!("Ungültiger Datensatz: {why}"))
+}
+
+/// Records arrive from other stations: only plausible ones are stored, names are cleaned.
+pub fn validate(record: &SessionRecord, now_ms: i64) -> AppResult<(SessionRecord, i64)> {
+    if record.v != 1 || !matches!(record.mode.as_str(), "showcase" | "lern") {
+        return Err(invalid("Version"));
+    }
+    if !valid_id(&record.id) || !valid_id(&record.station) || record.event.len() > 32 {
+        return Err(invalid("Kennung"));
+    }
+    if !matches!(record.ended_by.as_str(), "finale" | "idle" | "quit") {
+        return Err(invalid("Ende"));
+    }
+    if record.missions.len() > MAX_MISSIONS {
+        return Err(invalid("Missionen"));
+    }
+    let mut seen = std::collections::HashSet::new();
+    let mut stars = 0u32;
+    for m in &record.missions {
+        let id_ok = m.id.len() <= 5 && m.id.split_once('.').is_some_and(|(a, b)| !a.is_empty() && !b.is_empty() && a.chars().chain(b.chars()).all(|c| c.is_ascii_digit()));
+        if !id_ok || !seen.insert(m.id.as_str()) || m.stars > 3 || m.runs > 10_000 || m.blocks > 100 || m.seconds > 7200 {
+            return Err(invalid("Mission"));
+        }
+        stars += u32::from(m.stars);
+    }
+    if record.total_stars != stars || stars > (MAX_MISSIONS as u32) * 3 {
+        return Err(invalid("Sterne"));
+    }
+    let started = parse_ms(&record.started_at)?;
+    let finished = parse_ms(&record.finished_at)?;
+    if started > finished || finished - started > MAX_SESSION_MS || finished > now_ms + DAY_MS {
+        return Err(invalid("Zeit"));
+    }
+    let mut clean = record.clone();
+    clean.pilot_name = record.pilot_name.as_deref().and_then(sanitize_name);
+    Ok((clean, finished))
+}
+
 const SCHEMA: &str = "
 CREATE TABLE IF NOT EXISTS sessions (
     seq INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -90,8 +149,19 @@ impl History {
 
     /// Stores a record once (by id). Records older than the retention lose the name first.
     pub fn insert(&self, record: &SessionRecord, retention_days: u32, now_ms: i64) -> AppResult<bool> {
-        let finished = parse_ms(&record.finished_at)?;
-        let mut record = record.clone();
+        let (mut record, finished) = validate(record, now_ms)?;
+        let day_start = finished - finished.rem_euclid(DAY_MS);
+        let same_day: i64 = self
+            .conn()?
+            .query_row(
+                "SELECT COUNT(*) FROM sessions WHERE station = ?1 AND finished_ms >= ?2 AND finished_ms < ?3",
+                params![record.station, day_start, day_start + DAY_MS],
+                |r| r.get(0),
+            )
+            .map_err(db)?;
+        if same_day as usize >= MAX_PER_STATION_DAY {
+            return Err(invalid("zu viele Einträge"));
+        }
         if finished < now_ms - i64::from(retention_days) * DAY_MS {
             record.pilot_name = None;
         }
@@ -175,9 +245,8 @@ impl History {
 
     pub fn delete_all(&self) -> AppResult<usize> {
         let conn = self.conn()?;
-        let n = conn.execute("DELETE FROM sessions", []).map_err(db)?;
-        conn.execute("DELETE FROM marks", []).map_err(db)?;
-        Ok(n)
+        // Marks are kept on purpose: records still exist on the peers.
+        conn.execute("DELETE FROM sessions", []).map_err(db)
     }
 
     pub fn mark(&self, peer: &str, kind: &str) -> AppResult<i64> {
@@ -214,7 +283,7 @@ pub(crate) mod tests {
             started_at: finished_at.into(),
             finished_at: finished_at.into(),
             pilot_name: name.map(Into::into),
-            total_stars: 5,
+            total_stars: 3,
             missions: vec![MissionStat { id: "1.1".into(), stars: 3, runs: 1, blocks: 3, seconds: 40, skipped: false }],
             ended_by: "finale".into(),
         }
@@ -293,7 +362,8 @@ pub(crate) mod tests {
         h.set_mark("peer", "pull", 3).unwrap();
         assert_eq!(h.delete_all().unwrap(), 1);
         assert_eq!(h.count().unwrap(), 0);
-        assert_eq!(h.mark("peer", "pull").unwrap(), 0);
+        // Marks stay: pulling everything again from peers would undo nothing anyway.
+        assert_eq!(h.mark("peer", "pull").unwrap(), 3);
     }
 
     #[test]
@@ -308,5 +378,59 @@ pub(crate) mod tests {
         let path = dir.path().join("history.sqlite");
         History::open(&path).unwrap().insert(&record("a", "s1", NOW, None), 7, now_ms()).unwrap();
         assert_eq!(History::open(&path).unwrap().count().unwrap(), 1);
+    }
+
+    #[test]
+    fn cleans_names_like_the_app() {
+        assert_eq!(sanitize_name("  Lea<script> ").as_deref(), Some("Leascript"));
+        assert_eq!(sanitize_name("Jürgen-Maß").as_deref(), Some("Jürgen-Maß"));
+        assert_eq!(sanitize_name("Abcdefghijklmnopqrstuvwxyz").map(|n| n.chars().count()), Some(16));
+        assert_eq!(sanitize_name("----"), None);
+        assert_eq!(sanitize_name("1234"), None);
+    }
+
+    #[test]
+    fn rejects_impossible_records() {
+        let h = History::in_memory().unwrap();
+        let ok = record("ok-1", "s1", NOW, Some("Lea"));
+        let mut too_many_stars = ok.clone();
+        too_many_stars.id = "x1".into();
+        too_many_stars.total_stars = 4_000_000_000;
+        let mut future = ok.clone();
+        future.id = "x2".into();
+        future.finished_at = "2027-01-01T00:00:00.000Z".into();
+        let mut backwards = ok.clone();
+        backwards.id = "x3".into();
+        backwards.started_at = "2026-10-10T13:00:00.000Z".into();
+        let mut many = ok.clone();
+        many.id = "x4".into();
+        many.missions = (0..8).map(|i| MissionStat { id: format!("1.{i}"), stars: 0, runs: 0, blocks: 0, seconds: 0, skipped: true }).collect();
+        many.total_stars = 0;
+        let mut bad_id = ok.clone();
+        bad_id.id = "not an id!".into();
+        let mut too_long = ok.clone();
+        too_long.id = "x5".into();
+        too_long.started_at = "2026-10-10T08:00:00.000Z".into();
+        for bad in [too_many_stars, future, backwards, many, bad_id, too_long] {
+            assert!(h.insert(&bad, 7, now_ms()).is_err(), "{bad:?}");
+        }
+        assert!(h.insert(&ok, 7, now_ms()).unwrap());
+    }
+
+    #[test]
+    fn stores_the_cleaned_name() {
+        let h = History::in_memory().unwrap();
+        h.insert(&record("n1", "s1", NOW, Some("<b>Max</b> 3000")), 7, now_ms()).unwrap();
+        assert_eq!(h.all().unwrap()[0].pilot_name.as_deref(), Some("bMaxb"));
+    }
+
+    #[test]
+    fn caps_records_per_station_and_day() {
+        let h = History::in_memory().unwrap();
+        for i in 0..MAX_PER_STATION_DAY {
+            h.insert(&record(&format!("c{i}"), "flood", NOW, None), 7, now_ms()).unwrap();
+        }
+        assert!(h.insert(&record("one-more", "flood", NOW, None), 7, now_ms()).is_err());
+        assert!(h.insert(&record("other", "calm", NOW, None), 7, now_ms()).unwrap());
     }
 }

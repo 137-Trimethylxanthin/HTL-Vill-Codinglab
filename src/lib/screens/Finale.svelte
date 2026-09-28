@@ -70,7 +70,7 @@
 		const preview = toRecord(
 			{
 				pilotName: session.pilotName,
-				startedAt: Date.now() - 1,
+				startedAt: session.startedAtMs || Date.now() - 1,
 				finishedAt: Date.now(),
 				endedBy: 'finale',
 				totalStars: session.totalStars,

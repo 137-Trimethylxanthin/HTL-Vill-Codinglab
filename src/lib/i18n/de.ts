@@ -60,7 +60,8 @@ export const de = {
 		ok: 'OK',
 		station: 'Station',
 		stationName: 'Name der Station',
-		eventCode: 'Event-Code (optional)',
+		eventCode: 'Event-Code (auf allen Stationen gleich)',
+		eventHint: 'Ohne Event-Code tauschen die Stationen keine Ergebnisse aus.',
 		idleSeconds: 'Zurücksetzen nach Sekunden ohne Eingabe',
 		missions: 'Missionen',
 		qrUrl: 'Link im QR-Code',
@@ -137,7 +138,7 @@ export const de = {
 		manualPeers: 'Stationen von Hand (IP[:Port], mit Komma)',
 		export: 'Verlauf als CSV exportieren',
 		delete: 'Verlauf dieser Station löschen',
-		deleteConfirm: 'Wirklich? Nochmal tippen. Andere Stationen behalten ihre Kopie.',
+		deleteConfirm: 'Wirklich? Nochmal tippen. Andere Stationen schicken ihre Einträge wieder.',
 		deleted: (n: number) => `${n} Einträge gelöscht.`
 	},
 	workspace: {

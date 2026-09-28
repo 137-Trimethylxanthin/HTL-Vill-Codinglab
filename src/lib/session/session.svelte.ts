@@ -23,6 +23,10 @@ export class Session {
 		return Object.values(this.results).reduce((sum, r) => sum + r.stars, 0);
 	}
 
+	get startedAtMs(): number {
+		return this.startedAt;
+	}
+
 	get maxStars(): number {
 		return this.missions.length * 3;
 	}
