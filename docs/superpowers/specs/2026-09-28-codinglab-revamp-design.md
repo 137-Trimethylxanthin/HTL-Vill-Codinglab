@@ -1,7 +1,7 @@
 # CodingLab Revamp — Design Spec (Phase 1: Engine + Showcase Mode)
 
 **Date:** 2026-09-28
-**Status:** Draft for review
+**Status:** Approved 2026-09-28 · Revised 2026-09-28: peer-to-peer sync replaces host/client leaderboard; session history + statistics added; product name decided at the end (working name: CodingLab)
 **Scope:** Complete rewrite of the CodingLab app. Phase 1 delivers the shared engine and Showcase mode. Phase 2 (Lern mode) is described only as far as the architecture must support it; it gets its own spec.
 
 ---
@@ -21,7 +21,9 @@
 - A visitor with no programming experience completes Level 1–2 (5 missions) in ≤ 10 min without help from staff.
 - No typing is required anywhere except the optional name/email fields.
 - The app runs a full open day unattended per station: no crash, auto-reset between visitors.
-- Leaderboard shows results from all stations; a station that loses network keeps working.
+- Setup of a station = install + start. Stations on the same network find each other and share results without any configuration.
+- Leaderboard shows results from all stations; a station that loses network keeps working and catches up when it's back; no station is special, any can be switched off.
+- Results of every open day are kept as history, so days and years can be compared.
 
 ---
 
@@ -40,7 +42,9 @@
 | Code input | Drag-and-drop blocks that generate live, real Python |
 | Feel | Bouncy, reactive, spring-physics drag & drop and UI |
 | Session end | PDF certificate, email (with GDPR consent), shared leaderboard, QR code to HTL site |
-| Leaderboard | One desktop station is host (HTTP server in Rust on LAN); others (incl. phones) are clients with offline queue |
+| Leaderboard + history | Peer-to-peer "Schwarm" sync: every station stores all session records and exchanges missing ones with peers found via mDNS; no host, no configuration |
+| Statistics | Anonymous session history kept permanently; admin "Logbuch" page with per-day/per-year stats and CSV export |
+| Product name | Decided at the end of Phase 1; working name "CodingLab" until then |
 | Lern-mode progress (Phase 2) | Local per-device student profiles + export (file/QR). No server, no accounts |
 
 ---
@@ -135,10 +139,12 @@ The app must feel bouncy and reactive. Implemented with Svelte 5 `Spring`/`Tween
 - **Idle reset:** after 90 s without input → overlay "Bist du noch da?" with 10 s countdown → reset session → Attract. Duration configurable in admin.
 - **On-screen keyboard** (own component) for name and email fields; physical keyboard also works.
 - **Admin screen:** opened by Ctrl+Shift+A (desktop) or 3 s long-press on the logo (touch) + PIN. Contents:
-  - Station name, leaderboard role (host / client / off), host address (auto-discovered or manual)
+  - Station name (auto-generated, editable), optional event code (stations only sync with the same code; default: none = sync with every CodingLab on the network), sync on/off, list of peers currently seen
   - SMTP settings + "Test-Mail senden"
   - Idle timeout, enabled missions/levels
-  - Leaderboard: view, reset today, reset all
+  - Leaderboard: choose shown period (today / this event / all time)
+  - Logbuch (statistics): see 4.6
+  - History: delete this station's history (local only; explained in the UI)
   - Emails: export CSV of consented addresses, delete all
   - App version, check for updates (desktop)
 - Default PIN is set at first launch (forced), stored hashed.
@@ -167,11 +173,11 @@ The app must feel bouncy and reactive. Implemented with Svelte 5 `Spring`/`Tween
 └──────────────────────────────┬───────────────────────────────────────────────┘
                                │ typed Tauri commands
 ┌──────────────────────────────▼───────────── Backend (Rust) ──────────────────┐
-│ config  certificate  mail  leaderboard(host+client+queue)  emails  admin      │
+│ config  certificate  mail  history(store+stats)  sync(peers)  emails  admin  │
 └───────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Rule: the frontend never calls `invoke` outside `lib/platform/`. `lib/platform/` has a Tauri implementation and a web implementation (web: leaderboard via host HTTP if reachable, else off; certificate via browser download; email off).
+Rule: the frontend never calls `invoke` outside `lib/platform/`. `lib/platform/` has a Tauri implementation and a web implementation (web: history stored in the browser only, no sync; certificate via browser download; email off).
 
 ### 4.2 Frontend units
 
@@ -235,12 +241,13 @@ Missions live in `src/lib/missions/showcase/*.json`. A CI test loads and validat
 
 | Module | Responsibility |
 |---|---|
-| `config` | Load/save station config (JSON in app data dir): role, host address, idle timeout, enabled missions, PIN hash. |
+| `config` | Load/save station config (JSON in app data dir): station id (UUID, generated once), station name, event code, sync on/off, idle timeout, enabled missions, PIN hash. |
 | `admin` | PIN verify/set (argon2 hash), guards admin commands. |
 | `certificate` | Build PDF from `{ pilotName, stars, missions, pathImagePng, date }` with `printpdf`; returns bytes. Frontend saves/shares/prints. |
 | `mail` | Send certificate + HTL info via SMTP with `lettre` (rustls). Credentials stored in OS keychain (`keyring` crate on desktop; on mobile, email is only offered if SMTP is configured, credentials stored in app-private storage). Returns typed errors. |
 | `emails` | Append consented addresses (name, email, timestamp, consent flag) to a local store; export CSV; delete all. |
-| `leaderboard` | **Host:** small HTTP server (axum) on the LAN, SQLite (rusqlite) or JSON-file store, endpoints `POST /scores`, `GET /scores?day=`, `GET /health`, shared-secret token from admin config. Advertises via mDNS. **Client:** finds host via mDNS or manual address, posts scores; failed posts go to a persisted local queue retried every 30 s. **Local view:** merges host results with not-yet-synced local ones. |
+| `history` | SQLite (rusqlite, bundled) in the app data dir. One immutable `session` record per finished visitor (see 4.6), plus a local `seq` insertion counter. Queries for leaderboard (period filter) and statistics. Applies the name-retention rule (4.5) on insert and daily. |
+| `sync` | Peer-to-peer "Schwarm". Desktop stations run a small HTTP server (axum) on a fixed LAN port and advertise `_codinglab._tcp` via mDNS with TXT `station`, `event`, `v` (protocol version). Every 30 s and on discovery, a station pulls `GET /records?after=<seq>` from each peer (remembering a per-peer high-water mark) and pushes its own new records with `POST /records`. Inserts are idempotent by record id, so records relay through any peer and merging never conflicts. Requests carry the event code; peers with a different code or protocol version are ignored. Mobile stations do not serve; they push and pull against desktop peers. |
 
 - All commands return `Result<T, AppError>`; `AppError` serialises to `{ code, message }` for the frontend. No `unwrap()`/`expect()` outside tests; `panic = "abort"` removed.
 - No shell commands, no filesystem writes outside the app data dir, no per-visitor folders.
@@ -253,13 +260,38 @@ Missions live in `src/lib/missions/showcase/*.json`. A CI test loads and validat
 3. Stage player animates events; each step highlights block + Python line.
 4. Goal checker evaluates trace → success/failure; on success star calculation → session result.
 5. Mission complete screen; results stay in memory until Finale/reset.
-6. Finale: `leaderboard.submit(name, stars, station)`; optional certificate / email via backend.
+6. Finale: `history.save(session)` → stored locally, picked up by sync; leaderboard reads merged local history; optional certificate / email via backend.
 
 ### 4.5 Privacy (GDPR)
 
 - Pilot names only on the leaderboard (first name or generated name); nothing else is stored for visitors who don't request an email.
 - Email: explicit consent checkbox (not pre-ticked) with a one-line explanation; stored only with consent; exportable and deletable via admin.
-- Leaderboard entries older than the configured retention (default: 7 days) are deleted automatically by the host.
+- Pilot names are removed from session records older than the configured retention (default: 7 days); every station applies this rule on insert and daily, so synced copies are redacted too. The anonymous rest of the record stays as history.
+- History contains no email addresses; those live only in the separate, consent-based email store.
+
+### 4.6 Session history and statistics ("Logbuch")
+
+Session record (immutable once written):
+
+```ts
+type SessionRecord = {
+  id: string;            // UUID
+  v: 1;                  // record schema version
+  event: string | null;  // event code at the time
+  station: string;       // station id
+  mode: 'showcase';      // 'lern' in Phase 2
+  startedAt: string;     // ISO timestamp
+  finishedAt: string;
+  pilotName: string | null;   // null after retention
+  totalStars: number;
+  missions: { id: string; stars: 0|1|2|3; runs: number; blocks: number; seconds: number; skipped: boolean }[];
+  endedBy: 'finale' | 'idle' | 'quit';
+};
+```
+
+- Idle-reset visitors are stored too (`endedBy: 'idle'`), so drop-off points are visible.
+- Logbuch page (admin): visitors per day, completion rate per mission, average stars/time per mission, where visitors stop, comparison of open days across years; filter by event/year; CSV export of all records.
+- Maintenance: none needed. The database is small (≈1 KB per visitor), and every station holds a full copy, so any station is a backup.
 
 ---
 
@@ -277,9 +309,9 @@ Missions live in `src/lib/missions/showcase/*.json`. A CI test loads and validat
 
 - **Frontend unit tests (Vitest):** block→Python generator, goal checker, star calculation, session state machine, mission schema validation, every mission's reference solution solves it.
 - **Runtime integration test:** Pyodide worker runs sample programs (incl. infinite loop → timeout, exception → friendly error) in Node/Vitest.
-- **Rust unit tests:** leaderboard store + queue, config, PIN hashing, certificate generation produces a valid PDF, mail message building (no network).
+- **Rust unit tests:** history store (idempotent insert, retention redaction, stats queries), sync merge between two in-process peers (incl. relay through a third and offline catch-up), config, PIN hashing, certificate generation produces a valid PDF, mail message building (no network).
 - **E2E smoke (Playwright against the web build):** attract → pilot → solve mission 1.1 → finale.
-- **Manual device checklist** per release: Windows station, Android tablet, phone portrait, host/client leaderboard with network unplugged and replugged.
+- **Manual device checklist** per release: Windows station, Android tablet, phone portrait, three stations syncing with auto-discovery, one unplugged and replugged, one switched off.
 - CI runs lint (eslint + prettier, clippy + rustfmt), type check, all tests.
 
 ---
@@ -306,6 +338,7 @@ Phase 1 design choices that enable this: missions as data, block model as a tree
 
 ## 9. Open points
 
+- Product name (decided at the end of Phase 1).
 - HTL Villach official colours/logo files and the exact QR target URL — needed before the design-token step.
 - Apple Developer account availability (iOS distribution).
 - Final wording of the German texts and HTL promo cards — draft by implementation, reviewed by staff.
