@@ -133,4 +133,19 @@ describe('MissionRun', () => {
 		ctrl.toggleSpeed();
 		expect(ctrl.speed).toBe(1);
 	});
+
+	it('ignores a stop right after start (double tap)', async () => {
+		vi.useFakeTimers();
+		const ctrl = new MissionRun(m11, solvedRunner());
+		build(ctrl);
+		const running = ctrl.run();
+		await vi.advanceTimersByTimeAsync(100);
+		ctrl.stop();
+		expect(ctrl.status).toBe('running');
+		await vi.advanceTimersByTimeAsync(500);
+		ctrl.stop();
+		expect(ctrl.status).toBe('idle');
+		await vi.advanceTimersByTimeAsync(10000);
+		await running;
+	});
 });

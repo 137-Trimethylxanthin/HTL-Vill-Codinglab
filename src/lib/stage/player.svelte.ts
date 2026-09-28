@@ -1,14 +1,14 @@
-import { Spring } from 'svelte/motion';
+import { prefersReducedMotion, Spring } from 'svelte/motion';
 import type { Frame, Pose } from './timeline';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const key = (x: number, y: number) => `${x},${y}`;
 
 export class Player {
-	x = new Spring(0, { stiffness: 0.18, damping: 0.55 });
-	y = new Spring(0, { stiffness: 0.18, damping: 0.55 });
-	heading = new Spring(0, { stiffness: 0.22, damping: 0.6 });
-	lift = new Spring(0, { stiffness: 0.12, damping: 0.4 });
+	readonly x: Spring<number>;
+	readonly y: Spring<number>;
+	readonly heading: Spring<number>;
+	readonly lift: Spring<number>;
 	carrying = $state(false);
 	line = $state<number | null>(null);
 	bump = $state(0);
@@ -20,6 +20,15 @@ export class Player {
 	flash = $state(0);
 	sensing = $state<boolean | null>(null);
 	private token = 0;
+
+	constructor(reduced: boolean = prefersReducedMotion.current) {
+		const opt = (stiffness: number, damping: number) =>
+			reduced ? { stiffness: 1, damping: 1 } : { stiffness, damping };
+		this.x = new Spring(0, opt(0.18, 0.55));
+		this.y = new Spring(0, opt(0.18, 0.55));
+		this.heading = new Spring(0, opt(0.22, 0.6));
+		this.lift = new Spring(0, opt(0.12, 0.4));
+	}
 
 	reset(pose: Pose, rows: string[]) {
 		this.token++;

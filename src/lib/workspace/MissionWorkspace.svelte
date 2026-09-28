@@ -13,7 +13,7 @@
 	import { findBlock, type Slot } from '$lib/blocks/edit';
 	import { BLOCKS } from '$lib/blocks/registry';
 	import { DragController } from '$lib/dnd/controller.svelte';
-	import { dropIndex } from '$lib/dnd/geometry';
+	import { edgeSpeed, pickTarget, type Gap, type ListGeom } from '$lib/dnd/geometry';
 	import type { DragSource, DropOp, HitResult } from '$lib/dnd/types';
 	import { t } from '$lib/i18n/de';
 	import type { Mission } from '$lib/missions/schema';
@@ -81,29 +81,67 @@
 		}
 	}
 
-	function hitTest(x: number, y: number): HitResult {
-		const els = document.elementsFromPoint(x, y);
-		if (els.some((el) => el.closest('[data-drop-trash]'))) return { kind: 'trash' };
-		const list = els
-			.map((el) => el.closest<HTMLElement>('[data-drop-slot]'))
-			.find((el): el is HTMLElement => el !== null);
-		if (list) {
-			const mids = [...list.children]
+	const MAGNET_PX = 40;
+	const ROW_GAP = 8; // gap-2 between list items
+
+	/** Reads every visible drop list in the program panel, in screen coordinates. */
+	function readLists(scroller: HTMLElement): { el: HTMLElement; geom: ListGeom }[] {
+		const view = scroller.getBoundingClientRect();
+		return [...scroller.querySelectorAll<HTMLElement>('[data-drop-slot]')].flatMap((el) => {
+			const r = el.getBoundingClientRect();
+			const top = Math.max(r.top, view.top);
+			const bottom = Math.min(r.bottom, view.bottom);
+			if (bottom <= top) return []; // scrolled out of view
+			let depth = 0;
+			for (let p = el.parentElement; p && p !== scroller; p = p.parentElement) {
+				if (p.dataset.dropSlot !== undefined) depth++;
+			}
+			// Containers count by their header tile, so "below the header" means "into the body".
+			const mids = [...el.children]
 				.filter(
 					(c): c is HTMLElement => c instanceof HTMLElement && c.dataset.blockId !== undefined
 				)
 				.map((c) => {
-					const r = c.getBoundingClientRect();
-					return r.top + r.height / 2;
+					const h = (c.firstElementChild ?? c).getBoundingClientRect();
+					return h.top + h.height / 2;
 				});
-			return {
-				kind: 'slot',
-				target: {
-					parent: list.dataset.dropParent || null,
-					slot: (list.dataset.dropSlot as Slot) ?? 'body',
-					index: dropIndex(mids, y)
-				}
-			};
+			return [{ el, geom: { left: r.left, right: r.right, top, bottom, depth, mids } }];
+		});
+	}
+
+	function readGap(scroller: HTMLElement): Gap | null {
+		const li = scroller.querySelector<HTMLElement>('[data-drop-gap]')?.closest('li');
+		if (!li) return null;
+		const r = li.getBoundingClientRect();
+		// offsetHeight ignores the grow-in scale animation.
+		return { top: r.top, height: li.offsetHeight + ROW_GAP, left: r.left, right: r.right };
+	}
+
+	function hitTest(x: number, y: number): HitResult {
+		const els = document.elementsFromPoint(x, y);
+		if (els.some((el) => el.closest('[data-drop-trash]'))) return { kind: 'trash' };
+		const scroller = document.querySelector<HTMLElement>('[data-drop-scroll]');
+		if (scroller) {
+			const lists = readLists(scroller);
+			const pick = pickTarget(
+				lists.map((l) => l.geom),
+				x,
+				y,
+				readGap(scroller),
+				MAGNET_PX
+			);
+			if (pick?.kind === 'gap') return drag.hover;
+			if (pick?.kind === 'list') {
+				const list = lists[pick.list].el;
+				return {
+					kind: 'slot',
+					target: {
+						parent: list.dataset.dropParent || null,
+						slot: (list.dataset.dropSlot as Slot) ?? 'body',
+						index: pick.index
+					}
+				};
+			}
 		}
 		if (els.some((el) => el.closest('[data-drop-panel]'))) {
 			return { kind: 'slot', target: { parent: null, slot: 'body', index: ctrl.program.length } };
@@ -111,12 +149,39 @@
 		return null;
 	}
 
+	// Auto-scroll the program list while dragging near its top or bottom edge.
+	let scrollFrame = 0;
+	let scrollSpeed = 0;
+
+	function autoScroll(x: number, y: number) {
+		const scroller = document.querySelector<HTMLElement>('[data-drop-scroll]');
+		if (!scroller || !drag.active) return stopScroll();
+		const r = scroller.getBoundingClientRect();
+		scrollSpeed = x >= r.left && x <= r.right ? edgeSpeed(y, r.top, r.bottom) : 0;
+		if (scrollSpeed !== 0 && scrollFrame === 0) scrollFrame = requestAnimationFrame(scrollStep);
+	}
+
+	function scrollStep() {
+		scrollFrame = 0;
+		const scroller = document.querySelector<HTMLElement>('[data-drop-scroll]');
+		if (!scroller || scrollSpeed === 0 || !drag.active) return;
+		scroller.scrollTop += scrollSpeed;
+		drag.refresh();
+		scrollFrame = requestAnimationFrame(scrollStep);
+	}
+
+	function stopScroll() {
+		cancelAnimationFrame(scrollFrame);
+		scrollFrame = 0;
+		scrollSpeed = 0;
+	}
+
 	const drag = new DragController(hitTest, (source, target) => ctrl.canDrop(source, target), apply);
 
 	function grab(source: DragSource, e: PointerEvent) {
 		if (ctrl.status === 'running' || e.button > 0) return;
 		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-		drag.press(source, e.clientX, e.clientY, rect);
+		drag.press(source, e.clientX, e.clientY, rect, e.pointerId);
 	}
 
 	const ghost = $derived.by(() => {
@@ -137,10 +202,22 @@
 </script>
 
 <svelte:window
-	onpointermove={(e) => drag.move(e.clientX, e.clientY)}
-	onpointerup={() => drag.end()}
-	onpointercancel={() => drag.cancel()}
-	onblur={() => drag.cancel()}
+	onpointermove={(e) => {
+		drag.move(e.clientX, e.clientY, e.pointerId);
+		autoScroll(e.clientX, e.clientY);
+	}}
+	onpointerup={(e) => {
+		drag.end(e.pointerId);
+		stopScroll();
+	}}
+	onpointercancel={(e) => {
+		drag.cancel(e.pointerId);
+		stopScroll();
+	}}
+	onblur={() => {
+		drag.cancel();
+		stopScroll();
+	}}
 />
 
 <div class="grid h-full grid-rows-[auto_1fr] gap-4 bg-sky p-4">

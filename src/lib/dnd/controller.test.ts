@@ -104,4 +104,53 @@ describe('DragController', () => {
 		ctrl.end();
 		expect(ops).toEqual([]);
 	});
+
+	it('ignores other pointers while one finger drags', () => {
+		const { ctrl, ops } = setup();
+		ctrl.press({ kind: 'palette', type: 'land' }, 50, 50, rect, 1);
+		ctrl.move(120, 120, 1);
+		ctrl.press({ kind: 'palette', type: 'photo' }, 300, 300, rect, 2);
+		ctrl.move(900, 600, 2);
+		ctrl.end(2);
+		expect(ctrl.active).toEqual({ kind: 'palette', type: 'land' });
+		expect(ctrl.x.target).toBe(120);
+		expect(ops).toEqual([]);
+		ctrl.cancel(2);
+		expect(ctrl.active).not.toBeNull();
+		ctrl.end(1);
+		expect(ops).toHaveLength(1);
+	});
+
+	it('does not show the trash while a palette block is over the palette', () => {
+		const { ctrl } = setup({ kind: 'trash' });
+		ctrl.press({ kind: 'palette', type: 'land' }, 50, 50, rect);
+		ctrl.move(120, 120);
+		expect(ctrl.hover).toBeNull();
+	});
+
+	it('re-checks the target at the last pointer position on refresh', () => {
+		let hit: HitResult = null;
+		const ctrl = new DragController(
+			() => hit,
+			() => true,
+			() => {}
+		);
+		ctrl.press({ kind: 'palette', type: 'land' }, 50, 50, rect);
+		ctrl.move(120, 120);
+		expect(ctrl.hover).toBeNull();
+		hit = slot;
+		ctrl.refresh();
+		expect(ctrl.hover).toEqual(slot);
+	});
+
+	it('uses instant springs when motion is reduced', () => {
+		const ctrl = new DragController(
+			() => null,
+			() => true,
+			() => {},
+			true
+		);
+		expect(ctrl.tilt.stiffness).toBe(1);
+		expect(ctrl.x.damping).toBe(1);
+	});
 });

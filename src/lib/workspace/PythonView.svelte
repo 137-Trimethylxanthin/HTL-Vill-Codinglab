@@ -52,7 +52,7 @@
 					)}><span class="mr-4 inline-block w-6 text-right text-slate-500 select-none">{i + 1}</span
 					>{#each tokenizeLine(line) as token, j (j)}{#if editable && token.kind === 'number' && numberTargets[i + 1]}<button
 								class={cn(
-									'rounded-md bg-amber-300/20 px-1 text-amber-300 underline decoration-dotted underline-offset-4',
+									'inline-grid min-h-14 min-w-14 place-items-center rounded-xl bg-amber-300/20 px-2 align-middle text-amber-300 underline decoration-dotted underline-offset-4',
 									selected === i + 1 && 'ring-2 ring-amber-300'
 								)}
 								onclick={() => (selected = selected === i + 1 ? null : i + 1)}>{token.text}</button

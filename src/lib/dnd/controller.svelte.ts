@@ -1,6 +1,6 @@
-import { Spring } from 'svelte/motion';
+import { prefersReducedMotion, Spring } from 'svelte/motion';
 import type { DropTarget } from '$lib/blocks/edit';
-import { SPRINGS } from '$lib/ui/motion';
+import { springOptions } from '$lib/ui/motion';
 import type { DragSource, DropOp, HitResult } from './types';
 
 export const DRAG_THRESHOLD = 8;
@@ -19,6 +19,7 @@ export function resolveDrop(source: DragSource, hover: HitResult): DropOp {
 /**
  * Pointer-driven drag state. Decides *what* a drop means; the caller's hitTest decides
  * *where* the pointer is. Starts dragging only after DRAG_THRESHOLD px, otherwise reports a tap.
+ * Only the pointer that started the drag can move or end it.
  */
 export class DragController {
 	active = $state<DragSource | null>(null);
@@ -27,41 +28,54 @@ export class DragController {
 	width = $state(0);
 	offsetX = 0;
 	offsetY = 0;
-	x = new Spring(0, SPRINGS.snappy);
-	y = new Spring(0, SPRINGS.snappy);
-	tilt = new Spring(0, SPRINGS.bouncy);
-	scale = new Spring(1, SPRINGS.bouncy);
+	readonly x: Spring<number>;
+	readonly y: Spring<number>;
+	readonly tilt: Spring<number>;
+	readonly scale: Spring<number>;
 	private pending: { source: DragSource; startX: number; startY: number } | null = null;
+	private pointerId = 0;
 	private origin = { x: 0, y: 0 };
 	private lastX = 0;
+	private lastY = 0;
 	private backTimer: ReturnType<typeof setTimeout> | undefined;
 
 	constructor(
 		private readonly hitTest: (x: number, y: number) => HitResult,
 		private readonly canDrop: (source: DragSource, target: DropTarget) => boolean,
-		private readonly onDrop: (op: DropOp) => void
-	) {}
+		private readonly onDrop: (op: DropOp) => void,
+		reduced: boolean = prefersReducedMotion.current
+	) {
+		this.x = new Spring(0, springOptions('snappy', reduced));
+		this.y = new Spring(0, springOptions('snappy', reduced));
+		this.tilt = new Spring(0, springOptions('bouncy', reduced));
+		this.scale = new Spring(1, springOptions('bouncy', reduced));
+	}
 
 	press(
 		source: DragSource,
 		px: number,
 		py: number,
-		rect: { left: number; top: number; width: number }
+		rect: { left: number; top: number; width: number },
+		pointerId = 0
 	) {
-		this.finish();
+		// One drag at a time: a second finger (or a palm) must not take over.
+		if (this.active || this.pending) return;
+		this.pointerId = pointerId;
 		this.pending = { source, startX: px, startY: py };
 		this.offsetX = px - rect.left;
 		this.offsetY = py - rect.top;
 		this.width = rect.width;
 		this.origin = { x: px, y: py };
 		this.lastX = px;
+		this.lastY = py;
 		this.x.set(px, { instant: true });
 		this.y.set(py, { instant: true });
 		this.tilt.set(0, { instant: true });
 		this.scale.set(1, { instant: true });
 	}
 
-	move(px: number, py: number) {
+	move(px: number, py: number, pointerId = 0) {
+		if (pointerId !== this.pointerId || this.rejected) return;
 		if (!this.active) {
 			if (!this.pending) return;
 			if (Math.hypot(px - this.pending.startX, py - this.pending.startY) < DRAG_THRESHOLD) return;
@@ -72,11 +86,17 @@ export class DragController {
 		this.y.target = py;
 		this.tilt.target = Math.max(-12, Math.min(12, (px - this.lastX) * 0.8));
 		this.lastX = px;
-		const hit = this.hitTest(px, py);
-		this.hover = hit?.kind === 'slot' && !this.canDrop(this.active, hit.target) ? null : hit;
+		this.lastY = py;
+		this.updateHover();
 	}
 
-	end() {
+	/** Re-checks the target under the last pointer position (e.g. after the list scrolled). */
+	refresh() {
+		if (this.active && !this.rejected) this.updateHover();
+	}
+
+	end(pointerId = 0) {
+		if (pointerId !== this.pointerId || this.rejected) return;
 		const source = this.active;
 		if (!source) {
 			if (this.pending) this.onDrop({ kind: 'tap', source: this.pending.source });
@@ -99,9 +119,19 @@ export class DragController {
 		}
 	}
 
-	cancel() {
+	cancel(pointerId?: number) {
+		if (pointerId !== undefined && pointerId !== this.pointerId) return;
 		this.pending = null;
 		this.finish();
+	}
+
+	private updateHover() {
+		const source = this.active;
+		if (!source) return;
+		const hit = this.hitTest(this.lastX, this.lastY);
+		if (hit?.kind === 'trash' && source.kind === 'palette') this.hover = null;
+		else if (hit?.kind === 'slot' && !this.canDrop(source, hit.target)) this.hover = null;
+		else this.hover = hit;
 	}
 
 	private finish() {

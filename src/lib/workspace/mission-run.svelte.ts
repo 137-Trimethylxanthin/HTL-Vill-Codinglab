@@ -22,6 +22,9 @@ import type { RunResult } from '$lib/sim/result';
 import { Player } from '$lib/stage/player.svelte';
 import { buildTimeline, startPose } from '$lib/stage/timeline';
 
+/** Stop taps this soon after Start are ignored (double taps on the same spot). */
+export const STOP_GUARD_MS = 400;
+
 export type RunStatus = 'idle' | 'running' | 'success' | 'fail';
 
 function outcomeMessage(result: RunResult): string {
@@ -41,6 +44,7 @@ export class MissionRun {
 	stars = $state<Stars>(0);
 	speed = $state<1 | 2>(1);
 	readonly player = new Player();
+	private runStartedAt = 0;
 	python = $derived(toPython(this.program));
 	numberTargets = $derived(numberLines(this.program, this.python));
 	activeId = $derived(this.player.line ? (this.python.blockAt[this.player.line] ?? null) : null);
@@ -113,6 +117,7 @@ export class MissionRun {
 
 	stop() {
 		if (this.status !== 'running') return;
+		if (Date.now() - this.runStartedAt < STOP_GUARD_MS) return;
 		this.player.stop();
 		this.resetStage();
 	}
@@ -122,6 +127,7 @@ export class MissionRun {
 		this.resetStage();
 		this.notice = null;
 		this.status = 'running';
+		this.runStartedAt = Date.now();
 		this.runs += 1;
 		let result: RunResult;
 		try {

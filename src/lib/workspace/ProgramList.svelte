@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { flip } from 'svelte/animate';
+	import { prefersReducedMotion } from 'svelte/motion';
 	import { backOut } from 'svelte/easing';
 	import { scale } from 'svelte/transition';
 	import type { DropTarget, Slot } from '$lib/blocks/edit';
@@ -9,6 +9,24 @@
 	import BlockTile from './BlockTile.svelte';
 
 	type Item = { key: string; node: BlockNode | null };
+
+	// Svelte animations run via the Web Animations API, so reduced motion is handled here, not in CSS.
+	const ms = (value: number) => (prefersReducedMotion.current ? 0 : value);
+
+	/**
+	 * Like svelte/animate flip, but translate only: flip also scales, and when the gap moves
+	 * every frame (auto-scroll) restarted scale animations compound to absurd sizes.
+	 */
+	function slide(_node: Element, { from, to }: { from: DOMRect; to: DOMRect }) {
+		const dx = from.left - to.left;
+		const dy = from.top - to.top;
+		if (dx === 0 && dy === 0) return { duration: 0 };
+		return {
+			duration: ms(300),
+			easing: backOut,
+			css: (_t: number, u: number) => `transform: translate(${u * dx}px, ${u * dy}px);`
+		};
+	}
 
 	let {
 		program,
@@ -58,9 +76,9 @@
 		{#each items as item (item.key)}
 			<li
 				data-block-id={item.node?.id}
-				animate:flip={{ duration: 300, easing: backOut }}
-				in:scale={{ start: 0.7, duration: 280, easing: backOut }}
-				out:scale={{ start: 0.7, duration: 160 }}
+				animate:slide
+				in:scale={{ start: 0.7, duration: ms(280), easing: backOut }}
+				out:scale={{ start: 0.7, duration: item.node ? ms(160) : 0 }}
 			>
 				{#if item.node}
 					{@const node = item.node}
@@ -94,6 +112,7 @@
 					{/if}
 				{:else}
 					<div
+						data-drop-gap
 						class="breathe h-14 rounded-2xl border-2 border-dashed border-drone bg-drone/15"
 					></div>
 				{/if}
@@ -111,7 +130,7 @@
 	<h2 class="text-sm font-bold tracking-wide text-muted-foreground uppercase">
 		{t.workspace.program}
 	</h2>
-	<div class="min-h-0 grow overflow-y-auto px-1 pb-2">
+	<div data-drop-scroll class="min-h-0 grow overflow-y-auto px-1 pb-2">
 		{@render list(program, null, 'body')}
 		{#if program.length === 0 && !hover}
 			<p class="rounded-2xl border-2 border-dashed p-6 text-center text-lg text-muted-foreground">
