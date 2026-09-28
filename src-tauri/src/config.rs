@@ -205,8 +205,7 @@ mod tests {
 
     #[test]
     fn public_view_hides_the_pin_hash() {
-        let mut cfg = StationConfig::default();
-        cfg.pin_hash = Some("secret".into());
+        let mut cfg = StationConfig { pin_hash: Some("secret".into()), ..Default::default() };
         cfg.smtp.host = "mail.example.org".into();
         cfg.smtp.from = "lab@example.org".into();
         let public = cfg.public(true);
