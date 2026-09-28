@@ -8,7 +8,7 @@
 		"start": { "x": 2, "y": 4, "dir": "N" }
 	},
 	"blocks": ["takeoff", "forward", "land"],
-	"goal": { "type": "landOn" },
+	"goal": { "type": "complete" },
 	"stars": { "optimalBlocks": 3, "maxRunsFor3": 3 },
 	"hints": [
 		"Eine Drohne muss zuerst abheben.",

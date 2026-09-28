@@ -6,6 +6,7 @@ export type DroneEvent =
 	| { kind: 'move'; line: number; x: number; y: number }
 	| { kind: 'turn'; line: number; dir: Dir }
 	| { kind: 'photo'; line: number; hit: boolean }
+	| { kind: 'sense'; line: number; ahead: boolean }
 	| { kind: 'crash'; line: number; x: number; y: number; into: 'building' | 'edge' };
 
 export interface Stop {
@@ -23,6 +24,8 @@ export interface WorldSnapshot {
 	rows: string[];
 	delivered: number;
 	photographed: string[];
+	/** Every cell the drone has been over, as "x,y", start included. */
+	visited: string[];
 }
 
 export const DIRS: Dir[] = ['N', 'E', 'S', 'W'];
@@ -47,12 +50,18 @@ export class World {
 			carrying: false,
 			rows: [...rows],
 			delivered: 0,
-			photographed: []
+			photographed: [],
+			visited: [`${start.x},${start.y}`]
 		};
 	}
 
 	snapshot(): WorldSnapshot {
-		return { ...this.s, rows: [...this.s.rows], photographed: [...this.s.photographed] };
+		return {
+			...this.s,
+			rows: [...this.s.rows],
+			photographed: [...this.s.photographed],
+			visited: [...this.s.visited]
+		};
 	}
 
 	/** Executes one drone command. Returns false when the program must stop. */
@@ -97,6 +106,19 @@ export class World {
 		}
 	}
 
+	/** Answers a sensor question. Returns undefined when the program must stop. */
+	sense(name: string, line: number): boolean | undefined {
+		if (this.stop) return undefined;
+		if (name !== 'obstacle_ahead') {
+			this.fail('error', 'unknownCommand', line);
+			return undefined;
+		}
+		const [dx, dy] = STEP[this.s.dir];
+		const tile = this.s.rows[this.s.y + dy]?.[this.s.x + dx];
+		const ahead = tile === undefined || tile === 'B';
+		return this.push({ kind: 'sense', line, ahead }) ? ahead : undefined;
+	}
+
 	private forward(line: number, arg: unknown): boolean {
 		if (!this.s.flying) return this.fail('error', 'notFlying', line);
 		const steps = arg === undefined ? 1 : arg;
@@ -120,6 +142,8 @@ export class World {
 			}
 			this.s.x = x;
 			this.s.y = y;
+			const key = `${x},${y}`;
+			if (!this.s.visited.includes(key)) this.s.visited.push(key);
 			if (!this.push({ kind: 'move', line, x, y })) return false;
 		}
 		return true;

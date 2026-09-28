@@ -69,4 +69,17 @@ describe('executor', () => {
 		const third = executor.run(`${HEADER}takeoff()\n`, m11);
 		expect(third.stop).toBeNull();
 	});
+	it('lets Python ask the sensor', () => {
+		const code = `${HEADER}takeoff()\nif obstacle_ahead():\n    turn_right()\nelse:\n    forward(1)\n`;
+		const result = executor.run(code, m11);
+		expect(result.events.map((e) => e.kind)).toEqual(['takeoff', 'sense', 'move']);
+		expect(result.events[1]).toEqual({ kind: 'sense', line: 4, ahead: false });
+	});
+
+	it('stops a sensor loop at the event limit', () => {
+		const code = `${HEADER}while True:\n    if obstacle_ahead():\n        turn_right()\n`;
+		const result = executor.run(code, m11, 40);
+		expect(result.stop?.code).toBe('tooManySteps');
+		expect(result.events).toHaveLength(40);
+	});
 });

@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { BLOCK_TYPES, type BlockNode } from '$lib/blocks/types';
 
-export const TILE_CHARS = '.BPKDS';
+/** `.` ground, `B` building, `P` landing pad, `K` parcel, `D` drop zone, `S` solar panel, `C` ring. */
+export const TILE_CHARS = '.BPKDSC';
 export type Dir = 'N' | 'E' | 'S' | 'W';
 
 const BlockNodeSchema: z.ZodType<BlockNode> = z.lazy(() =>
@@ -9,12 +10,17 @@ const BlockNodeSchema: z.ZodType<BlockNode> = z.lazy(() =>
 		id: z.string().min(1),
 		type: z.enum(BLOCK_TYPES),
 		n: z.number().int().optional(),
-		children: z.array(BlockNodeSchema).optional()
+		children: z.array(BlockNodeSchema).optional(),
+		else: z.array(BlockNodeSchema).optional()
 	})
 );
 
 const blockTypesIn = (nodes: BlockNode[]): string[] =>
-	nodes.flatMap((node) => [node.type, ...blockTypesIn(node.children ?? [])]);
+	nodes.flatMap((node) => [
+		node.type,
+		...blockTypesIn(node.children ?? []),
+		...blockTypesIn(node.else ?? [])
+	]);
 
 export const MissionSchema = z
 	.object({
@@ -31,7 +37,10 @@ export const MissionSchema = z
 			})
 		}),
 		blocks: z.array(z.enum(BLOCK_TYPES)).min(1),
-		goal: z.object({ type: z.literal('landOn') }),
+		goal: z.object({ type: z.literal('complete') }),
+		fog: z.boolean().default(false),
+		editablePython: z.boolean().default(false),
+		starter: z.array(BlockNodeSchema).optional(),
 		stars: z.object({
 			optimalBlocks: z.number().int().positive(),
 			maxRunsFor3: z.number().int().positive()
@@ -59,19 +68,30 @@ export const MissionSchema = z
 				}
 			}
 		});
-		if (rows[start.y]?.[start.x] !== '.') {
+		const startTile = rows[start.y]?.[start.x];
+		if (startTile !== '.' && startTile !== 'P') {
 			ctx.addIssue({
 				code: 'custom',
 				path: ['map', 'start'],
-				message: 'Start muss auf der Karte auf einem leeren Feld liegen.'
+				message: 'Start muss auf einem leeren Feld oder Landeplatz liegen.'
 			});
 		}
-		const outside = blockTypesIn(m.solution).filter((type) => !m.blocks.includes(type as never));
-		if (outside.length > 0) {
+		const outside = (nodes: BlockNode[]) =>
+			blockTypesIn(nodes).filter((type) => !m.blocks.includes(type as never));
+		const badSolution = outside(m.solution);
+		if (badSolution.length > 0) {
 			ctx.addIssue({
 				code: 'custom',
 				path: ['solution'],
-				message: `Lösung benutzt Blöcke außerhalb der Palette: ${outside.join(', ')}`
+				message: `Lösung benutzt Blöcke außerhalb der Palette: ${badSolution.join(', ')}`
+			});
+		}
+		const badStarter = outside(m.starter ?? []);
+		if (badStarter.length > 0) {
+			ctx.addIssue({
+				code: 'custom',
+				path: ['starter'],
+				message: `Startprogramm benutzt Blöcke außerhalb der Palette: ${badStarter.join(', ')}`
 			});
 		}
 	});

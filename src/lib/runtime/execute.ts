@@ -25,7 +25,9 @@ export function createExecutor(py: PyodideLike): Executor {
 
 	py.registerJsModule('_drone_js', {
 		call: (name: string, line: number, arg?: unknown) =>
-			world ? world.call(name, line, arg) : false
+			world ? world.call(name, line, arg) : false,
+		// JS undefined becomes Python None, which stops the program.
+		sense: (name: string, line: number) => (world ? world.sense(name, line) : undefined)
 	});
 	globals.set('_drone_src', droneSource);
 	py.runPython(

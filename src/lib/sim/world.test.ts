@@ -10,7 +10,7 @@ const mission = (rows: string[], start = { x: 0, y: rows.length - 1, dir: 'N' as
 		goalText: 'T',
 		map: { rows, start },
 		blocks: ['takeoff'],
-		goal: { type: 'landOn' },
+		goal: { type: 'complete' },
 		stars: { optimalBlocks: 1, maxRunsFor3: 1 },
 		hints: ['h'],
 		solution: [{ id: 's', type: 'takeoff' }]
@@ -30,6 +30,13 @@ describe('World', () => {
 		]);
 		expect(w.snapshot()).toMatchObject({ x: 0, y: 0, flying: false });
 		expect(w.stop).toBeNull();
+	});
+
+	it('remembers every visited cell, including the start', () => {
+		const w = new World(mission(['.', 'C', '.']));
+		w.call('takeoff', 1);
+		w.call('forward', 2, 2);
+		expect(w.snapshot().visited).toEqual(['0,2', '0,1', '0,0']);
 	});
 
 	it('turns left and right', () => {
@@ -65,10 +72,10 @@ describe('World', () => {
 
 	it('rejects bad numbers', () => {
 		for (const bad of [0, -1, 1.5, '2', 100]) {
-			const fresh = new World(mission(['.', '.']));
-			fresh.call('takeoff', 1);
-			expect(fresh.call('forward', 2, bad)).toBe(false);
-			expect(fresh.stop?.code).toBe('badNumber');
+			const w = new World(mission(['.', '.']));
+			w.call('takeoff', 1);
+			expect(w.call('forward', 2, bad)).toBe(false);
+			expect(w.stop?.code).toBe('badNumber');
 		}
 	});
 
@@ -96,6 +103,33 @@ describe('World', () => {
 		expect(w.snapshot().photographed).toEqual(['0,0']);
 	});
 
+	it('senses buildings and the map edge ahead without moving', () => {
+		const w = new World(mission(['.', 'B', '.']));
+		expect(w.sense('obstacle_ahead', 3)).toBe(true);
+		w.call('turn_right', 4);
+		expect(w.sense('obstacle_ahead', 5)).toBe(true);
+		expect(w.events.filter((e) => e.kind === 'sense')).toEqual([
+			{ kind: 'sense', line: 3, ahead: true },
+			{ kind: 'sense', line: 5, ahead: true }
+		]);
+		expect(w.snapshot()).toMatchObject({ x: 0, y: 2 });
+	});
+
+	it('senses free space', () => {
+		const w = new World(mission(['.', '.']));
+		expect(w.sense('obstacle_ahead', 1)).toBe(false);
+	});
+
+	it('returns undefined from sense at the event limit or for unknown sensors', () => {
+		const limited = new World(mission(['.']), 1);
+		limited.call('turn_left', 1);
+		expect(limited.sense('obstacle_ahead', 2)).toBeUndefined();
+		expect(limited.stop?.code).toBe('tooManySteps');
+		const unknown = new World(mission(['.']));
+		expect(unknown.sense('radar', 1)).toBeUndefined();
+		expect(unknown.stop?.code).toBe('unknownCommand');
+	});
+
 	it('stops when the event limit is reached', () => {
 		const w = new World(mission(['.']), 5);
 		let ok = true;
@@ -112,6 +146,7 @@ describe('World', () => {
 		const w = new World(mission(['.']));
 		w.call('land', 1);
 		expect(w.call('takeoff', 2)).toBe(false);
+		expect(w.sense('obstacle_ahead', 3)).toBeUndefined();
 		expect(w.events).toHaveLength(0);
 	});
 

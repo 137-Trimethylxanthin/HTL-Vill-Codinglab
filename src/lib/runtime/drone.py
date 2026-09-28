@@ -63,4 +63,12 @@ def photo():
     _do("photo")
 
 
-__all__ = ["takeoff", "land", "forward", "turn_left", "turn_right", "pick_up", "drop", "photo"]
+def obstacle_ahead():
+    """True, wenn vor der Drohne ein Gebäude oder das Kartenende ist."""
+    result = _drone_js.sense("obstacle_ahead", _line())
+    if result is None:
+        raise DroneStop()
+    return bool(result)
+
+
+__all__ = ["takeoff", "land", "forward", "turn_left", "turn_right", "pick_up", "drop", "photo", "obstacle_ahead"]

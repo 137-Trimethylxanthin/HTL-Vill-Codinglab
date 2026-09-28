@@ -25,6 +25,7 @@ const DURATION: Record<DroneEvent['kind'], number> = {
 	pickup: 450,
 	drop: 450,
 	photo: 400,
+	sense: 320,
 	crash: 700
 };
 
@@ -70,6 +71,7 @@ export function buildTimeline(
 				pose = { ...pose, carrying: false };
 				break;
 			case 'photo':
+			case 'sense':
 			case 'crash':
 				break;
 		}
