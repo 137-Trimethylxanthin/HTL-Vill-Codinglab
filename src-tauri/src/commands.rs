@@ -66,6 +66,17 @@ pub fn set_pin(state: State<'_, AppState>, old_pin: Option<String>, new_pin: Str
     config::save(&state.dir, &cfg)
 }
 
+#[derive(serde::Serialize)]
+pub struct PlatformInfo {
+    pub mobile: bool,
+    pub os: &'static str,
+}
+
+#[tauri::command]
+pub fn platform_info() -> PlatformInfo {
+    PlatformInfo { mobile: cfg!(mobile), os: std::env::consts::OS }
+}
+
 /// The main window follows the kiosk setting (a no-op on phones, where it is ignored).
 pub fn apply_window(app: &AppHandle, cfg: &StationConfig) {
     use tauri::Manager;

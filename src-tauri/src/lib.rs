@@ -31,6 +31,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::get_config,
+            commands::platform_info,
             commands::verify_pin,
             commands::set_pin,
             commands::save_config,

@@ -52,10 +52,13 @@
 			() => (phase = 'ready'),
 			() => (phase = 'failed')
 		);
-		station.load(platform).then(() => {
-			applyConfig();
-			if (!station.config.hasPin) adminOpen = true;
-		});
+		platform
+			.init()
+			.then(() => station.load(platform))
+			.then(() => {
+				applyConfig();
+				if (!station.config.hasPin) adminOpen = true;
+			});
 		return installKioskGuards(window, import.meta.env.DEV);
 	});
 

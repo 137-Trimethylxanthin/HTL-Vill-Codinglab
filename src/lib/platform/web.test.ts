@@ -36,6 +36,12 @@ const code = async (p: Promise<unknown>) => {
 };
 
 describe('web platform', () => {
+	it('has a no-op init', async () => {
+		const p = createWebPlatform(new MemoryStorage());
+		await p.init();
+		expect(p.features).toEqual({ certificate: false, email: false });
+	});
+
 	it('stores the fullscreen choice', async () => {
 		const storage = new MemoryStorage();
 		const p = createWebPlatform(storage);

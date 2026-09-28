@@ -11,9 +11,15 @@ async function call<T>(command: string, args?: Record<string, unknown>): Promise
 }
 
 export function createTauriPlatform(): Platform {
+	const features = { certificate: true, email: true };
 	return {
 		kind: 'tauri',
-		features: { certificate: true, email: true },
+		features,
+		init: async () => {
+			const info = await call<{ mobile: boolean; os: string }>('platform_info').catch(() => null);
+			// Phones have no place to save the PDF yet.
+			if (info?.mobile) features.certificate = false;
+		},
 		getConfig: () => call('get_config'),
 		verifyPin: (pin) => call('verify_pin', { pin }),
 		setPin: (oldPin, newPin) => call('set_pin', { oldPin, newPin }),

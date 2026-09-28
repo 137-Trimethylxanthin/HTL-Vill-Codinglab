@@ -51,6 +51,8 @@ export class PlatformError extends Error {
 export interface Platform {
 	kind: 'tauri' | 'web';
 	features: { certificate: boolean; email: boolean };
+	/** Ask the backend what this device can do; call once before use. */
+	init(): Promise<void>;
 	getConfig(): Promise<PublicConfig>;
 	verifyPin(pin: string): Promise<boolean>;
 	setPin(oldPin: string | null, newPin: string): Promise<void>;
