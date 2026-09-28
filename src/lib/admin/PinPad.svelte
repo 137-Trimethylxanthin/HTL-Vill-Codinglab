@@ -49,7 +49,7 @@
 				class="grid h-16 w-20 press place-items-center rounded-2xl text-2xl font-bold {key === 'ok'
 					? 'bg-htl text-white'
 					: 'bg-muted'}"
-				aria-label={key === 'back' ? t.pilot.delete : key}
+				aria-label={key === 'back' ? t.pilot.delete : key === 'ok' ? t.admin.ok : key}
 				onclick={() => press(key)}
 			>
 				{#if key === 'back'}<Delete class="size-7" />{:else if key === 'ok'}{t.admin

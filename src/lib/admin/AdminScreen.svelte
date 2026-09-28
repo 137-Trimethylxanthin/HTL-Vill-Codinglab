@@ -302,7 +302,7 @@
 						variant="secondary"
 						class="h-12 rounded-xl px-6"
 						disabled={busy || !newPin}
-						onclick={changePin}>{t.admin.save}</Button
+						onclick={changePin}>{t.admin.changePin}</Button
 					>
 				</div>
 			</section>
