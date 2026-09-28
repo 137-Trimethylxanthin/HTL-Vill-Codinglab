@@ -14,6 +14,8 @@ export interface EditableConfig {
 	/** null = all missions */
 	enabledMissions: string[] | null;
 	qrUrl: string;
+	nameRetentionDays: number;
+	manualPeers: string[];
 	smtp: SmtpSettings;
 }
 
@@ -66,5 +68,7 @@ export const editableOf = (c: PublicConfig): EditableConfig => ({
 	idleSeconds: c.idleSeconds,
 	enabledMissions: c.enabledMissions,
 	qrUrl: c.qrUrl,
+	nameRetentionDays: c.nameRetentionDays,
+	manualPeers: [...c.manualPeers],
 	smtp: { ...c.smtp }
 });

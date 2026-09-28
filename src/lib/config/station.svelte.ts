@@ -9,6 +9,8 @@ export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
 	idleSeconds: 90,
 	enabledMissions: null,
 	qrUrl: HTL_URL,
+	nameRetentionDays: 7,
+	manualPeers: [],
 	smtp: { host: '', port: 587, username: '', from: '', starttls: true },
 	hasPin: true,
 	smtpReady: false

@@ -21,6 +21,8 @@ const defaults = (): Stored => {
 			idleSeconds: 90,
 			enabledMissions: null,
 			qrUrl: HTL_URL,
+			nameRetentionDays: 7,
+			manualPeers: [],
 			smtp: { host: '', port: 587, username: '', from: '', starttls: true }
 		},
 		pinSalt: null,
@@ -42,7 +44,11 @@ export function createWebPlatform(storage: Storage): Platform {
 	const read = (): Stored => {
 		try {
 			const raw = storage.getItem(KEY);
-			if (raw) return { ...defaults(), ...JSON.parse(raw) };
+			if (raw) {
+				const d = defaults();
+				const stored = JSON.parse(raw);
+				return { ...d, ...stored, config: { ...d.config, ...stored.config } };
+			}
 		} catch {
 			// broken storage: start fresh
 		}
@@ -91,7 +97,12 @@ export function createWebPlatform(storage: Storage): Platform {
 				eventCode: config.eventCode.trim(),
 				qrUrl: config.qrUrl.trim(),
 				idleSeconds: Math.min(600, Math.max(30, Math.round(config.idleSeconds))),
-				enabledMissions: config.enabledMissions?.length ? config.enabledMissions : null
+				enabledMissions: config.enabledMissions?.length ? config.enabledMissions : null,
+				nameRetentionDays: Math.min(365, Math.max(1, Math.round(config.nameRetentionDays))),
+				manualPeers: config.manualPeers
+					.map((p) => p.trim())
+					.filter(Boolean)
+					.slice(0, 10)
 			};
 			write(s);
 			return publicOf(s);

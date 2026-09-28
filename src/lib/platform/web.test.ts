@@ -75,4 +75,10 @@ describe('web platform', () => {
 		expect(await code(p.sendCertificate('a@b.at', false, {} as never))).toBe('unsupported');
 		expect(await code(p.saveCertificate({} as never))).toBe('unsupported');
 	});
+	it('has retention and manual peers in its config', async () => {
+		const p = createWebPlatform(new MemoryStorage());
+		const cfg = await p.getConfig();
+		expect(cfg.nameRetentionDays).toBe(7);
+		expect(cfg.manualPeers).toEqual([]);
+	});
 });

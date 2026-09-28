@@ -24,6 +24,8 @@ pub struct StationConfig {
     pub idle_seconds: u32,
     pub enabled_missions: Option<Vec<String>>,
     pub qr_url: String,
+    pub name_retention_days: u32,
+    pub manual_peers: Vec<String>,
     pub smtp: SmtpSettings,
     /// Kept in its own file (`admin.pin`), so a broken config never removes the PIN.
     #[serde(default, skip_serializing)]
@@ -39,6 +41,8 @@ pub struct EditableConfig {
     pub idle_seconds: u32,
     pub enabled_missions: Option<Vec<String>>,
     pub qr_url: String,
+    pub name_retention_days: u32,
+    pub manual_peers: Vec<String>,
     pub smtp: SmtpSettings,
 }
 
@@ -69,6 +73,8 @@ impl Default for StationConfig {
             idle_seconds: 90,
             enabled_missions: None,
             qr_url: "https://www.htl-villach.at".into(),
+            name_retention_days: 7,
+            manual_peers: Vec::new(),
             smtp: SmtpSettings::default(),
             pin_hash: None,
         }
@@ -84,6 +90,8 @@ impl StationConfig {
             idle_seconds: self.idle_seconds,
             enabled_missions: self.enabled_missions.clone(),
             qr_url: self.qr_url.clone(),
+            name_retention_days: self.name_retention_days,
+            manual_peers: self.manual_peers.clone(),
             smtp: self.smtp.clone(),
         }
     }
@@ -96,6 +104,14 @@ impl StationConfig {
         // An empty selection would leave visitors with nothing to play: treat it as "all".
         self.enabled_missions = e.enabled_missions.filter(|list| !list.is_empty());
         self.qr_url = e.qr_url.trim().to_string();
+        self.name_retention_days = e.name_retention_days.clamp(1, 365);
+        self.manual_peers = e
+            .manual_peers
+            .iter()
+            .map(|p| p.trim().to_string())
+            .filter(|p| !p.is_empty())
+            .take(10)
+            .collect();
         self.smtp = SmtpSettings {
             host: e.smtp.host.trim().to_string(),
             port: e.smtp.port,
@@ -269,5 +285,22 @@ mod tests {
         let loaded = load(dir.path()).unwrap();
         assert_eq!(loaded.station_id, cfg.station_id);
         assert_eq!(loaded.event_code, "TDOT");
+    }
+    #[test]
+    fn has_retention_and_manual_peer_defaults() {
+        let cfg = StationConfig::default();
+        assert_eq!(cfg.name_retention_days, 7);
+        assert!(cfg.manual_peers.is_empty());
+    }
+
+    #[test]
+    fn apply_cleans_retention_and_peers() {
+        let mut cfg = StationConfig::default();
+        let mut e = cfg.editable();
+        e.name_retention_days = 0;
+        e.manual_peers = vec![" 192.168.0.5:47800 ".into(), "".into(), "10.0.0.2".into()];
+        cfg.apply(e);
+        assert_eq!(cfg.name_retention_days, 1);
+        assert_eq!(cfg.manual_peers, vec!["192.168.0.5:47800".to_string(), "10.0.0.2".to_string()]);
     }
 }
