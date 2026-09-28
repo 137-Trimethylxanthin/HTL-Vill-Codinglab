@@ -4,14 +4,64 @@ export const de = {
 		loading: 'Drohne startet …',
 		loadFailed: 'Python konnte nicht geladen werden. Bitte App neu starten.'
 	},
+	attract: {
+		school: 'HTL Villach',
+		title: 'Programmier eine Drohne!',
+		subtitle: 'Mit echtem Python. Ganz ohne Tippen.',
+		tap: 'Tippe zum Starten'
+	},
+	pilot: {
+		title: 'Wie heißt du?',
+		placeholder: 'Dein Name',
+		random: 'Anderer Name',
+		own: 'Eigener Name',
+		space: 'Leerzeichen',
+		delete: 'Löschen',
+		done: 'Fertig',
+		go: "Los geht's!"
+	},
+	map: {
+		pilot: 'Pilot',
+		finish: 'Fertig',
+		levels: ['Level 1 · Befehle', 'Level 2 · Schleifen', 'Level 3 · Sensoren']
+	},
+	complete: {
+		perfect: 'Perfekt!',
+		great: 'Super gemacht!',
+		done: 'Geschafft!',
+		next: 'Nächste Mission',
+		map: 'Zur Karte',
+		promoTitle: 'An der HTL Villach',
+		promo: [
+			'Du lernst, echte Maschinen zu steuern.',
+			'Hier baust du Roboter, Apps und Spiele.',
+			'Sensoren, Drohnen, Elektronik: Das ist dein Alltag hier.'
+		]
+	},
+	finale: {
+		title: (name: string) => `Super, ${name}!`,
+		solved: (count: number) =>
+			`Du hast ${count} ${count === 1 ? 'Mission' : 'Missionen'} geschafft.`,
+		qrTitle: 'Mehr über die HTL Villach',
+		qrHint: 'Scanne den Code mit deinem Handy.',
+		again: 'Nächster Pilot'
+	},
+	idle: {
+		title: 'Bist du noch da?',
+		continue: 'Ja, weiter!'
+	},
 	workspace: {
 		palette: 'Befehle',
 		program: 'Dein Programm',
 		python: 'Python',
+		showProgram: 'Blöcke',
+		showPython: 'Python',
 		start: 'Start',
 		stop: 'Stopp',
 		speed: 'Schneller',
 		reset: 'Zurück',
+		back: 'Karte',
+		skip: 'Überspringen',
 		emptyProgram: 'Tippe oder zieh einen Befehl hierher.',
 		remove: 'Entfernen',
 		more: 'Mehr',

@@ -21,7 +21,7 @@ export function randomPilotName(rng: () => number = Math.random): string {
 
 export function sanitizeName(raw: string): string {
 	return raw
-		.replace(/[^A-Za-zÄÖÜäöüß \-]/g, '')
+		.replace(/[^A-Za-zÄÖÜäöüß -]/g, '')
 		.replace(/\s+/g, ' ')
 		.trim()
 		.slice(0, MAX_NAME)
