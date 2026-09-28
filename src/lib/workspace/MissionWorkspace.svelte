@@ -53,7 +53,7 @@
 
 		<div class="grid min-h-0 grid-rows-[1fr_auto] gap-4 rounded-3xl bg-card/70 p-4">
 			<div class="min-h-0">
-				<DroneStage rows={mission.map.rows} player={ctrl.player} />
+				<DroneStage player={ctrl.player} fog={mission.fog} />
 			</div>
 			<div class="flex flex-col gap-3">
 				{#if ctrl.message}

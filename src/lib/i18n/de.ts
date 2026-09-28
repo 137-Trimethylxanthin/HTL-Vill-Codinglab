@@ -29,6 +29,9 @@ export const de = {
 		repeat: 'Wiederhole',
 		if_obstacle: 'Wenn Hindernis'
 	},
+	stage: {
+		label: 'Karte mit Drohne'
+	},
 	stops: {
 		edge: 'Hoppla – hier ist die Karte zu Ende!',
 		building: 'Autsch! Da steht ein Gebäude.',

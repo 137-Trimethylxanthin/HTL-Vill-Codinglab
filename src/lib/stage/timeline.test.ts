@@ -58,6 +58,19 @@ describe('buildTimeline', () => {
 		expect(frames.map((f) => f.pose.carrying)).toEqual([true, false]);
 	});
 
+	it('keeps the pose on sensor frames and carries the answer', () => {
+		const frames = buildTimeline(start, [{ kind: 'sense', line: 3, ahead: true }]);
+		expect(frames[0]).toMatchObject({ kind: 'sense', ahead: true, pose: { x: 2, y: 4 } });
+	});
+
+	it('carries photo hits', () => {
+		const frames = buildTimeline(start, [
+			{ kind: 'photo', line: 3, hit: true },
+			{ kind: 'photo', line: 4, hit: false }
+		]);
+		expect(frames.map((f) => f.hit)).toEqual([true, false]);
+	});
+
 	it('maps directions to headings', () => {
 		expect(['N', 'E', 'S', 'W'].map((d) => headingOf(d as 'N'))).toEqual([0, 90, 180, 270]);
 	});

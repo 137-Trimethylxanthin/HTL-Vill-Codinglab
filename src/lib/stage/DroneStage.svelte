@@ -1,25 +1,33 @@
 <script lang="ts">
+	import { t } from '$lib/i18n/de';
 	import type { Player } from './player.svelte';
+	import { visibleCells } from './visibility';
 
-	let { rows, player }: { rows: string[]; player: Player } = $props();
+	let { player, fog = false }: { player: Player; fog?: boolean } = $props();
 
 	const CELL = 100;
-	const width = $derived(rows[0].length * CELL);
-	const height = $derived(rows.length * CELL);
+	const rows = $derived(player.rows);
+	const cols = $derived(rows[0]?.length ?? 1);
+	const width = $derived(cols * CELL);
+	const height = $derived(Math.max(rows.length, 1) * CELL);
 	const cells = $derived(
-		rows.flatMap((row, y) => [...row].map((ch, x) => ({ ch, x: x * CELL, y: y * CELL })))
+		rows.flatMap((row, y) =>
+			[...row].map((ch, x) => ({ ch, key: `${x},${y}`, px: x * CELL, py: y * CELL }))
+		)
 	);
+	const visible = $derived(fog ? visibleCells(cols, rows.length, player.visited) : null);
 	const lift = $derived(player.lift.current);
 	const cx = $derived((player.x.current + 0.5) * CELL);
 	const cy = $derived((player.y.current + 0.5) * CELL);
 </script>
 
-<svg viewBox="0 0 {width} {height}" class="h-full w-full" role="img" aria-label="Karte mit Drohne">
+<svg viewBox="0 0 {width} {height}" class="h-full w-full" role="img" aria-label={t.stage.label}>
 	<rect {width} {height} rx="24" class="fill-sky" />
-	{#each cells as cell (cell.x + ',' + cell.y)}
+	{#each cells as cell (cell.key)}
+		{@const mid = { x: cell.px + CELL / 2, y: cell.py + CELL / 2 }}
 		<rect
-			x={cell.x + 4}
-			y={cell.y + 4}
+			x={cell.px + 4}
+			y={cell.py + 4}
 			width={CELL - 8}
 			height={CELL - 8}
 			rx="14"
@@ -27,8 +35,8 @@
 		/>
 		{#if cell.ch === 'B'}
 			<rect
-				x={cell.x + 12}
-				y={cell.y + 12}
+				x={cell.px + 12}
+				y={cell.py + 12}
 				width={CELL - 24}
 				height={CELL - 24}
 				rx="10"
@@ -37,8 +45,8 @@
 			{#each [0, 1] as row (row)}
 				{#each [0, 1] as col (col)}
 					<rect
-						x={cell.x + 26 + col * 30}
-						y={cell.y + 26 + row * 30}
+						x={cell.px + 26 + col * 30}
+						y={cell.py + 26 + row * 30}
 						width="18"
 						height="18"
 						rx="4"
@@ -47,19 +55,27 @@
 				{/each}
 			{/each}
 		{:else if cell.ch === 'P'}
-			<circle cx={cell.x + CELL / 2} cy={cell.y + CELL / 2} r="36" class="fill-emerald-500" />
+			<circle cx={mid.x} cy={mid.y} r="36" class="fill-success" />
 			<text
-				x={cell.x + CELL / 2}
-				y={cell.y + CELL / 2 + 14}
+				x={mid.x}
+				y={mid.y + 14}
 				text-anchor="middle"
-				class="fill-white text-[40px] font-black">H</text
+				class="fill-white font-display text-[40px] font-bold">H</text
 			>
 		{:else if cell.ch === 'K'}
-			<rect x={cell.x + 30} y={cell.y + 30} width="40" height="40" rx="6" class="fill-amber-600" />
+			<rect
+				x={cell.px + 30}
+				y={cell.py + 30}
+				width="40"
+				height="40"
+				rx="6"
+				class="fill-amber-600"
+			/>
+			<rect x={cell.px + 46} y={cell.py + 30} width="8" height="40" class="fill-amber-300" />
 		{:else if cell.ch === 'D'}
 			<rect
-				x={cell.x + 16}
-				y={cell.y + 16}
+				x={cell.px + 16}
+				y={cell.py + 16}
 				width={CELL - 32}
 				height={CELL - 32}
 				rx="12"
@@ -69,12 +85,38 @@
 			/>
 		{:else if cell.ch === 'S'}
 			<rect
-				x={cell.x + 14}
-				y={cell.y + 24}
+				x={cell.px + 14}
+				y={cell.py + 24}
 				width={CELL - 28}
 				height={CELL - 48}
 				rx="6"
-				class="fill-blue-700"
+				class={player.photographed.includes(cell.key) ? 'fill-success' : 'fill-blue-700'}
+			/>
+			<line
+				x1={mid.x}
+				y1={cell.py + 24}
+				x2={mid.x}
+				y2={cell.py + CELL - 24}
+				stroke-width="3"
+				class="stroke-white/50"
+			/>
+		{:else if cell.ch === 'C'}
+			<circle
+				cx={mid.x}
+				cy={mid.y}
+				r="30"
+				fill="none"
+				stroke-width="10"
+				class={player.visited.includes(cell.key) ? 'stroke-success' : 'stroke-drone'}
+			/>
+		{/if}
+		{#if visible && !visible.has(cell.key)}
+			<rect
+				x={cell.px}
+				y={cell.py}
+				width={CELL}
+				height={CELL}
+				class="fill-slate-300 transition-opacity duration-500"
 			/>
 		{/if}
 	{/each}
@@ -94,6 +136,16 @@
 				transform="translate({cx} {cy - lift * 10}) rotate({player.heading.current}) scale({0.8 +
 					lift * 0.25})"
 			>
+				{#if player.sensing !== null}
+					<rect
+						x="-6"
+						y="-100"
+						width="12"
+						height="60"
+						rx="6"
+						class={player.sensing ? 'fill-red-500/70' : 'fill-success/70'}
+					/>
+				{/if}
 				<rect
 					x="-6"
 					y="-34"
@@ -133,6 +185,12 @@
 				{/if}
 			</g>
 		</g>
+	{/key}
+
+	{#key player.flash}
+		{#if player.flash > 0}
+			<rect {width} {height} rx="24" class="flash pointer-events-none fill-white" />
+		{/if}
 	{/key}
 </svg>
 

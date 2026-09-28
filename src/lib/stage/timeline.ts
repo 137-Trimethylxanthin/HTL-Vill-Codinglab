@@ -15,6 +15,10 @@ export interface Frame {
 	line: number;
 	kind: DroneEvent['kind'];
 	ms: number;
+	/** Photo frames: was a panel below the drone? */
+	hit?: boolean;
+	/** Sensor frames: was there an obstacle ahead? */
+	ahead?: boolean;
 }
 
 const DURATION: Record<DroneEvent['kind'], number> = {
@@ -51,6 +55,7 @@ export function buildTimeline(
 ): Frame[] {
 	let pose = startPose(start);
 	return events.map((event) => {
+		const frame: Partial<Frame> = {};
 		switch (event.kind) {
 			case 'takeoff':
 				pose = { ...pose, flying: true };
@@ -71,10 +76,14 @@ export function buildTimeline(
 				pose = { ...pose, carrying: false };
 				break;
 			case 'photo':
+				frame.hit = event.hit;
+				break;
 			case 'sense':
+				frame.ahead = event.ahead;
+				break;
 			case 'crash':
 				break;
 		}
-		return { pose, line: event.line, kind: event.kind, ms: DURATION[event.kind] };
+		return { ...frame, pose, line: event.line, kind: event.kind, ms: DURATION[event.kind] };
 	});
 }

@@ -33,7 +33,7 @@ export class MissionRun {
 		private readonly mission: Mission,
 		private readonly runner: Pick<PythonRunner, 'run'>
 	) {
-		this.player.reset(startPose(mission.map.start));
+		this.player.reset(startPose(mission.map.start), mission.map.rows);
 	}
 
 	add(type: BlockType) {
@@ -50,7 +50,7 @@ export class MissionRun {
 	}
 
 	resetStage() {
-		this.player.reset(startPose(this.mission.map.start));
+		this.player.reset(startPose(this.mission.map.start), this.mission.map.rows);
 		this.status = 'idle';
 		this.message = null;
 	}
