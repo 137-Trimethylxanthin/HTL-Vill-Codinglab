@@ -14,11 +14,11 @@
 	import MissionComplete from '$lib/screens/MissionComplete.svelte';
 	import MissionMap from '$lib/screens/MissionMap.svelte';
 	import Pilot from '$lib/screens/Pilot.svelte';
+	import Splash from '$lib/screens/Splash.svelte';
 	import { IdleTimer } from '$lib/session/idle.svelte';
 	import { installKioskGuards } from '$lib/session/kiosk';
 	import { Session } from '$lib/session/session.svelte';
 	import type { SessionSummary } from '$lib/session/types';
-	import { cn } from '$lib/utils';
 	import MissionWorkspace from '$lib/workspace/MissionWorkspace.svelte';
 
 	const platform = getPlatform();
@@ -103,16 +103,7 @@
 
 <div class="contents" inert={settling || adminOpen}>
 	{#if phase !== 'ready' || !runner}
-		<main class="grid h-full place-items-center bg-sky">
-			<p
-				class={cn(
-					'font-display text-3xl font-bold',
-					phase === 'failed' ? 'text-destructive' : 'animate-pulse'
-				)}
-			>
-				{phase === 'failed' ? t.app.loadFailed : t.app.loading}
-			</p>
-		</main>
+		<Splash failed={phase === 'failed'} />
 	{:else if session.screen === 'attract'}
 		<Attract {demo} onStart={() => session.begin()} onAdmin={() => (adminOpen = true)} />
 	{:else if session.screen === 'pilot'}

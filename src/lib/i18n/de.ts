@@ -1,6 +1,7 @@
 export const de = {
 	app: {
 		name: 'CodingLab',
+		drone: 'Drohne',
 		loading: 'Drohne startet …',
 		loadFailed: 'Python konnte nicht geladen werden. Bitte App neu starten.'
 	},

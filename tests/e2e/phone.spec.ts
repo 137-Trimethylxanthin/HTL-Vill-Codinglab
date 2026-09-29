@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { openMission, seedStation, settle, toMap } from './helpers';
+import { checkLongProgram } from './layout';
 
 test.beforeEach(async ({ page }) => {
 	await seedStation(page);
@@ -30,3 +31,5 @@ test('the workspace fits a phone', async ({ page }) => {
 	const palette = (await page.locator('[data-drop-trash]').boundingBox())!;
 	expect(stage.y).toBeLessThan(palette.y);
 });
+
+test('30 blocks fit a phone', ({ page }) => checkLongProgram(page, 390, 844));
