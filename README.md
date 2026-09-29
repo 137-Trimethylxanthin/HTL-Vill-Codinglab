@@ -5,7 +5,7 @@ Kinder programmieren am Tag der offenen Tür der HTL Villach eine Drohne — mit
 ## Voraussetzungen
 
 - [Rust](https://www.rust-lang.org/tools/install) (stable) und [Node.js](https://nodejs.org/) 22+
-- Linux: `libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf`
+- Linux: `libwebkit2gtk-4.1-dev librsvg2-dev patchelf`
 
 ```bash
 npm install
@@ -26,7 +26,30 @@ npm install
 
 - Desktop: `npm run tauri build` (Installer mit Updater-Signatur braucht `TAURI_SIGNING_PRIVATE_KEY`; ohne: `npm run tauri build -- --no-bundle`)
 - Web: `npm run build` → Ordner `build/` auf einen beliebigen statischen Webserver
-- Releases: Push auf den Branch `release` → GitHub Actions baut Windows/macOS/Linux + Android-APK (`.github/workflows/release.yml`). GitLab CI (`.gitlab-ci.yml`) prüft jeden Push.
+- GitLab CI (`.gitlab-ci.yml`) prüft jeden Push auf GitLab (`origin`).
+
+## Release veröffentlichen
+
+Releases baut GitHub Actions (`.github/workflows/release.yml`) im Repo `137-Trimethylxanthin/HTL-Vill-Codinglab` — dort sucht auch der Updater (`tauri.conf.json` → `plugins.updater.endpoints`).
+
+**Einmalig einrichten** — GitHub-Remote und Secrets (Settings → Secrets and variables → Actions):
+
+```bash
+git remote add github git@github.com:137-Trimethylxanthin/HTL-Vill-Codinglab.git
+```
+
+| Secret                                                                      | Inhalt                                                                                                                                                                                                                        |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`           | privater Schlüssel zum `pubkey` in `tauri.conf.json` (derselbe wie bei der alten App). Verloren? `npx tauri signer generate`, neuen `pubkey` eintragen — bereits installierte Stationen einmal von Hand aktualisieren.        |
+| `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` | Keystore für die APK: `keytool -genkeypair -keystore release.jks -alias codinglab -keyalg RSA -keysize 4096 -validity 10000`, dann `base64 -w0 release.jks`. Gut aufheben: Updates der APK brauchen immer denselben Keystore. |
+
+**Jedes Release:**
+
+1. Version in `package.json`, `src-tauri/Cargo.toml` und `src-tauri/tauri.conf.json` erhöhen, committen.
+2. `git push github main:release` — baut Windows, macOS, Linux und die Android-APK (Artefakt `android-apk`).
+3. Auf GitHub unter Releases den **Entwurf** `CodingLab vX.Y.Z` prüfen und **veröffentlichen**. Erst dann finden die Stationen das Update.
+
+macOS-Builds sind nicht signiert: beim ersten Start Rechtsklick → Öffnen.
 
 ## Aufbau
 

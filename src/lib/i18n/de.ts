@@ -89,6 +89,7 @@ export const de = {
 		version: (v: string) => `Version ${v}`,
 		checkUpdate: 'Nach Updates suchen',
 		noUpdate: 'Die App ist aktuell.',
+		updateUnreachable: 'Update-Server nicht erreichbar. Internet prüfen.',
 		updateFound: (v: string) => `Update ${v} verfügbar.`,
 		installUpdate: 'Update installieren',
 		newPin: 'Neue PIN',

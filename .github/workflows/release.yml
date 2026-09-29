@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - if: matrix.platform == 'ubuntu-22.04'
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev librsvg2-dev patchelf
       - uses: actions/setup-node@v4
         with: { node-version: lts/*, cache: npm }
       - uses: dtolnay/rust-toolchain@stable
@@ -60,9 +60,29 @@ jobs:
       - run: npm ci
       - run: npx tauri android init
         env: { NDK_HOME: '${{ env.ANDROID_HOME }}/ndk/27.0.12077973' }
+      # init regenerates gen/android with the default Tauri icon: put the drone back.
+      - run: npx tauri icon src-tauri/icons/source.svg
       - run: npx tauri android build --apk
         env: { NDK_HOME: '${{ env.ANDROID_HOME }}/ndk/27.0.12077973' }
+      # Android refuses unsigned APKs. Keystore setup: README, "Release veröffentlichen".
+      - name: Sign APK
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::error::Secret ANDROID_KEYSTORE_BASE64 fehlt (README, Release veröffentlichen)"
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          UNSIGNED=$(find src-tauri/gen/android/app/build/outputs/apk -name '*-unsigned.apk' | head -1)
+          "$BT/zipalign" -f -p 4 "$UNSIGNED" "$RUNNER_TEMP/aligned.apk"
+          "$BT/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-pass env:ANDROID_KEYSTORE_PASSWORD \
+            --ks-key-alias "$ANDROID_KEY_ALIAS" --out codinglab.apk "$RUNNER_TEMP/aligned.apk"
+          "$BT/apksigner" verify codinglab.apk
       - uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          path: codinglab.apk

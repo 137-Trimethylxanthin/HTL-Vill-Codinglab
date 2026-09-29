@@ -62,7 +62,7 @@ Besuche pro Tag und Jahr, wie gut jede Mission läuft und wo Besucher aufhören.
 
 ## Updates
 
-Admin → **Updates** → „Nach Updates suchen“ → „Update installieren“. Die App startet danach neu. Nur am Computer, mit Internet.
+Admin → **Updates** → „Nach Updates suchen“ → „Update installieren“. Die App startet danach neu. Nur am Computer, mit Internet. Meldet die App „Update-Server nicht erreichbar“: Internet prüfen. Ein neues Update erscheint erst, wenn es auf GitHub veröffentlicht ist (README, „Release veröffentlichen“).
 
 ## Wenn etwas hängt
 

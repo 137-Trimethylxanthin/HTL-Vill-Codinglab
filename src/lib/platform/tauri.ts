@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { t } from '$lib/i18n/de';
 import { PlatformError, type Platform } from './types';
 
 async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
@@ -23,7 +24,10 @@ export function createTauriPlatform(): Platform {
 		appVersion: async () => (await import('@tauri-apps/api/app')).getVersion(),
 		checkUpdate: async () => {
 			const { check } = await import('@tauri-apps/plugin-updater');
-			const update = await check().catch(() => null);
+			// No network or no published release must not read as "up to date".
+			const update = await check().catch(() => {
+				throw new PlatformError('updateUnreachable', t.admin.updateUnreachable);
+			});
 			return update?.version ?? null;
 		},
 		installUpdate: async () => {
