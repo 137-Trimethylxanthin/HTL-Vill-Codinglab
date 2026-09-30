@@ -17,6 +17,8 @@ export class Player {
 	rows = $state<string[]>([]);
 	visited = $state<string[]>([]);
 	photographed = $state<string[]>([]);
+	/** Drop spots where the drone has put down a parcel. */
+	delivered = $state<string[]>([]);
 	flash = $state(0);
 	sensing = $state<boolean | null>(null);
 	private token = 0;
@@ -39,6 +41,7 @@ export class Player {
 		this.rows = [...rows];
 		this.visited = [key(pose.x, pose.y)];
 		this.photographed = [];
+		this.delivered = [];
 		this.x.set(pose.x, { instant: true });
 		this.y.set(pose.y, { instant: true });
 		this.heading.set(pose.heading, { instant: true });
@@ -64,6 +67,10 @@ export class Player {
 				if (frame.hit && !this.photographed.includes(here)) {
 					this.photographed = [...this.photographed, here];
 				}
+			}
+			if (frame.kind === 'drop') {
+				const here = key(pose.x, pose.y);
+				if (!this.delivered.includes(here)) this.delivered = [...this.delivered, here];
 			}
 			if (frame.kind === 'pickup') {
 				const row = this.rows[pose.y];

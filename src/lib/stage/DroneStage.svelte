@@ -83,6 +83,20 @@
 				stroke-dasharray="12 8"
 				class="fill-none stroke-amber-600"
 			/>
+			{#if player.delivered.includes(cell.key)}
+				<!-- The parcel the drone put down, drawn like the one it picked up. -->
+				<g class="parcel-drop">
+					<rect
+						x={cell.px + 30}
+						y={cell.py + 30}
+						width="40"
+						height="40"
+						rx="6"
+						class="fill-amber-600"
+					/>
+					<rect x={cell.px + 46} y={cell.py + 30} width="8" height="40" class="fill-amber-300" />
+				</g>
+			{/if}
 		{:else if cell.ch === 'S'}
 			<rect
 				x={cell.px + 14}
@@ -203,6 +217,15 @@
 	.bump {
 		animation: bump 0.5s ease-out;
 	}
+	.parcel-drop {
+		animation: parcel-drop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+	@keyframes parcel-drop {
+		from {
+			transform: translateY(-24px) scale(0.6);
+			opacity: 0;
+		}
+	}
 	@keyframes spin {
 		to {
 			transform: rotate(360deg);
@@ -228,7 +251,8 @@
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.spin,
-		.bump {
+		.bump,
+		.parcel-drop {
 			animation: none;
 		}
 	}
