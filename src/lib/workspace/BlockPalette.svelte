@@ -2,16 +2,24 @@
 	import { BLOCKS } from '$lib/blocks/registry';
 	import type { BlockType } from '$lib/blocks/types';
 	import { t } from '$lib/i18n/de';
+	import { cn } from '$lib/utils';
 	import BlockTile from './BlockTile.svelte';
 
 	let {
 		blocks,
 		disabled = false,
+		scrollable = false,
 		onGrab,
 		onAdd
 	}: {
 		blocks: BlockType[];
 		disabled?: boolean;
+		/**
+		 * The palette overflows: let a finger pan along it (vertical in landscape, horizontal in
+		 * portrait). Moving across that axis still drags a block out; the browser cancels the
+		 * pointer when it takes over for scrolling, which ends the drag cleanly.
+		 */
+		scrollable?: boolean;
 		onGrab: (type: BlockType, e: PointerEvent) => void;
 		onAdd: (type: BlockType) => void;
 	} = $props();
@@ -23,7 +31,10 @@
 	</h2>
 	{#each blocks as type (type)}
 		<button
-			class="press touch-none text-left disabled:opacity-50 portrait:w-48 portrait:shrink-0"
+			class={cn(
+				'press text-left disabled:opacity-50 portrait:w-48 portrait:shrink-0',
+				scrollable ? 'touch-pan-y portrait:touch-pan-x' : 'touch-none'
+			)}
 			{disabled}
 			onpointerdown={(e) => onGrab(type, e)}
 			onkeydown={(e) => {

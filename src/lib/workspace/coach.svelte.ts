@@ -17,6 +17,11 @@ export class CoachState {
 		if (!this.done) this.arm();
 	}
 
+	/** While the drone flies the visitor is busy watching: no idle hints until the next activity. */
+	pause() {
+		clearTimeout(this.timer);
+	}
+
 	failed() {
 		if (this.done) return;
 		this.fails += 1;

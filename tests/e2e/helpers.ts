@@ -86,3 +86,24 @@ export async function solveFirstFlight(page: Page) {
 	await page.getByRole('button', { name: 'Start' }).click();
 	await page.getByText('Geschafft').waitFor({ timeout: 30_000 });
 }
+
+/** A one-finger touch drag (Playwright's touchscreen only taps). Needs `hasTouch`. */
+export async function touchDrag(
+	page: Page,
+	from: readonly [number, number],
+	to: readonly [number, number],
+	hold = 200
+) {
+	const cdp = await page.context().newCDPSession(page);
+	const at = (x: number, y: number) => [{ x, y, id: 1 }];
+	await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(...from) });
+	for (let i = 1; i <= 15; i++) {
+		const x = from[0] + ((to[0] - from[0]) * i) / 15;
+		const y = from[1] + ((to[1] - from[1]) * i) / 15;
+		await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(x, y) });
+		await page.waitForTimeout(16);
+	}
+	await page.waitForTimeout(hold);
+	await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+	await cdp.detach();
+}

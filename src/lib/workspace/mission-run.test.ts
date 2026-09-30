@@ -4,7 +4,7 @@ import { t } from '$lib/i18n/de';
 import { SHOWCASE } from '$lib/missions';
 import type { RunResult } from '$lib/sim/result';
 import { World } from '$lib/sim/world';
-import { MissionRun } from './mission-run.svelte';
+import { MissionRun, STOP_GUARD_MS } from './mission-run.svelte';
 
 const m11 = SHOWCASE[0];
 const m21 = SHOWCASE.find((m) => m.id === '2.1')!;
@@ -132,6 +132,62 @@ describe('MissionRun', () => {
 		expect(ctrl.speed).toBe(2);
 		ctrl.toggleSpeed();
 		expect(ctrl.speed).toBe(1);
+	});
+
+	it('an old run waking up late cannot take over a newer run', async () => {
+		vi.useFakeTimers();
+		const ctrl = new MissionRun(m11, solvedRunner());
+		build(ctrl);
+		const first = ctrl.run();
+		await vi.advanceTimersByTimeAsync(700);
+		ctrl.stop();
+		// Past the double-tap guard, but the first run is still asleep inside its current frame.
+		vi.setSystemTime(Date.now() + STOP_GUARD_MS);
+		const second = ctrl.run();
+		// The first run's player sleep ends now; it must leave the second run alone.
+		await vi.advanceTimersByTimeAsync(300);
+		expect(ctrl.status).toBe('running');
+		expect(ctrl.add('photo')).toBeNull();
+		await vi.advanceTimersByTimeAsync(10000);
+		await Promise.all([first, second]);
+		expect(ctrl.status).toBe('success');
+		expect(ctrl.stars).toBeGreaterThan(0);
+	});
+
+	it('ignores a start right after stop (double tap)', async () => {
+		vi.useFakeTimers();
+		const ctrl = new MissionRun(m11, solvedRunner());
+		build(ctrl);
+		const running = ctrl.run();
+		await vi.advanceTimersByTimeAsync(700);
+		ctrl.stop();
+		await vi.advanceTimersByTimeAsync(100);
+		await ctrl.run();
+		expect(ctrl.status).toBe('idle');
+		await vi.advanceTimersByTimeAsync(10000);
+		await running;
+		expect(ctrl.status).toBe('idle');
+	});
+
+	it('the speed button changes a flight that is already running', async () => {
+		vi.useFakeTimers();
+		const slow = new MissionRun(m11, solvedRunner());
+		const fast = new MissionRun(m11, solvedRunner());
+		build(slow);
+		build(fast);
+		const a = slow.run();
+		const b = fast.run();
+		await vi.advanceTimersByTimeAsync(10);
+		fast.toggleSpeed();
+		let t1 = 0;
+		let t2 = 0;
+		for (let ms = 0; ms < 20000 && (!t1 || !t2); ms += 50) {
+			await vi.advanceTimersByTimeAsync(50);
+			if (!t1 && slow.status === 'success') t1 = ms;
+			if (!t2 && fast.status === 'success') t2 = ms;
+		}
+		await Promise.all([a, b]);
+		expect(t2).toBeLessThan(t1 * 0.75);
 	});
 
 	it('ignores a stop right after start (double tap)', async () => {

@@ -87,6 +87,41 @@ describe('DragController', () => {
 		expect(ctrl.rejected).toBe(false);
 	});
 
+	it('can grab again while a rejected block springs back', () => {
+		vi.useFakeTimers();
+		const { ctrl, ops } = setup(null);
+		ctrl.press({ kind: 'program', id: 'a' }, 50, 50, rect, 1);
+		ctrl.move(120, 120, 1);
+		ctrl.end(1);
+		expect(ctrl.rejected).toBe(true);
+		ctrl.press({ kind: 'program', id: 'b' }, 60, 60, rect, 2);
+		expect(ctrl.rejected).toBe(false);
+		ctrl.move(130, 130, 2);
+		expect(ctrl.active).toEqual({ kind: 'program', id: 'b' });
+		// The old spring-back timer must not end the new drag.
+		vi.advanceTimersByTime(500);
+		expect(ctrl.active).toEqual({ kind: 'program', id: 'b' });
+		expect(ops).toEqual([]);
+	});
+
+	it('keeps the same hover object while the target does not change', () => {
+		let hit: HitResult = { kind: 'slot', target: { parent: null, slot: 'body', index: 1 } };
+		const ctrl = new DragController(
+			() => hit,
+			() => true,
+			() => {}
+		);
+		ctrl.press({ kind: 'palette', type: 'land' }, 50, 50, rect);
+		ctrl.move(120, 120);
+		const first = ctrl.hover;
+		hit = { kind: 'slot', target: { parent: null, slot: 'body', index: 1 } };
+		ctrl.move(125, 122);
+		expect(ctrl.hover).toBe(first);
+		hit = { kind: 'slot', target: { parent: null, slot: 'body', index: 2 } };
+		ctrl.move(125, 160);
+		expect(ctrl.hover).toEqual(hit);
+	});
+
 	it('cancel clears the drag without dropping', () => {
 		const { ctrl, ops } = setup();
 		ctrl.press({ kind: 'program', id: 'a' }, 50, 50, rect);

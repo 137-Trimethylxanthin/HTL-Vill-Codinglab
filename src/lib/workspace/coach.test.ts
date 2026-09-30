@@ -26,6 +26,17 @@ describe('CoachState', () => {
 		expect(coach.hint).toBe('drei');
 	});
 
+	it('shows no idle hint while paused (drone flying)', () => {
+		const coach = new CoachState(HINTS);
+		vi.advanceTimersByTime(15000);
+		coach.pause();
+		vi.advanceTimersByTime(60000);
+		expect(coach.hint).toBeNull();
+		coach.activity();
+		vi.advanceTimersByTime(20000);
+		expect(coach.hint).toBe('eins');
+	});
+
 	it('restarts the idle timer on activity', () => {
 		const coach = new CoachState(HINTS);
 		vi.advanceTimersByTime(15000);

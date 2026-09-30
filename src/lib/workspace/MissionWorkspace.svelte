@@ -37,7 +37,8 @@
 		onBack,
 		onSkip,
 		onSolved,
-		onDone
+		onDone,
+		onActivity
 	}: {
 		mission: Mission;
 		runner: PythonRunner;
@@ -46,9 +47,21 @@
 		/** Called as soon as a run succeeds, so leaving via "Karte" keeps the stars. */
 		onSolved: (result: MissionResult) => void;
 		onDone: (result: MissionResult) => void;
+		/** Watching a flight counts as activity: the idle reset must not fire mid-flight. */
+		onActivity?: () => void;
 	} = $props();
 
 	let tab = $state<'program' | 'python'>('program');
+
+	$effect(() => {
+		if (ctrl.status !== 'running') return;
+		const timer = setInterval(() => onActivity?.(), 5000);
+		return () => {
+			clearInterval(timer);
+			// The idle time counts from the end of the flight.
+			untrack(() => onActivity?.());
+		};
+	});
 
 	// Only the status is tracked: recording reads and writes session state.
 	$effect(() => {
@@ -98,11 +111,29 @@
 	const MAGNET_PX = 40;
 	const ROW_GAP = 8; // gap-2 between list items
 
+	/**
+	 * Where an element sits once every running slide/scale animation has finished, in screen
+	 * coordinates. Blocks animate towards their place while the gap moves; measuring them in
+	 * flight would make the drop target flip back and forth under a resting pointer.
+	 */
+	function layoutBox(el: HTMLElement, scroller: HTMLElement) {
+		let left = 0;
+		let top = 0;
+		for (let p: HTMLElement | null = el; p && p !== scroller; p = p.offsetParent as HTMLElement) {
+			left += p.offsetLeft;
+			top += p.offsetTop;
+		}
+		const view = scroller.getBoundingClientRect();
+		left += view.left + scroller.clientLeft - scroller.scrollLeft;
+		top += view.top + scroller.clientTop - scroller.scrollTop;
+		return { left, top, right: left + el.offsetWidth, bottom: top + el.offsetHeight };
+	}
+
 	/** Reads every visible drop list in the program panel, in screen coordinates. */
 	function readLists(scroller: HTMLElement): { el: HTMLElement; geom: ListGeom }[] {
 		const view = scroller.getBoundingClientRect();
 		return [...scroller.querySelectorAll<HTMLElement>('[data-drop-slot]')].flatMap((el) => {
-			const r = el.getBoundingClientRect();
+			const r = layoutBox(el, scroller);
 			const top = Math.max(r.top, view.top);
 			const bottom = Math.min(r.bottom, view.bottom);
 			if (bottom <= top) return []; // scrolled out of view
@@ -116,8 +147,8 @@
 					(c): c is HTMLElement => c instanceof HTMLElement && c.dataset.blockId !== undefined
 				)
 				.map((c) => {
-					const h = (c.firstElementChild ?? c).getBoundingClientRect();
-					return h.top + h.height / 2;
+					const h = layoutBox((c.firstElementChild as HTMLElement | null) ?? c, scroller);
+					return (h.top + h.bottom) / 2;
 				});
 			return [{ el, geom: { left: r.left, right: r.right, top, bottom, depth, mids } }];
 		});
@@ -126,9 +157,8 @@
 	function readGap(scroller: HTMLElement): Gap | null {
 		const li = scroller.querySelector<HTMLElement>('[data-drop-gap]')?.closest('li');
 		if (!li) return null;
-		const r = li.getBoundingClientRect();
-		// offsetHeight ignores the grow-in scale animation.
-		return { top: r.top, height: li.offsetHeight + ROW_GAP, left: r.left, right: r.right };
+		const r = layoutBox(li, scroller);
+		return { top: r.top, height: r.bottom - r.top + ROW_GAP, left: r.left, right: r.right };
 	}
 
 	function hitTest(x: number, y: number): HitResult {
@@ -179,8 +209,10 @@
 		scrollFrame = 0;
 		const scroller = document.querySelector<HTMLElement>('[data-drop-scroll]');
 		if (!scroller || scrollSpeed === 0 || !drag.active) return;
+		const before = scroller.scrollTop;
 		scroller.scrollTop += scrollSpeed;
-		drag.refresh();
+		// Already at the end: nothing moved, so keep the frame loop but skip the hit test.
+		if (scroller.scrollTop !== before) drag.refresh();
 		scrollFrame = requestAnimationFrame(scrollStep);
 	}
 
@@ -202,10 +234,39 @@
 		};
 	});
 
+	// Long palettes (e.g. 3.2, or portrait) overflow; only then may a finger scroll them.
+	let paletteBox = $state<HTMLElement>();
+	let paletteScrolls = $state(false);
+	$effect(() => {
+		const box = paletteBox;
+		if (!box) return;
+		const measure = () => {
+			paletteScrolls = box.scrollHeight > box.clientHeight || box.scrollWidth > box.clientWidth;
+		};
+		const observer = new ResizeObserver(measure);
+		observer.observe(box);
+		for (const child of box.children) observer.observe(child);
+		measure();
+		return () => observer.disconnect();
+	});
+
+	// The drop gap is as tall as the block being moved, so nothing jumps when it lands.
+	let gapHeight = $state<number | null>(null);
+
 	function grab(source: DragSource, e: PointerEvent) {
 		if (ctrl.status === 'running' || e.button > 0) return;
-		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+		const el = e.currentTarget as HTMLElement;
+		// A just-landed block is still squished: keep the grab point, but at its real size.
+		const r = el.getBoundingClientRect();
+		const sx = r.width ? el.offsetWidth / r.width : 1;
+		const sy = r.height ? el.offsetHeight / r.height : 1;
+		const rect = {
+			left: e.clientX - (e.clientX - r.left) * sx,
+			top: e.clientY - (e.clientY - r.top) * sy,
+			width: el.offsetWidth
+		};
 		drag.press(source, e.clientX, e.clientY, rect, e.pointerId);
+		gapHeight = source.kind === 'program' ? (el.closest('li')?.offsetHeight ?? null) : null;
 	}
 
 	const ghost = $derived.by(() => {
@@ -218,10 +279,12 @@
 	});
 
 	async function run() {
-		coach.activity();
+		coach.pause();
 		await ctrl.run();
 		if (ctrl.status === 'success') coach.succeeded();
 		else if (ctrl.status === 'fail') coach.failed();
+		// A superseded run returns while a newer one flies: leave the coach paused then.
+		else if (ctrl.status !== 'running') coach.activity();
 	}
 </script>
 
@@ -277,6 +340,7 @@
 	>
 		<div
 			data-drop-trash
+			bind:this={paletteBox}
 			class={cn(
 				'min-h-0 overflow-y-auto rounded-3xl bg-card/70 p-4 transition-colors portrait:row-start-2 portrait:overflow-x-auto portrait:overflow-y-hidden portrait:p-3',
 				drag.hover?.kind === 'trash' && 'bg-destructive/15'
@@ -284,6 +348,7 @@
 		>
 			<BlockPalette
 				blocks={mission.blocks}
+				scrollable={paletteScrolls}
 				disabled={ctrl.status === 'running'}
 				onGrab={(type, e) => grab({ kind: 'palette', type }, e)}
 				onAdd={(type) => apply({ kind: 'tap', source: { kind: 'palette', type } })}
@@ -316,9 +381,10 @@
 					program={ctrl.program}
 					activeId={ctrl.activeId}
 					locked={ctrl.status === 'running'}
-					draggingId={drag.active?.kind === 'program' ? drag.active.id : null}
+					draggingId={drag.active?.kind === 'program' && !drag.rejected ? drag.active.id : null}
 					hover={drag.hover?.kind === 'slot' ? drag.hover.target : null}
 					{landedId}
+					{gapHeight}
 					onRemove={(id) => {
 						coach.activity();
 						ctrl.remove(id);

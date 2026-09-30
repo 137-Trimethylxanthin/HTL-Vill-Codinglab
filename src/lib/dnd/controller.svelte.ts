@@ -16,6 +16,16 @@ export function resolveDrop(source: DragSource, hover: HitResult): DropOp {
 		: { kind: 'move', id: source.id, target: hover.target };
 }
 
+export function sameHit(a: HitResult, b: HitResult): boolean {
+	if (a === null || b === null) return a === b;
+	if (a.kind === 'trash' || b.kind === 'trash') return a.kind === b.kind;
+	return (
+		a.target.parent === b.target.parent &&
+		a.target.slot === b.target.slot &&
+		a.target.index === b.target.index
+	);
+}
+
 /**
  * Pointer-driven drag state. Decides *what* a drop means; the caller's hitTest decides
  * *where* the pointer is. Starts dragging only after DRAG_THRESHOLD px, otherwise reports a tap.
@@ -58,8 +68,10 @@ export class DragController {
 		rect: { left: number; top: number; width: number },
 		pointerId = 0
 	) {
+		// A rejected block is only springing back: grabbing again right away must work.
+		if (this.rejected) this.finish();
 		// One drag at a time: a second finger (or a palm) must not take over.
-		if (this.active || this.pending) return;
+		else if (this.active || this.pending) return;
 		this.pointerId = pointerId;
 		this.pending = { source, startX: px, startY: py };
 		this.offsetX = px - rect.left;
@@ -128,10 +140,11 @@ export class DragController {
 	private updateHover() {
 		const source = this.active;
 		if (!source) return;
-		const hit = this.hitTest(this.lastX, this.lastY);
-		if (hit?.kind === 'trash' && source.kind === 'palette') this.hover = null;
-		else if (hit?.kind === 'slot' && !this.canDrop(source, hit.target)) this.hover = null;
-		else this.hover = hit;
+		let hit = this.hitTest(this.lastX, this.lastY);
+		if (hit?.kind === 'trash' && source.kind === 'palette') hit = null;
+		else if (hit?.kind === 'slot' && !this.canDrop(source, hit.target)) hit = null;
+		// A new object on every pointer move would re-render the list and restart its slide animations.
+		if (!sameHit(hit, this.hover)) this.hover = hit;
 	}
 
 	private finish() {

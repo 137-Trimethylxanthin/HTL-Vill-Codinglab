@@ -119,6 +119,7 @@
 				onSkip={() => session.skip()}
 				onSolved={(result) => session.record(result)}
 				onDone={(result) => session.complete(result)}
+				onActivity={() => idle.activity()}
 			/>
 		{/key}
 	{:else if session.screen === 'complete' && session.lastResult}

@@ -37,13 +37,20 @@
 	let emailError = $state<string | null>(null);
 	const data = () => certificateData(session, config.qrUrl || HTL_URL, new Date());
 
+	// A double tap must not save two PDFs.
+	let certBusy = $state(false);
+
 	async function saveCertificate() {
+		if (certBusy) return;
+		certBusy = true;
 		notice = null;
 		try {
 			const path = await platform.saveCertificate(data());
 			if (path) notice = t.certificate.saved;
 		} catch {
 			notice = t.certificate.failed;
+		} finally {
+			certBusy = false;
 		}
 	}
 
@@ -136,6 +143,7 @@
 				<Button
 					variant="secondary"
 					class="h-16 press rounded-2xl px-6 text-xl"
+					disabled={certBusy}
 					onclick={saveCertificate}><FileDown class="size-6" />{t.certificate.button}</Button
 				>
 			{/if}

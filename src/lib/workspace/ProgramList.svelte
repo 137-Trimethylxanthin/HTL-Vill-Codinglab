@@ -35,6 +35,7 @@
 		draggingId = null,
 		hover = null,
 		landedId = null,
+		gapHeight = null,
 		onRemove,
 		onStep,
 		onGrab
@@ -45,10 +46,24 @@
 		draggingId?: string | null;
 		hover?: DropTarget | null;
 		landedId?: string | null;
+		/** Height of the block being moved; new blocks get the default tile height. */
+		gapHeight?: number | null;
 		onRemove: (id: string) => void;
 		onStep: (id: string, delta: number) => void;
 		onGrab: (id: string, e: PointerEvent) => void;
 	} = $props();
+
+	// Long programs scroll: keep the block that is running right now in view.
+	let scroller = $state<HTMLElement>();
+	$effect(() => {
+		if (!activeId || !scroller) return;
+		const row = scroller.querySelector<HTMLElement>(`[data-block-id="${activeId}"]`);
+		const tile = (row?.firstElementChild as HTMLElement | null) ?? row;
+		tile?.scrollIntoView({
+			block: 'nearest',
+			behavior: prefersReducedMotion.current ? 'auto' : 'smooth'
+		});
+	});
 
 	/** Items of one list: without the dragged block, with a placeholder where it would land. */
 	function itemsFor(nodes: BlockNode[], parent: string | null, slot: Slot): Item[] {
@@ -77,8 +92,8 @@
 			<li
 				data-block-id={item.node?.id}
 				animate:slide
-				in:scale={{ start: 0.7, duration: ms(280), easing: backOut }}
-				out:scale={{ start: 0.7, duration: item.node ? ms(160) : 0 }}
+				in:scale={{ start: 0.7, duration: item.node ? 0 : ms(280), easing: backOut }}
+				out:scale={{ start: 0.7, duration: item.node && item.node.id !== draggingId ? ms(160) : 0 }}
 			>
 				{#if item.node}
 					{@const node = item.node}
@@ -113,7 +128,8 @@
 				{:else}
 					<div
 						data-drop-gap
-						class="breathe h-14 rounded-2xl border-2 border-dashed border-drone bg-drone/15"
+						class="breathe h-[4.25rem] rounded-2xl border-2 border-dashed border-drone bg-drone/15"
+						style:height={gapHeight ? `${gapHeight}px` : undefined}
 					></div>
 				{/if}
 			</li>
@@ -130,7 +146,12 @@
 	<h2 class="text-sm font-bold tracking-wide text-muted-foreground uppercase">
 		{t.workspace.program}
 	</h2>
-	<div data-drop-scroll class="min-h-0 grow overflow-y-auto px-1 pb-2">
+	<!-- relative: the offset chain used to measure drop targets ends here. -->
+	<div
+		data-drop-scroll
+		bind:this={scroller}
+		class="relative min-h-0 grow overflow-y-auto px-1 pb-2"
+	>
 		{@render list(program, null, 'body')}
 		{#if program.length === 0 && !hover}
 			<p class="rounded-2xl border-2 border-dashed p-6 text-center text-lg text-muted-foreground">

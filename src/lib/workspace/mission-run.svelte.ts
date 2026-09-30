@@ -23,7 +23,7 @@ import type { RunResult } from '$lib/sim/result';
 import { Player } from '$lib/stage/player.svelte';
 import { buildTimeline, startPose } from '$lib/stage/timeline';
 
-/** Stop taps this soon after Start are ignored (double taps on the same spot). */
+/** Stop taps this soon after Start (and Start taps this soon after Stop) are ignored: double taps on the same spot. */
 export const STOP_GUARD_MS = 400;
 
 export type RunStatus = 'idle' | 'running' | 'success' | 'fail';
@@ -47,6 +47,9 @@ export class MissionRun {
 	readonly player = new Player();
 	private readonly startedAt = Date.now();
 	private runStartedAt = 0;
+	private stoppedAt = 0;
+	/** Bumped whenever a run is abandoned, so a late-waking old run cannot touch a newer one. */
+	private gen = 0;
 	python = $derived(toPython(this.program));
 	numberTargets = $derived(numberLines(this.program, this.python));
 	activeId = $derived(this.player.line ? (this.python.blockAt[this.player.line] ?? null) : null);
@@ -125,12 +128,14 @@ export class MissionRun {
 
 	/** Leaving the mission (navigation, idle reset): stop at once, no double-tap guard. */
 	dispose() {
+		this.gen++;
 		this.player.stop();
 		this.status = 'idle';
 		this.message = null;
 	}
 
 	resetStage() {
+		this.gen++;
 		this.player.reset(startPose(this.mission.map.start), this.mission.map.rows);
 		this.status = 'idle';
 		this.message = null;
@@ -141,11 +146,14 @@ export class MissionRun {
 		if (Date.now() - this.runStartedAt < STOP_GUARD_MS) return;
 		this.player.stop();
 		this.resetStage();
+		this.stoppedAt = Date.now();
 	}
 
 	async run() {
 		if (this.status === 'running' || this.program.length === 0) return;
+		if (Date.now() - this.stoppedAt < STOP_GUARD_MS) return;
 		this.resetStage();
+		const gen = this.gen;
 		this.notice = null;
 		this.status = 'running';
 		this.runStartedAt = Date.now();
@@ -154,17 +162,19 @@ export class MissionRun {
 		try {
 			result = await this.runner.run(this.python.code, this.mission);
 		} catch {
+			if (gen !== this.gen) return;
 			this.status = 'fail';
 			this.message = t.app.loadFailed;
 			return;
 		}
-		if (this.status !== 'running') return;
+		if (gen !== this.gen) return;
 		const finished = await this.player.play(
 			buildTimeline(this.mission.map.start, result.events),
-			this.speed
+			() => this.speed
 		);
+		if (gen !== this.gen) return;
 		if (!finished) {
-			if (this.status === 'running') this.status = 'idle';
+			this.status = 'idle';
 			return;
 		}
 		if (isGoalReached(this.mission, result)) {

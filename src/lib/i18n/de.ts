@@ -205,7 +205,8 @@ export const de = {
 		badNumber: 'Diese Zahl passt hier nicht.',
 		unknownCommand: 'Diesen Befehl kennt die Drohne nicht.',
 		tooManySteps: 'Deine Drohne fliegt endlos im Kreis!',
-		timeout: 'Deine Drohne fliegt endlos im Kreis!'
+		// Block programs cannot loop forever, so a timeout is a slow computer, not the child's fault.
+		timeout: 'Die Drohne hat zu lange gebraucht. Probier es nochmal!'
 	},
 	pyErrors: {
 		SyntaxError: 'Da stimmt die Schreibweise nicht.',

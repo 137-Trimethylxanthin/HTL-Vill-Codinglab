@@ -92,11 +92,15 @@
 			}
 			return;
 		}
-		if (await platform.verifyPin(entry)) {
-			pin = entry;
-			await openSettings();
-		} else {
-			pinError = t.admin.wrongPin;
+		try {
+			if (await platform.verifyPin(entry)) {
+				pin = entry;
+				await openSettings();
+			} else {
+				pinError = t.admin.wrongPin;
+			}
+		} catch (e) {
+			pinError = message(e);
 		}
 		entry = '';
 	}

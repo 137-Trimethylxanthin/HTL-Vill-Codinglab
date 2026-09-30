@@ -83,6 +83,65 @@ describe('PythonRunner', () => {
 		expect(workers[0].terminated).toBe(true);
 		expect(workers).toHaveLength(2);
 	});
+	it('a timeout ends every run on the hung worker and spares the fresh one', async () => {
+		vi.useFakeTimers();
+		const workers: FakeWorker[] = [];
+		const runner = new PythonRunner(() => {
+			const w = new FakeWorker();
+			workers.push(w);
+			return w;
+		}, 2000);
+		workers[0].emit({ type: 'ready' });
+		const first = runner.run('a', m11);
+		await vi.advanceTimersByTimeAsync(500);
+		const second = runner.run('b', m11);
+		await vi.advanceTimersByTimeAsync(1500);
+		expect((await first).stop?.code).toBe('timeout');
+		expect((await second).stop?.code).toBe('timeout');
+		// The second run's own timer must not kill the replacement worker.
+		await vi.advanceTimersByTimeAsync(5000);
+		expect(workers).toHaveLength(2);
+		expect(workers[1].terminated).toBe(false);
+	});
+
+	it('retries a worker that failed to start', async () => {
+		const workers: FakeWorker[] = [];
+		const runner = new PythonRunner(() => {
+			const w = new FakeWorker();
+			workers.push(w);
+			return w;
+		});
+		workers[0].emit({ type: 'failed', message: 'boom' });
+		await expect(runner.ready()).rejects.toThrow('boom');
+		const pending = runner.run('code', m11);
+		await vi.waitFor(() => expect(workers).toHaveLength(2));
+		workers[1].emit({ type: 'ready' });
+		await vi.waitFor(() => expect(workers[1].sent).toHaveLength(1));
+		const result = { events: [], final: {} as never, stop: null, pyError: null };
+		workers[1].emit({ type: 'result', id: workers[1].sent[0].id, result });
+		await expect(pending).resolves.toBe(result);
+	});
+
+	it('runs waiting on a failed start share one retry', async () => {
+		const workers: FakeWorker[] = [];
+		const runner = new PythonRunner(() => {
+			const w = new FakeWorker();
+			workers.push(w);
+			return w;
+		});
+		const a = runner.run('a', m11);
+		const b = runner.run('b', m11);
+		workers[0].emit({ type: 'failed', message: 'boom' });
+		await vi.waitFor(() => expect(workers).toHaveLength(2));
+		workers[1].emit({ type: 'ready' });
+		await vi.waitFor(() => expect(workers[1].sent).toHaveLength(2));
+		expect(workers).toHaveLength(2);
+		expect(workers[0].terminated).toBe(true);
+		const result = { events: [], final: {} as never, stop: null, pyError: null };
+		for (const msg of workers[1].sent) workers[1].emit({ type: 'result', id: msg.id, result });
+		await expect(Promise.all([a, b])).resolves.toEqual([result, result]);
+	});
+
 	it('does not respawn after dispose, even with a run in flight', async () => {
 		vi.useFakeTimers();
 		const workers: FakeWorker[] = [];

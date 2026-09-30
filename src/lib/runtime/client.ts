@@ -24,13 +24,19 @@ export function timeoutResult(mission: Mission): RunResult {
 	};
 }
 
+interface Pending {
+	worker: WorkerLike;
+	timer: ReturnType<typeof setTimeout>;
+	mission: Mission;
+	resolve: (result: RunResult) => void;
+}
+
 export class PythonRunner {
 	private worker!: WorkerLike;
 	private readyPromise!: Promise<void>;
 	private nextId = 1;
-	private pending = new Map<number, (result: RunResult) => void>();
+	private pending = new Map<number, Pending>();
 	private disposed = false;
-	private timers = new Set<ReturnType<typeof setTimeout>>();
 
 	constructor(
 		private readonly factory: WorkerFactory = defaultWorkerFactory,
@@ -46,32 +52,45 @@ export class PythonRunner {
 	}
 
 	async run(code: string, mission: Mission): Promise<RunResult> {
-		await this.readyPromise;
-		const id = this.nextId++;
-		return new Promise((resolve) => {
-			const timer = setTimeout(() => {
-				this.timers.delete(timer);
-				this.pending.delete(id);
+		const ready = this.readyPromise;
+		try {
+			await ready;
+		} catch {
+			// A worker that failed to start (or restart) gets one more chance instead of breaking Python
+			// for good. Runs waiting together share that one retry.
+			if (this.readyPromise === ready) {
 				this.worker.terminate();
 				this.spawn();
-				resolve(timeoutResult(mission));
-			}, this.timeoutMs);
-			this.timers.add(timer);
-			this.pending.set(id, (result) => {
-				this.timers.delete(timer);
-				clearTimeout(timer);
-				resolve(result);
-			});
-			this.worker.postMessage({ id, code, mission, maxEvents: this.maxEvents });
+			}
+			await this.readyPromise;
+		}
+		const id = this.nextId++;
+		const worker = this.worker;
+		return new Promise((resolve) => {
+			const timer = setTimeout(() => this.restart(worker), this.timeoutMs);
+			this.pending.set(id, { worker, timer, mission, resolve });
+			worker.postMessage({ id, code, mission, maxEvents: this.maxEvents });
 		});
 	}
 
 	dispose() {
 		this.disposed = true;
-		for (const timer of this.timers) clearTimeout(timer);
-		this.timers.clear();
+		for (const p of this.pending.values()) clearTimeout(p.timer);
 		this.pending.clear();
 		this.worker.terminate();
+	}
+
+	/** A hung worker: end every run still waiting on it, then start a fresh one (only once per worker). */
+	private restart(worker: WorkerLike) {
+		for (const [id, p] of this.pending) {
+			if (p.worker !== worker) continue;
+			clearTimeout(p.timer);
+			this.pending.delete(id);
+			p.resolve(timeoutResult(p.mission));
+		}
+		if (worker !== this.worker) return;
+		worker.terminate();
+		this.spawn();
 	}
 
 	private spawn() {
@@ -93,9 +112,11 @@ export class PythonRunner {
 				if (data.type === 'ready') settle();
 				else if (data.type === 'failed') settle(new Error(data.message));
 				else {
-					const done = this.pending.get(data.id);
+					const p = this.pending.get(data.id);
+					if (!p) return;
+					clearTimeout(p.timer);
 					this.pending.delete(data.id);
-					done?.(data.result);
+					p.resolve(data.result);
 				}
 			};
 		});

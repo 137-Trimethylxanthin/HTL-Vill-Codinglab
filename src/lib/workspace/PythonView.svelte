@@ -16,7 +16,13 @@
 		onNumber?: (blockId: string, delta: number) => void;
 	} = $props();
 
-	let selected = $state<number | null>(null);
+	// The block, not the line: adding or moving blocks shifts lines under a selection.
+	let selectedId = $state<string | null>(null);
+	const selected = $derived.by(() => {
+		for (const [line, id] of Object.entries(numberTargets))
+			if (id === selectedId) return Number(line);
+		return null;
+	});
 	const lines = $derived(code.replace(/\n$/, '').split('\n'));
 	const editable = $derived(onNumber !== undefined);
 	const selectedValue = $derived(
@@ -35,8 +41,7 @@
 	};
 
 	function change(delta: number) {
-		const id = selected === null ? undefined : numberTargets[selected];
-		if (id) onNumber?.(id, delta);
+		if (selectedId && selected !== null) onNumber?.(selectedId, delta);
 	}
 </script>
 
@@ -55,7 +60,8 @@
 									'inline-grid min-h-14 min-w-14 place-items-center rounded-xl bg-amber-300/20 px-2 align-middle text-amber-300 underline decoration-dotted underline-offset-4',
 									selected === i + 1 && 'ring-2 ring-amber-300'
 								)}
-								onclick={() => (selected = selected === i + 1 ? null : i + 1)}>{token.text}</button
+								onclick={() => (selectedId = selected === i + 1 ? null : numberTargets[i + 1])}
+								>{token.text}</button
 							>{:else}<span class={COLORS[token.kind]}>{token.text}</span
 							>{/if}{/each}</div>{/each}</code
 		></pre>
