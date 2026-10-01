@@ -10,6 +10,8 @@ pub const MAX_PER_STATION_DAY: usize = 2000;
 const MAX_MISSIONS: usize = 7;
 const MAX_SESSION_MS: i64 = 2 * 60 * 60 * 1000;
 const MAX_NAME: usize = 16;
+/// Flight-path cells per mission ("x,y"); the maps are far smaller.
+const MAX_PATH: usize = 100;
 const DAY_MS: i64 = 24 * 60 * 60 * 1000;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -21,6 +23,9 @@ pub struct MissionStat {
     pub blocks: u32,
     pub seconds: u32,
     pub skipped: bool,
+    /// Visited cells "x,y" (for the wall display's replays); missing in older records.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub path: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -68,6 +73,12 @@ fn valid_id(s: &str) -> bool {
     (1..=64).contains(&s.len()) && s.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
 }
 
+fn valid_cell(key: &str) -> bool {
+    key.split_once(',').is_some_and(|(x, y)| {
+        (1..=2).contains(&x.len()) && (1..=2).contains(&y.len()) && x.chars().chain(y.chars()).all(|c| c.is_ascii_digit())
+    })
+}
+
 fn invalid(why: &str) -> AppError {
     AppError::Other(format!("Ungültiger Datensatz: {why}"))
 }
@@ -105,6 +116,12 @@ pub fn validate(record: &SessionRecord, now_ms: i64) -> AppResult<(SessionRecord
     }
     let mut clean = record.clone();
     clean.pilot_name = record.pilot_name.as_deref().and_then(sanitize_name);
+    // A strange flight path only costs the replay, never the visit.
+    for m in &mut clean.missions {
+        if m.path.as_ref().is_some_and(|p| p.len() > MAX_PATH || !p.iter().all(|k| valid_cell(k))) {
+            m.path = None;
+        }
+    }
     Ok((clean, finished))
 }
 
@@ -284,7 +301,7 @@ pub(crate) mod tests {
             finished_at: finished_at.into(),
             pilot_name: name.map(Into::into),
             total_stars: 3,
-            missions: vec![MissionStat { id: "1.1".into(), stars: 3, runs: 1, blocks: 3, seconds: 40, skipped: false }],
+            missions: vec![MissionStat { id: "1.1".into(), stars: 3, runs: 1, blocks: 3, seconds: 40, skipped: false, path: None }],
             ended_by: "finale".into(),
         }
     }
@@ -404,7 +421,7 @@ pub(crate) mod tests {
         backwards.started_at = "2026-10-10T13:00:00.000Z".into();
         let mut many = ok.clone();
         many.id = "x4".into();
-        many.missions = (0..8).map(|i| MissionStat { id: format!("1.{i}"), stars: 0, runs: 0, blocks: 0, seconds: 0, skipped: true }).collect();
+        many.missions = (0..8).map(|i| MissionStat { id: format!("1.{i}"), stars: 0, runs: 0, blocks: 0, seconds: 0, skipped: true, path: None }).collect();
         many.total_stars = 0;
         let mut bad_id = ok.clone();
         bad_id.id = "not an id!".into();
@@ -415,6 +432,27 @@ pub(crate) mod tests {
             assert!(h.insert(&bad, 7, now_ms()).is_err(), "{bad:?}");
         }
         assert!(h.insert(&ok, 7, now_ms()).unwrap());
+    }
+
+    #[test]
+    fn keeps_the_flight_path_and_reads_records_without_one() {
+        let h = History::in_memory().unwrap();
+        let mut r = record("p1", "s1", NOW, None);
+        r.missions[0].path = Some(vec!["0,4".into(), "0,3".into()]);
+        h.insert(&r, 7, now_ms()).unwrap();
+        assert_eq!(h.all().unwrap()[0].missions[0].path, r.missions[0].path);
+        let mut bad = record("p2", "s1", NOW, None);
+        bad.missions[0].path = Some(vec!["0,0".into(), "<script>".into()]);
+        let mut long = record("p3", "s1", NOW, None);
+        long.missions[0].path = Some(vec!["1,1".into(); MAX_PATH + 1]);
+        for r in [bad, long] {
+            let (clean, _) = validate(&r, now_ms()).unwrap();
+            assert_eq!(clean.missions[0].path, None);
+        }
+        let old = r#"{"id":"1.1","stars":3,"runs":1,"blocks":3,"seconds":40,"skipped":false}"#;
+        let m: MissionStat = serde_json::from_str(old).unwrap();
+        assert_eq!(m.path, None);
+        assert!(!serde_json::to_string(&m).unwrap().contains("path"));
     }
 
     #[test]

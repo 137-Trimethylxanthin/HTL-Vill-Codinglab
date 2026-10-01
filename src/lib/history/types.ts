@@ -5,6 +5,8 @@ export interface MissionStat {
 	blocks: number;
 	seconds: number;
 	skipped: boolean;
+	/** Visited cells "x,y" (wall display replays); missing in older records. */
+	path?: string[];
 }
 
 /** One visit (spec 4.6). Immutable except that the name is removed after the retention. */

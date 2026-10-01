@@ -8,6 +8,7 @@
 		"start": { "x": 0, "y": 4, "dir": "E" }
 	},
 	"editablePython": true,
+	"parentTip": "Fragen Sie: Was passiert, wenn wir eine Zahl im Python-Code ändern?",
 	"blocks": [
 		"takeoff",
 		"forward",

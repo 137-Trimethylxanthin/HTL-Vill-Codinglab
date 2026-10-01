@@ -9,13 +9,19 @@
 		player,
 		fog = false,
 		phantom = null,
-		glow = null
+		glow = null,
+		guess = null,
+		onPick
 	}: {
 		player: Player;
 		fog?: boolean;
 		phantom?: Preview | null;
 		/** A cell the coach's hint is about. */
 		glow?: [number, number] | null;
+		/** The child's guess where the drone ends up. */
+		guess?: [number, number] | null;
+		/** Guessing: every cell becomes tappable. */
+		onPick?: (x: number, y: number) => void;
 	} = $props();
 
 	const CELL = 100;
@@ -231,6 +237,37 @@
 			</g>
 		</g>
 	{/key}
+
+	{#if guess}
+		<!-- A pin where the child guessed the drone would end up. -->
+		<g transform="translate({(guess[0] + 0.5) * CELL} {(guess[1] + 0.5) * CELL})">
+			<circle
+				r="30"
+				class="fill-none stroke-fuchsia-500"
+				stroke-width="7"
+				stroke-dasharray="10 7"
+			/>
+			<text y="12" text-anchor="middle" class="fill-fuchsia-500 font-display text-[34px] font-bold"
+				>?</text
+			>
+		</g>
+	{/if}
+
+	{#if onPick}
+		{#each cells as cell (cell.key)}
+			<rect
+				role="button"
+				tabindex="-1"
+				aria-label={cell.key}
+				x={cell.px}
+				y={cell.py}
+				width={CELL}
+				height={CELL}
+				class="cursor-pointer fill-fuchsia-500/0 hover:fill-fuchsia-500/20"
+				onpointerdown={() => onPick(cell.px / CELL, cell.py / CELL)}
+			/>
+		{/each}
+	{/if}
 
 	{#if phantom}
 		<PhantomDrone preview={phantom} cell={CELL} />

@@ -28,7 +28,9 @@ describe('toRecord', () => {
 			finishedAt: '2026-10-10T10:12:00.000Z',
 			pilotName: 'Lea',
 			totalStars: 3,
-			missions: [{ id: '1.1', stars: 3, runs: 2, blocks: 3, seconds: 55, skipped: false }],
+			missions: [
+				{ id: '1.1', stars: 3, runs: 2, blocks: 3, seconds: 55, skipped: false, path: ['2,4'] }
+			],
 			endedBy: 'finale'
 		});
 	});
@@ -44,5 +46,23 @@ describe('toRecord', () => {
 		};
 		expect(toRecord(summary, DEFAULT_PUBLIC_CONFIG).id).toHaveLength(36);
 		expect(toRecord(summary, DEFAULT_PUBLIC_CONFIG).pilotName).toBeNull();
+	});
+
+	it('keeps the flight path only for solved missions', () => {
+		const record = toRecord(
+			{
+				pilotName: '',
+				startedAt: 0,
+				finishedAt: 1000,
+				endedBy: 'quit',
+				totalStars: 0,
+				results: [
+					{ id: '1.1', stars: 0, runs: 2, blocks: 3, seconds: 5, skipped: false, path: ['2,4'] },
+					{ id: '1.2', stars: 0, runs: 0, blocks: 0, seconds: 5, skipped: true, path: ['1,4'] }
+				]
+			},
+			DEFAULT_PUBLIC_CONFIG
+		);
+		expect(record.missions.map((m) => m.path)).toEqual([undefined, undefined]);
 	});
 });

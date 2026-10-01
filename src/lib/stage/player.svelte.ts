@@ -55,7 +55,9 @@ export class Player {
 	async play(
 		frames: Frame[],
 		speed: () => number = () => 1,
-		onFrame?: (frame: Frame) => void
+		onFrame?: (frame: Frame) => void,
+		/** Step-by-step: keep the line highlighted after the last frame. */
+		hold = false
 	): Promise<boolean> {
 		const token = ++this.token;
 		this.playing = true;
@@ -92,8 +94,10 @@ export class Player {
 		}
 		if (token !== this.token) return false;
 		this.playing = false;
-		this.line = null;
-		this.sensing = null;
+		if (!hold) {
+			this.line = null;
+			this.sensing = null;
+		}
 		return true;
 	}
 

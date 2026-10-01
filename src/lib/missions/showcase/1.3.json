@@ -7,6 +7,7 @@
 		"rows": [".D...", ".....", "..B..", ".....", ".K..."],
 		"start": { "x": 4, "y": 4, "dir": "W" }
 	},
+	"parentTip": "Fragen Sie: Was muss zuerst passieren – hinfliegen oder das Paket nehmen?",
 	"blocks": ["takeoff", "forward", "turn_left", "turn_right", "pick_up", "drop", "land"],
 	"goal": { "type": "complete" },
 	"stars": { "optimalBlocks": 7, "maxRunsFor3": 3 },

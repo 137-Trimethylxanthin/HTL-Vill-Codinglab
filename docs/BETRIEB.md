@@ -40,9 +40,9 @@ Die Stationen finden sich im selben Netz von selbst — kein Server, keine Einri
 
 Für Betreuer gibt es den [Spickzettel](SPICKZETTEL.md): Lösungen aller Missionen, häufige Fehler, Tipps.
 
-- **Übersicht am Handy:** Admin → „Übersicht am Handy“ → QR-Code scannen. Zeigt alle Stationen, Hilferufe und wer schon lange an einer Mission sitzt. Braucht den Event-Code und Port 47800 (wie der Austausch).
+- **Übersicht am Handy:** Admin → „Übersicht am Handy“ → QR-Code scannen. Zeigt alle Stationen, Hilferufe, wer hängt (orange **HÄNGT**: 3 Fehlversuche hintereinander, 4 Minuten an einer Mission oder 45 Sekunden keine Eingabe) und wer schon lange an einer Mission sitzt. Braucht den Event-Code und Port 47800 (wie der Austausch).
 - **Hilfe-Knopf:** Kinder rufen in der Mission mit „Hilfe“ einen Betreuer; auf der Übersicht erscheint **HILFE**.
-- **Betreuungs-Menü:** Missionsnummer oben links **2 Sekunden halten** (oder **Strg + Umschalt + H**), dann die Admin-PIN: Lösung zeigen (zählt nicht für Sterne), zu einer Mission springen, Hilferuf beenden, nächster Besucher.
+- **Betreuungs-Menü:** Missionsnummer oben links **2 Sekunden halten** (oder **Strg + Umschalt + H**), dann die Admin-PIN: Blöcke zum Ordnen (die Lösung gemischt, höchstens 2 Sterne), Lösung zeigen (zählt nicht für Sterne), zu einer Mission springen, Hilferuf beenden, nächster Besucher.
 
 ## E-Mail
 

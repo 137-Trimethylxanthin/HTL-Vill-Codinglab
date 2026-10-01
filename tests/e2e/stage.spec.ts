@@ -40,6 +40,8 @@ test('a running loop counts its rounds', async ({ page }) => {
 	);
 	await palette(page, 'Landen').click();
 	await page.getByRole('button', { name: 'Start' }).click();
+	// A guess-first mission: skip the guess.
+	await page.getByRole('button', { name: 'Einfach starten' }).click();
 	const list = page.locator('[data-drop-panel] ol').first();
 	await expect(list.getByText('1/2')).toBeVisible({ timeout: 20_000 });
 	await expect(list.getByText('2/2')).toBeVisible({ timeout: 20_000 });

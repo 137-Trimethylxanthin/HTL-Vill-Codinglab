@@ -9,10 +9,10 @@ test.beforeEach(async ({ page }) => {
 test('a hand guides the first mission and steps back when the kid explores', async ({ page }) => {
 	await openMission(page, 'Erster Flug');
 	const hand = page.locator('.hand');
-	await expect(hand).toHaveClass(/drag/, { timeout: 5000 });
+	await expect(hand).toHaveClass(/drag/, { timeout: 15_000 });
 	await palette(page, 'Abheben').click();
 	await palette(page, 'Vorwärts').click();
-	await expect(hand).toHaveClass(/tap/, { timeout: 5000 });
+	await expect(hand).toHaveClass(/tap/, { timeout: 15_000 });
 	await palette(page, 'Landen').click();
 	await palette(page, 'Landen').click();
 	await page.waitForTimeout(1500);

@@ -257,6 +257,18 @@
 					>{t.admin.qrUrl}<input class={field} bind:value={form.qrUrl} /></label
 				>
 				<label class="flex flex-col gap-1"
+					>{t.replay.admin}<input
+						class={field}
+						type="url"
+						placeholder="https://…/flug"
+						bind:value={form.replayUrl}
+					/><span class="text-base text-muted-foreground">{t.replay.adminHint}</span></label
+				>
+				<label class="flex items-center gap-3 text-lg"
+					><input type="checkbox" class="size-6" bind:checked={form.wallMode} />{t.wall
+						.admin}</label
+				>
+				<label class="flex flex-col gap-1"
 					>{t.logbook.retention}<input
 						class={field}
 						type="number"

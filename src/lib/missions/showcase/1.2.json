@@ -7,6 +7,8 @@
 		"rows": ["....P", ".BBB.", ".BBB.", ".BBB.", "....."],
 		"start": { "x": 0, "y": 4, "dir": "N" }
 	},
+	"parentTip": "Fragen Sie: Wo muss die Drohne abbiegen – links oder rechts?",
+	"predict": true,
 	"blocks": ["takeoff", "forward", "turn_left", "turn_right", "land"],
 	"goal": { "type": "complete" },
 	"stars": { "optimalBlocks": 5, "maxRunsFor3": 3 },

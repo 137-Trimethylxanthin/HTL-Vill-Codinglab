@@ -100,6 +100,18 @@
 					</p>{/if}
 			</header>
 			<Button
+				variant="secondary"
+				class="{big} flex-col gap-0"
+				disabled={session.screen !== 'mission' ||
+					session.currentId === null ||
+					session.isRevealed(session.currentId) ||
+					session.current?.editablePython}
+				onclick={() => act(() => session.order())}
+				>{t.supervisor.orderBlocks}<span class="text-base font-normal"
+					>{t.supervisor.orderHint}</span
+				></Button
+			>
+			<Button
 				class="{big} flex-col gap-0"
 				disabled={session.screen !== 'mission'}
 				onclick={() => act(() => session.reveal())}

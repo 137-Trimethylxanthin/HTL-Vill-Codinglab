@@ -8,6 +8,7 @@
 		"start": { "x": 0, "y": 3, "dir": "N" }
 	},
 	"fog": true,
+	"parentTip": "Fragen Sie: Was soll die Drohne tun, wenn vor ihr ein Haus steht?",
 	"blocks": ["takeoff", "forward", "turn_left", "turn_right", "repeat", "if_obstacle", "land"],
 	"goal": { "type": "complete" },
 	"stars": { "optimalBlocks": 6, "maxRunsFor3": 4 },

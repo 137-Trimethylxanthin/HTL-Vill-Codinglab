@@ -19,23 +19,25 @@ const source = (extra: Partial<StatusSource> = {}): StatusSource => ({
 
 describe('buildStatus', () => {
 	it('describes the open mission', () => {
-		expect(buildStatus(source({ help: true }), 3)).toEqual({
+		expect(buildStatus(source({ help: true }), 3, 2)).toEqual({
 			screen: 'mission',
 			missionId: '2.1',
 			missionTitle: 'Runde drehen',
 			since: 5000,
 			runs: 3,
+			fails: 2,
 			help: true,
 			solved: 2
 		});
 	});
 
 	it('has no mission on the map, even if one was open before', () => {
-		expect(buildStatus(source({ screen: 'map' }), 3)).toMatchObject({
+		expect(buildStatus(source({ screen: 'map' }), 3, 4)).toMatchObject({
 			missionId: null,
 			missionTitle: null,
 			since: null,
-			runs: 0
+			runs: 0,
+			fails: 0
 		});
 	});
 

@@ -11,6 +11,8 @@ export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
 	sound: true,
 	enabledMissions: null,
 	qrUrl: HTL_URL,
+	replayUrl: '',
+	wallMode: false,
 	nameRetentionDays: 7,
 	manualPeers: [],
 	smtp: { host: '', port: 587, username: '', from: '', starttls: true },

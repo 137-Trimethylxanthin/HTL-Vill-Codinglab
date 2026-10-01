@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { FileDown, Mail, RotateCcw, Star, Trophy } from '@lucide/svelte';
 	import { onMount } from 'svelte';
+	import QRCode from 'qrcode';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { HTL_URL } from '$lib/config/defaults';
@@ -9,11 +10,13 @@
 	import { leaderboard as rank, type LeaderboardEntry } from '$lib/history/stats';
 	import { certificateData } from '$lib/platform/data';
 	import { PlatformError, type Platform, type PublicConfig } from '$lib/platform/types';
+	import { encodeVisit, visitOf } from '$lib/replay/codec';
 	import { qrDataUrl } from '$lib/session/qr';
 	import type { Session } from '$lib/session/session.svelte';
 	import Confetti from '$lib/workspace/Confetti.svelte';
 	import EmailDialog from './EmailDialog.svelte';
 	import Leaderboard from './Leaderboard.svelte';
+	import { solvedToday } from './wall';
 	import PathThumbnail from './PathThumbnail.svelte';
 
 	let {
@@ -24,6 +27,8 @@
 	}: { session: Session; platform: Platform; config: PublicConfig; onDone: () => void } = $props();
 
 	let qr = $state('');
+	/** Take-home replay of this visit's flights (only when the admin set a replay address). */
+	let replayQr = $state('');
 	const last = $derived(
 		Object.values(session.results)
 			.filter((r) => !r.skipped && r.stars > 0)
@@ -71,6 +76,7 @@
 	}
 
 	let board = $state<LeaderboardEntry[] | null>(null);
+	let flownToday = $state(0);
 
 	async function openBoard() {
 		const records = await platform.listRecords().catch(() => []);
@@ -86,11 +92,10 @@
 			config,
 			'current'
 		);
-		board = rank([...records, preview], {
-			period: 'today',
-			now: new Date(),
-			event: config.eventCode
-		});
+		const now = new Date();
+		board = rank([...records, preview], { period: 'today', now, event: config.eventCode });
+		// Same count as the wall display: every visitor today, named or not.
+		flownToday = solvedToday([...records, preview], now);
 	}
 
 	onMount(() => {
@@ -98,6 +103,26 @@
 			(url) => (qr = url),
 			() => (qr = '')
 		);
+		const visit = visitOf(
+			Object.values(session.results),
+			config.qrUrl && config.qrUrl !== HTL_URL ? config.qrUrl : null
+		);
+		if (config.replayUrl && visit.flights.length > 0) {
+			encodeVisit(visit)
+				// low error correction: fewer, larger modules for phone cameras
+				.then((code) =>
+					QRCode.toDataURL(`${config.replayUrl}#${code}`, {
+						margin: 1,
+						width: 512,
+						errorCorrectionLevel: 'L',
+						color: { dark: '#0f172a', light: '#ffffff' }
+					})
+				)
+				.then(
+					(url) => (replayQr = url),
+					() => (replayQr = '')
+				);
+		}
 	});
 </script>
 
@@ -126,13 +151,25 @@
 	<section
 		class="flex flex-col items-center justify-center gap-6 rounded-3xl bg-card/70 p-8 text-center"
 	>
-		<h2 class="text-3xl font-bold">{t.finale.qrTitle}</h2>
-		<div class="grid size-64 place-items-center rounded-2xl bg-white p-3 shadow-md">
-			{#if qr}<img src={qr} alt={config.qrUrl || HTL_URL} class="size-full" />{:else}<p
-					class="text-center font-mono text-lg break-all"
-				>
-					{config.qrUrl || HTL_URL}
-				</p>{/if}
+		<div class="flex flex-wrap items-start justify-center gap-6">
+			{#if replayQr}
+				<div class="flex max-w-64 flex-col items-center gap-3">
+					<h2 class="text-3xl font-bold">{t.replay.qrTitle}</h2>
+					<div class="grid size-64 place-items-center rounded-2xl bg-white p-3 shadow-md">
+						<img src={replayQr} alt={t.replay.qrTitle} class="size-full" />
+					</div>
+				</div>
+			{/if}
+			<div class="flex max-w-64 flex-col items-center gap-3">
+				<h2 class="text-3xl font-bold">{t.finale.qrTitle}</h2>
+				<div class="grid size-64 place-items-center rounded-2xl bg-white p-3 shadow-md">
+					{#if qr}<img src={qr} alt={config.qrUrl || HTL_URL} class="size-full" />{:else}<p
+							class="text-center font-mono text-lg break-all"
+						>
+							{config.qrUrl || HTL_URL}
+						</p>{/if}
+				</div>
+			</div>
 		</div>
 		<p class="text-xl text-muted-foreground">{t.finale.qrHint}</p>
 		<div class="flex flex-wrap justify-center gap-3">
@@ -173,5 +210,5 @@
 {/if}
 
 {#if board}
-	<Leaderboard entries={board} ownId="current" onClose={() => (board = null)} />
+	<Leaderboard entries={board} ownId="current" flown={flownToday} onClose={() => (board = null)} />
 {/if}

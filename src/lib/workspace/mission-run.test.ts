@@ -4,7 +4,7 @@ import { t } from '$lib/i18n/de';
 import { SHOWCASE } from '$lib/missions';
 import type { RunResult } from '$lib/sim/result';
 import { World } from '$lib/sim/world';
-import { MissionRun, STOP_GUARD_MS } from './mission-run.svelte';
+import { blameFor, MissionRun, STOP_GUARD_MS } from './mission-run.svelte';
 
 const m11 = SHOWCASE[0];
 const m21 = SHOWCASE.find((m) => m.id === '2.1')!;
@@ -188,6 +188,87 @@ describe('MissionRun', () => {
 		}
 		await Promise.all([a, b]);
 		expect(t2).toBeLessThan(t1 * 0.75);
+	});
+
+	it('names the block where the drone stopped, counted top to bottom', () => {
+		const program = [
+			{ id: 'a', type: 'takeoff' as const },
+			{
+				id: 'r',
+				type: 'repeat' as const,
+				n: 2,
+				children: [{ id: 'f', type: 'forward' as const, n: 4 }]
+			}
+		];
+		expect(blameFor(program, 'f')).toBe(' Das war Block 3: „Vorwärts 4“.');
+		expect(blameFor(program, 'a')).toBe(' Das war Block 1: „Abheben“.');
+		expect(blameFor(program, null)).toBe('');
+	});
+
+	it('praises a success that fixes a failed run', async () => {
+		vi.useFakeTimers();
+		let solve = false;
+		const runner = {
+			run: async (): Promise<RunResult> => {
+				const w = new World(m11);
+				w.call('takeoff', 3);
+				w.call('forward', 4, solve ? 4 : 1);
+				w.call('land', 5);
+				return { events: w.events, final: w.snapshot(), stop: null, pyError: null };
+			}
+		};
+		const ctrl = new MissionRun(m11, runner);
+		build(ctrl);
+		let running = ctrl.run();
+		await vi.advanceTimersByTimeAsync(10000);
+		await running;
+		expect(ctrl.status).toBe('fail');
+		expect(ctrl.fails).toBe(1);
+		solve = true;
+		running = ctrl.run();
+		await vi.advanceTimersByTimeAsync(10000);
+		await running;
+		expect(ctrl.status).toBe('success');
+		expect(ctrl.fixed).toBe(true);
+		expect(ctrl.fails).toBe(0);
+	});
+
+	it('steps through the flight one move per tap and keeps the line lit', async () => {
+		vi.useFakeTimers();
+		const ctrl = new MissionRun(m11, solvedRunner());
+		build(ctrl);
+		const tap = async () => {
+			const step = ctrl.advance();
+			await vi.advanceTimersByTimeAsync(2000);
+			await step;
+		};
+		await tap();
+		expect(ctrl.stepping).toBe(true);
+		expect(ctrl.status).toBe('running');
+		expect(ctrl.player.line).toBe(3); // takeoff()
+		expect(ctrl.add('photo')).toBeNull();
+		await tap();
+		expect(ctrl.player.line).toBe(4); // first step of forward(4)
+		expect(ctrl.player.y.target).toBe(3);
+		// takeoff, 4 moves, land = 6 frames: 4 more taps finish the flight.
+		for (let i = 0; i < 4; i++) await tap();
+		expect(ctrl.status).toBe('success');
+		expect(ctrl.stepping).toBe(false);
+		expect(ctrl.runs).toBe(1);
+	});
+
+	it('plays the rest of a stepped flight on Start', async () => {
+		vi.useFakeTimers();
+		const ctrl = new MissionRun(m11, solvedRunner());
+		build(ctrl);
+		const first = ctrl.advance();
+		await vi.advanceTimersByTimeAsync(2000);
+		await first;
+		const rest = ctrl.run();
+		await vi.advanceTimersByTimeAsync(10000);
+		await rest;
+		expect(ctrl.status).toBe('success');
+		expect(ctrl.runs).toBe(1);
 	});
 
 	it('ignores a stop right after start (double tap)', async () => {

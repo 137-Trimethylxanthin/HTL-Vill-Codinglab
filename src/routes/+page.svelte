@@ -17,9 +17,11 @@
 	import MissionMap from '$lib/screens/MissionMap.svelte';
 	import Pilot from '$lib/screens/Pilot.svelte';
 	import Splash from '$lib/screens/Splash.svelte';
+	import Wall from '$lib/screens/Wall.svelte';
 	import { IdleTimer } from '$lib/session/idle.svelte';
 	import { installKioskGuards } from '$lib/session/kiosk';
-	import { Session } from '$lib/session/session.svelte';
+	import { ORDERED_MAX_STARS, Session } from '$lib/session/session.svelte';
+	import { seededRandom, shuffleBlocks } from '$lib/session/order';
 	import { buildStatus, StatusPublisher } from '$lib/session/status';
 	import type { SessionSummary } from '$lib/session/types';
 	import MissionWorkspace from '$lib/workspace/MissionWorkspace.svelte';
@@ -40,15 +42,23 @@
 	let supervisorOpen = $state(false);
 	/** Start presses in the open mission, for the supervisor overview. */
 	let runs = $state(0);
+	/** Failed runs in a row in the open mission: the overview flags a stuck visitor. */
+	let fails = $state(0);
 
 	// Supervisors see every station's status on their phones (no visitor names).
 	const publisher = new StatusPublisher((status) => platform.publishStatus(status));
-	$effect(() => publisher.update(buildStatus(session, runs)));
+	$effect(() => publisher.update(buildStatus(session, runs, fails)));
 
-	/** A supervisor loaded the solution: the workspace starts over with it as the program. */
+	/**
+	 * A supervisor loaded the solution (or its blocks shuffled, to put in order): the workspace
+	 * starts over with it as the program. Seeded by the press count, so each press reshuffles.
+	 */
 	const workspaceMission = $derived.by(() => {
 		const m = session.current;
-		return m && session.isRevealed(m.id) ? { ...m, starter: m.solution } : m;
+		if (m && session.isRevealed(m.id)) return { ...m, starter: m.solution };
+		if (m && session.isOrdered(m.id))
+			return { ...m, starter: shuffleBlocks(m.solution, seededRandom(session.revealTick)) };
+		return m;
 	});
 
 	function activity() {
@@ -105,7 +115,8 @@
 
 	// The idle timer runs on every screen except the attract loop, and never during admin.
 	$effect(() => {
-		if (adminOpen || supervisorOpen || session.screen === 'attract') idle.stop();
+		if (adminOpen || supervisorOpen || station.config.wallMode || session.screen === 'attract')
+			idle.stop();
 		else idle.start();
 	});
 
@@ -137,12 +148,20 @@
 />
 
 <div class="contents" inert={settling || adminOpen || supervisorOpen}>
-	{#if phase !== 'ready' || !runner}
+	{#if station.config.wallMode}
+		<!-- Wall display: only watching, no visitor flow. -->
+		<Wall
+			{platform}
+			missions={SHOWCASE}
+			event={station.config.eventCode}
+			onAdmin={() => (adminOpen = true)}
+		/>
+	{:else if phase !== 'ready' || !runner}
 		<Splash failed={phase === 'failed'} />
 	{:else if session.screen === 'attract'}
 		<Attract {demo} onStart={() => session.begin()} onAdmin={() => (adminOpen = true)} />
 	{:else if session.screen === 'pilot'}
-		<Pilot onDone={(name) => session.setPilot(name)} />
+		<Pilot onDone={(name, duo) => session.setPilot(name, duo)} />
 	{:else if session.screen === 'map'}
 		<MissionMap {session} onOpen={(id) => session.open(id)} onFinish={() => session.finish()} />
 	{:else if session.screen === 'mission' && workspaceMission}
@@ -159,8 +178,14 @@
 				onHelp={() => session.toggleHelp()}
 				onSupervisor={() => (supervisorOpen = true)}
 				onRuns={(n) => (runs = n)}
+				onFails={(n) => (fails = n)}
 				revealed={session.currentId !== null && session.isRevealed(session.currentId)}
 				missions={session.missions}
+				driver={session.driver}
+				announceKey={`${session.startedAtMs}:${session.turns}`}
+				maxStars={session.currentId !== null && session.isOrdered(session.currentId)
+					? ORDERED_MAX_STARS
+					: 3}
 			/>
 		{/key}
 	{:else if session.screen === 'complete' && session.lastResult}

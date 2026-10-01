@@ -58,6 +58,26 @@ describe('web platform', () => {
 		expect(saved.fullscreen).toBe(false);
 	});
 
+	it('has replay and wall display off by default, also in older settings', async () => {
+		const storage = new MemoryStorage();
+		storage.setItem(
+			'codinglab.station',
+			JSON.stringify({ stationId: 'x', config: { stationName: 'A' } })
+		);
+		const p = createWebPlatform(storage);
+		const cfg = await p.getConfig();
+		expect(cfg.replayUrl).toBe('');
+		expect(cfg.wallMode).toBe(false);
+		await p.setPin(null, '2468');
+		const saved = await p.saveConfig('2468', {
+			...cfg,
+			replayUrl: ' https://lab.example.org/flug ',
+			wallMode: true
+		});
+		expect(saved.replayUrl).toBe('https://lab.example.org/flug');
+		expect(saved.wallMode).toBe(true);
+	});
+
 	it('starts with defaults and no PIN', async () => {
 		const p = createWebPlatform(new MemoryStorage());
 		const cfg = await p.getConfig();
@@ -139,6 +159,7 @@ describe('web platform', () => {
 				since: null,
 				lastActivity: 0,
 				runs: 0,
+				fails: 0,
 				help: false,
 				solved: 0
 			})

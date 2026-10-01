@@ -12,6 +12,12 @@ interface Stored {
 	pinHash: string | null;
 }
 
+/** Only http(s) makes a working QR code; a fragment would clash with the one we append. */
+function cleanReplayUrl(url: string): string {
+	const base = url.trim().split('#')[0];
+	return /^https?:\/\//.test(base) ? base : '';
+}
+
 const defaults = (): Stored => {
 	const stationId = crypto.randomUUID();
 	return {
@@ -25,6 +31,8 @@ const defaults = (): Stored => {
 			sound: true,
 			enabledMissions: null,
 			qrUrl: HTL_URL,
+			replayUrl: '',
+			wallMode: false,
 			nameRetentionDays: 7,
 			manualPeers: [],
 			smtp: { host: '', port: 587, username: '', from: '', starttls: true }
@@ -112,6 +120,7 @@ export function createWebPlatform(storage: Storage): Platform {
 				stationName: config.stationName.trim(),
 				eventCode: config.eventCode.trim(),
 				qrUrl: config.qrUrl.trim(),
+				replayUrl: cleanReplayUrl(config.replayUrl),
 				idleSeconds: Math.min(600, Math.max(30, Math.round(config.idleSeconds))),
 				enabledMissions: config.enabledMissions?.length ? config.enabledMissions : null,
 				nameRetentionDays: Math.min(365, Math.max(1, Math.round(config.nameRetentionDays))),

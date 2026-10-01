@@ -4,14 +4,47 @@ Für alle, die am Tag der offenen Tür zwischen den Stationen helfen. Kurz halte
 
 ## Auf dem Gang
 
-- **Übersicht am Handy:** Admin öffnen → Abschnitt **„Übersicht am Handy“** → QR-Code mit dem Handy scannen (Handy im selben Netz wie die Stationen). Die Seite zeigt alle Stationen des Events: was gerade läuft („Mission 2.1 „Runde drehen““), wie lange schon („seit 6 Min.“), wie viele Versuche — und ein rotes **HILFE**. Oben stehen Hilferufe, dann wer am längsten an einer Mission sitzt. „offline“ heißt: die Station hat sich seit 30 Sekunden nicht gemeldet. Die Seite aktualisiert sich alle 3 Sekunden. Voraussetzung: Event-Code gesetzt und gespeichert. Den Link nicht an Besucher weitergeben (er enthält den Event-Code).
+- **Übersicht am Handy:** Admin öffnen → Abschnitt **„Übersicht am Handy“** → QR-Code mit dem Handy scannen (Handy im selben Netz wie die Stationen). Die Seite zeigt alle Stationen des Events: was gerade läuft („Mission 2.1 „Runde drehen““), wie lange schon („seit 6 Min.“), wie viele Versuche — und ein rotes **HILFE**. Ein oranges **HÄNGT** heißt: das Kind kommt allein wohl nicht weiter, mit Grund darunter („3× nicht geklappt“ = drei Fehlversuche hintereinander, „seit 5 Min.“ = 4 Minuten oder länger an der Mission, „tippt nichts“ = 45 Sekunden keine Eingabe). Oben stehen Hilferufe, dann HÄNGT, dann wer am längsten an einer Mission sitzt. „offline“ heißt: die Station hat sich seit 30 Sekunden nicht gemeldet. Die Seite aktualisiert sich alle 3 Sekunden. Voraussetzung: Event-Code gesetzt und gespeichert. Den Link nicht an Besucher weitergeben (er enthält den Event-Code).
 - **Hilfe-Knopf:** Kinder tippen in der Mission oben auf **„Hilfe“** (Hand). Der Knopf blinkt („Hilfe kommt!“) und auf der Übersicht erscheint **HILFE**. Der Hilferuf verschwindet, wenn das Kind nochmal tippt, die Mission schafft, der nächste Besucher beginnt oder ihr ihn im Betreuungs-Menü beendet.
 - **Betreuungs-Menü** (schneller als Admin): in der Mission die **Missionsnummer oben links 2 Sekunden gedrückt halten** (Tastatur: **Strg + Umschalt + H**), dann die Admin-PIN. Große Knöpfe:
   - **Lösung zeigen** — ersetzt das Programm durch die Musterlösung. Das Kind darf sie fliegen, die Mission zählt dann aber als übersprungen (0 Sterne), damit die Bestenliste fair bleibt.
+  - **Blöcke zum Ordnen** — die Blöcke der Musterlösung, aber durcheinander (Inhalte von „Wiederhole“ bleiben drin). Das Kind bringt sie in die richtige Reihenfolge. Zählt, aber höchstens 2 Sterne. Sanfter als „Lösung zeigen“ — erst das probieren.
   - **Zu Mission …** — direkt zu jeder freigeschalteten Mission.
   - **Hilferuf beenden**
   - **Nächster Besucher** — beendet den Besuch (zweimal tippen) und zeigt wieder den Startbildschirm.
   - **Schließen** — das Menü schließt sich auch nach 60 Sekunden ohne Eingabe von selbst.
+
+## So hilfst du, ohne es vorzusagen
+
+Fragen statt Antworten: Das Kind soll selbst draufkommen. Erst zuschauen, dann fragen, die Hand vom Bildschirm lassen.
+
+- „Was glaubst du, passiert jetzt?“ (vor dem Start tippen lassen)
+- „Wo genau ist die Drohne falsch abgebogen?“
+- „Zeig mir, welcher Block das macht.“
+- „Was hat die Drohne gemacht — und was wolltest du?“
+- „Was wäre, wenn du nur eine Zahl änderst?“
+- „Lies mir dein Programm vor, Block für Block.“
+- Geschafft? „Wie hast du das herausgefunden?“
+
+**Frag zuerst** — eine Frage pro Mission, bevor du irgendetwas zeigst:
+
+| Mission | Frag zuerst |
+| --- | --- |
+| 1.1 Erster Flug | „Wie viele Felder sind es bis zum Landeplatz? Zähl mit dem Finger.“ |
+| 1.2 Um die Ecke | „Wo muss die Drohne abbiegen — und wohin schaut sie da?“ |
+| 1.3 Paketdienst | „Was muss zuerst passieren: hinfliegen oder das Paket nehmen?“ |
+| 2.1 Runde drehen | „Welche Blöcke wiederholen sich? Wie oft?“ |
+| 2.2 Solarpark | „Was muss über jeder Solarzelle passieren?“ |
+| 3.1 Nebel | „Was soll die Drohne tun, wenn vor ihr ein Haus steht? Und wenn frei ist?“ |
+| 3.2 Rettungsflug | „Welche Zahl im Code passt nicht zur Karte?“ |
+
+**Wenn es hängt** (orange **HÄNGT** auf der Übersicht): hingehen, eine der Fragen oben stellen. Hilft das nicht, im Betreuungs-Menü **Blöcke zum Ordnen** (zählt noch, höchstens 2 Sterne). Erst wenn auch das nicht geht: **Lösung zeigen**.
+
+**Für Eltern — drei Sätze zur HTL Villach:**
+
+1. Hier lernt man viel durch Ausprobieren: in Werkstätten und Laboren, nicht nur aus dem Buch.
+2. Die Schülerinnen und Schüler arbeiten an echten Projekten, oft im Team — so wie dieses Programm hier.
+3. Genaueres zu Fachrichtungen, Aufnahme und Schwerpunkten wissen die Kolleginnen und Kollegen der Abteilungen am besten — gern hinbringen oder hinschicken.
 
 ## Allgemeine Tipps
 

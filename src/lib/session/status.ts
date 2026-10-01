@@ -11,6 +11,8 @@ export interface StationStatus {
 	lastActivity: number;
 	/** Start presses in the current mission. */
 	runs: number;
+	/** Failed runs in a row on the current mission (the overview flags a stuck visitor). */
+	fails: number;
 	help: boolean;
 	solved: number;
 }
@@ -26,7 +28,8 @@ export interface StatusSource {
 /** The status without the activity time (that alone is not worth a push). */
 export function buildStatus(
 	session: StatusSource,
-	runs: number
+	runs: number,
+	fails = 0
 ): Omit<StationStatus, 'lastActivity'> {
 	const inMission = session.screen === 'mission' || session.screen === 'complete';
 	const mission = inMission ? session.current : null;
@@ -36,6 +39,7 @@ export function buildStatus(
 		missionTitle: mission?.title ?? null,
 		since: mission && session.openedAt > 0 ? session.openedAt : null,
 		runs: session.screen === 'mission' ? runs : 0,
+		fails: session.screen === 'mission' ? fails : 0,
 		help: session.help,
 		solved: session.solvedCount
 	};

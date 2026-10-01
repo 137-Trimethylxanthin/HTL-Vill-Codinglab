@@ -27,6 +27,40 @@ function atMap() {
 }
 
 describe('Session', () => {
+	it('starts every new duo with the first kid tapping', () => {
+		let time = 1000;
+		const s = new Session(SHOWCASE, () => time);
+		s.begin();
+		s.setPilot('Solo');
+		s.open('1.1');
+		s.reset('quit');
+		s.begin();
+		s.setPilot('Duo', true);
+		s.open('1.1');
+		expect(s.driver).toBe(1);
+		time += 1;
+	});
+
+	it('lets two kids take turns at tapping, one mission each', () => {
+		let time = 1000;
+		const s = new Session(SHOWCASE, () => time);
+		s.begin();
+		s.setPilot('Anna', true);
+		expect(s.driver).toBe(2);
+		s.open('1.1');
+		expect(s.driver).toBe(1);
+		s.backToMap();
+		s.open('1.2');
+		expect(s.driver).toBe(2);
+		s.backToMap();
+		s.open('1.2');
+		expect(s.driver).toBe(2); // reopening the same mission keeps the roles
+		time += 1;
+		const alone = atMap().s;
+		alone.open('1.1');
+		expect(alone.driver).toBeNull();
+	});
+
 	it('walks attract → pilot → map → mission → complete', () => {
 		const { s } = atMap();
 		expect(s.screen).toBe('map');

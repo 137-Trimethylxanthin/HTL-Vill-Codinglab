@@ -3,11 +3,18 @@ import type { EndedBy, MissionResult, Screen, SessionSummary } from './types';
 
 /** A second tap on "Hilfe" this soon after the first is the same tap (double tap), not "cancel". */
 export const HELP_GUARD_MS = 400;
+/** Solving after "Blöcke zum Ordnen" earns at most this many stars. */
+export const ORDERED_MAX_STARS = 2;
 
 /** One visitor's walk through the Showcase. Wrong-state calls are ignored on purpose (double taps). */
 export class Session {
 	screen = $state<Screen>('attract');
 	pilotName = $state('');
+	/** Two kids play together: one taps (pilot), one tells what to do (navigator); they swap. */
+	duo = $state(false);
+	/** Missions opened so far; decides whose turn it is to tap in duo mode. */
+	turns = $state(0);
+	private lastTurnId: string | null = null;
 	results = $state<Record<string, MissionResult>>({});
 	currentId = $state<string | null>(null);
 	lastResult = $state<MissionResult | null>(null);
@@ -17,7 +24,9 @@ export class Session {
 	openedAt = $state(0);
 	/** Missions whose reference solution a supervisor loaded: they never count for stars. */
 	revealed = $state<string[]>([]);
-	/** Counts "show solution" presses, so pressing it again loads the solution again. */
+	/** Missions a supervisor turned into "put the blocks in order": at most ORDERED_MAX_STARS. */
+	ordered = $state<string[]>([]);
+	/** Counts "show solution" (and "order the blocks") presses, so each press rebuilds the program. */
 	revealTick = $state(0);
 	private startedAt = 0;
 	private helpToggledAt = -Infinity;
@@ -83,6 +92,27 @@ export class Session {
 		this.help = false;
 	}
 
+	isOrdered(id: string): boolean {
+		return this.ordered.includes(id);
+	}
+
+	/** Supervisor: the solution's blocks, shuffled, for the kid to put in order. Counts, but capped. */
+	order() {
+		if (this.screen !== 'mission' || this.currentId === null) return;
+		if (this.isRevealed(this.currentId)) return;
+		if (!this.isOrdered(this.currentId)) this.ordered = [...this.ordered, this.currentId];
+		this.revealTick += 1;
+		this.help = false;
+	}
+
+	/** What a result is worth after supervisor help: nothing with the solution, capped when ordered. */
+	private counted(result: MissionResult): MissionResult {
+		if (this.isRevealed(result.id)) return { ...result, stars: 0, skipped: true };
+		if (this.isOrdered(result.id) && result.stars > ORDERED_MAX_STARS)
+			return { ...result, stars: ORDERED_MAX_STARS };
+		return result;
+	}
+
 	/** Supervisor: jump straight to a mission from the map, a mission or the complete screen. */
 	goTo(id: string) {
 		if (this.screen === 'mission' && this.currentId === id) return;
@@ -112,9 +142,25 @@ export class Session {
 		this.screen = 'pilot';
 	}
 
-	setPilot(name: string) {
+	/** A different mission means the other kid taps; reopening the same one keeps the roles. */
+	private nextTurn(id: string) {
+		if (id === this.lastTurnId) return;
+		this.lastTurnId = id;
+		this.turns += 1;
+	}
+
+	/** Which of the two kids taps in this mission (1 or 2); null when playing alone. */
+	get driver(): 1 | 2 | null {
+		if (!this.duo) return null;
+		return this.turns % 2 === 1 ? 1 : 2;
+	}
+
+	setPilot(name: string, duo = false) {
 		if (this.screen !== 'pilot') return;
 		this.pilotName = name;
+		this.duo = duo;
+		this.turns = 0;
+		this.lastTurnId = null;
 		this.screen = 'map';
 	}
 
@@ -123,13 +169,14 @@ export class Session {
 		if (!this.missions.some((m) => m.id === id)) return;
 		this.currentId = id;
 		this.openedAt = this.now();
+		this.nextTurn(id);
 		this.screen = 'mission';
 	}
 
 	/** Stores a solved mission (best stars win) without leaving it — the kid may still tap "Karte". */
 	record(result: MissionResult) {
 		if (this.screen !== 'mission' || result.id !== this.currentId) return;
-		if (this.isRevealed(result.id)) result = { ...result, stars: 0, skipped: true };
+		result = this.counted(result);
 		this.help = false;
 		const previous = this.results[result.id];
 		const keep = previous !== undefined && !previous.skipped && previous.stars >= result.stars;
@@ -139,7 +186,7 @@ export class Session {
 	complete(result: MissionResult) {
 		if (this.screen !== 'mission' || result.id !== this.currentId) return;
 		this.record(result);
-		this.lastResult = this.isRevealed(result.id) ? { ...result, stars: 0, skipped: true } : result;
+		this.lastResult = this.counted(result);
 		this.screen = 'complete';
 	}
 
@@ -173,6 +220,7 @@ export class Session {
 		}
 		this.currentId = next;
 		this.openedAt = this.now();
+		this.nextTurn(next);
 		this.screen = 'mission';
 	}
 
@@ -206,6 +254,7 @@ export class Session {
 		this.help = false;
 		this.openedAt = 0;
 		this.revealed = [];
+		this.ordered = [];
 		this.revealTick = 0;
 		this.startedAt = 0;
 		return summary;

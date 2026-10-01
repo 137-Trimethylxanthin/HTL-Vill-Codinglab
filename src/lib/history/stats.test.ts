@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionRecord } from './types';
-import { leaderboard, logbook } from './stats';
+import { boardRows, leaderboard, logbook, missionsFlown } from './stats';
 
 const rec = (
 	id: string,
@@ -47,6 +47,51 @@ describe('leaderboard', () => {
 		expect(
 			leaderboard(records, { period: 'all', now: NOW, event: '' }, 2).map((e) => e.id)
 		).toEqual(['d', 'f']);
+	});
+
+	it('numbers every entry and counts its solved missions', () => {
+		const flown = rec('g', 5, '2026-10-10T13:00:00.000Z', {
+			missions: [
+				{ id: '1.1', stars: 3, runs: 1, blocks: 3, seconds: 40, skipped: false },
+				{ id: '1.2', stars: 2, runs: 2, blocks: 5, seconds: 90, skipped: false },
+				{ id: '1.3', stars: 0, runs: 0, blocks: 0, seconds: 0, skipped: true }
+			]
+		});
+		const all = leaderboard([...records, flown], { period: 'today', now: NOW, event: 'TDOT' });
+		expect(all.map((e) => [e.id, e.place])).toEqual([
+			['f', 1],
+			['c', 2],
+			['b', 3],
+			['a', 4],
+			['g', 5]
+		]);
+		expect(all.at(-1)?.flown).toBe(2);
+		expect(missionsFlown(all)).toBe(2);
+	});
+});
+
+describe('boardRows', () => {
+	const many = Array.from({ length: 15 }, (_, i) =>
+		rec(`r${i}`, 30 - i, '2026-10-10T12:00:00.000Z', {
+			missions: [{ id: '1.1', stars: 1, runs: 1, blocks: 3, seconds: 40, skipped: false }]
+		})
+	);
+	const board = leaderboard(many, { period: 'today', now: NOW, event: 'TDOT' });
+
+	it('adds the own row with its real place when it is not in the top 10', () => {
+		const { top, own } = boardRows(board, 'r12');
+		expect(top).toHaveLength(10);
+		expect(own?.place).toBe(13);
+	});
+
+	it('shows no extra row when the visitor is in the top 10 or not on the list', () => {
+		expect(boardRows(board, 'r3').own).toBeNull();
+		expect(boardRows(board, 'nobody').own).toBeNull();
+		expect(boardRows([], 'current')).toEqual({ top: [], own: null });
+	});
+
+	it('counts the missions of everyone in the period, not only the top 10', () => {
+		expect(missionsFlown(board)).toBe(15);
 	});
 });
 

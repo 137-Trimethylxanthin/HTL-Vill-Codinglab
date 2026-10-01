@@ -6,6 +6,10 @@ export interface LeaderboardEntry {
 	totalStars: number;
 	seconds: number;
 	station: string;
+	/** Rank in the whole list (1 = best). */
+	place: number;
+	/** Missions this visitor solved. */
+	flown: number;
 }
 
 const duration = (r: SessionRecord) =>
@@ -15,10 +19,13 @@ const localDay = (iso: string) => {
 	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
+const solved = (r: SessionRecord) => r.missions.filter((m) => !m.skipped && m.stars > 0).length;
+
+/** Everyone in the period, best first. Without `limit` the whole list (see `boardRows`). */
 export function leaderboard(
 	records: SessionRecord[],
 	filter: { period: 'today' | 'event' | 'all'; now: Date; event: string },
-	limit = 10
+	limit = Infinity
 ): LeaderboardEntry[] {
 	const today = localDay(filter.now.toISOString());
 	return records
@@ -35,10 +42,31 @@ export function leaderboard(
 			pilotName: r.pilotName as string,
 			totalStars: r.totalStars,
 			seconds: duration(r),
-			station: r.station
+			station: r.station,
+			place: 0,
+			flown: solved(r)
 		}))
 		.sort((a, b) => b.totalStars - a.totalStars || a.seconds - b.seconds)
+		.map((e, i) => ({ ...e, place: i + 1 }))
 		.slice(0, limit);
+}
+
+/** The top of the list, plus the own row (if it is further down) so nobody looks for themselves in vain. */
+export function boardRows(
+	entries: LeaderboardEntry[],
+	ownId: string,
+	top = 10
+): { top: LeaderboardEntry[]; own: LeaderboardEntry | null } {
+	const shown = entries.slice(0, top);
+	const own = shown.some((e) => e.id === ownId)
+		? null
+		: (entries.find((e) => e.id === ownId) ?? null);
+	return { top: shown, own };
+}
+
+/** All missions solved in the list together: "Heute: 312 Missionen geflogen". */
+export function missionsFlown(entries: LeaderboardEntry[]): number {
+	return entries.reduce((sum, e) => sum + e.flown, 0);
 }
 
 export interface Logbook {

@@ -20,6 +20,10 @@ export interface EditableConfig {
 	/** null = all missions */
 	enabledMissions: string[] | null;
 	qrUrl: string;
+	/** Where the static web build is hosted (…/flug); empty = no take-home replay QR. */
+	replayUrl: string;
+	/** Wall display: only shows the day's flights, no visitor input. */
+	wallMode: boolean;
 	nameRetentionDays: number;
 	manualPeers: string[];
 	smtp: SmtpSettings;
@@ -93,6 +97,8 @@ export const editableOf = (c: PublicConfig): EditableConfig => ({
 	sound: c.sound !== false,
 	enabledMissions: c.enabledMissions,
 	qrUrl: c.qrUrl,
+	replayUrl: c.replayUrl ?? '',
+	wallMode: c.wallMode === true,
 	nameRetentionDays: c.nameRetentionDays,
 	manualPeers: [...c.manualPeers],
 	smtp: { ...c.smtp }

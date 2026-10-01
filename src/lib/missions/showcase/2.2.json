@@ -7,6 +7,7 @@
 		"rows": ["........", ".SSSSSSP", "........"],
 		"start": { "x": 0, "y": 1, "dir": "E" }
 	},
+	"parentTip": "Fragen Sie: Was passiert, wenn wir die Wiederholung von 6 auf 3 ändern?",
 	"blocks": ["takeoff", "forward", "turn_left", "turn_right", "repeat", "photo", "land"],
 	"goal": { "type": "complete" },
 	"stars": { "optimalBlocks": 6, "maxRunsFor3": 3 },

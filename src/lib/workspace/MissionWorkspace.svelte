@@ -1,16 +1,24 @@
+<script lang="ts" module>
+	// Survives the {#key} re-creation of the workspace.
+	let lastAnnounced = '';
+</script>
+
 <script lang="ts">
 	import {
 		FastForward,
+		Footprints,
 		Map as MapIcon,
 		Play,
 		RotateCcw,
 		SkipForward,
 		Square,
-		Star
+		Star,
+		Users
 	} from '@lucide/svelte';
 	import type { MissionResult } from '$lib/session/types';
 	import { untrack } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
+	import { fade } from 'svelte/transition';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import {
 		blockTypes,
@@ -60,7 +68,11 @@
 		onHelp,
 		onSupervisor,
 		onRuns,
+		onFails,
 		revealed = false,
+		driver = null,
+		maxStars = 3,
+		announceKey = '',
 		missions = SHOWCASE
 	}: {
 		mission: Mission;
@@ -77,16 +89,42 @@
 		onHelp?: () => void;
 		onSupervisor?: () => void;
 		onRuns?: (runs: number) => void;
+		/** Failed runs in a row, for the supervisors' stuck alert. */
+		onFails?: (fails: number) => void;
 		/** A supervisor showed the solution: success earns no stars, so show none. */
 		revealed?: boolean;
+		/** Duo mode: which kid taps this mission (the other navigates). */
+		driver?: 1 | 2 | null;
+		/** Blocks were handed over to put in order: the success shows (and earns) fewer stars. */
+		maxStars?: number;
+		/** Changes with every new turn (duo), so a rebuild of the same turn stays quiet. */
+		announceKey?: string;
 		/** Missions this station plays, in order (for the "Neu!" badges). */
 		missions?: Mission[];
 	} = $props();
 
 	let tab = $state<'program' | 'python'>('program');
 
+	// Duo mode: announce whose turn it is when the mission opens.
+	// Once per mission: the page re-creates this component for every mission ({#key}).
+	let swapBanner = $state(
+		untrack(() => {
+			// The workspace is also rebuilt for supervisor actions: announce each turn only once.
+			const fresh = driver !== null && announceKey !== lastAnnounced;
+			lastAnnounced = announceKey;
+			return fresh;
+		})
+	);
 	$effect(() => {
-		if (ctrl.status !== 'running') return;
+		if (!swapBanner) return;
+		const timer = setTimeout(() => (swapBanner = false), 3200);
+		return () => clearTimeout(timer);
+	});
+	const caller = $derived(driver === 1 ? 2 : 1);
+
+	$effect(() => {
+		// Stepping waits for taps (which count by themselves): a child who walks away must time out.
+		if (ctrl.status !== 'running' || ctrl.stepping) return;
 		const timer = setInterval(() => onActivity?.(), 5000);
 		return () => {
 			clearInterval(timer);
@@ -116,6 +154,7 @@
 	});
 	const coach = $derived(new CoachState(mission.hints));
 	$effect(() => onRuns?.(ctrl.runs));
+	$effect(() => onFails?.(ctrl.fails));
 	$effect(() => {
 		const current = coach;
 		return () => current.dispose();
@@ -397,9 +436,69 @@
 		return node ? { type: node.type, n: node.n } : null;
 	});
 
-	async function run() {
+	// Predict, then run: before the first run of a "predict" mission the child taps a cell.
+	let guessing = $state(false);
+	// Raw: compared by identity with the guess a flight was started for.
+	let guess = $state.raw<[number, number] | null>(null);
+	let guessRight = $state<boolean | null>(null);
+
+	function forgetGuess() {
+		guessing = false;
+		guess = null;
+		guessRight = null;
+	}
+
+	// An edit makes an old guess (and its verdict) meaningless.
+	$effect(() => {
+		void ctrl.program;
+		untrack(() => {
+			if (!guessing) forgetGuess();
+		});
+	});
+
+	async function start() {
+		if (mission.predict && ctrl.runs === 0 && !ctrl.stepping && guess === null) {
+			guessing = true;
+			return;
+		}
+		forgetGuess();
+		await run();
+	}
+
+	function pick(x: number, y: number) {
+		const picked: [number, number] = [x, y];
+		guess = picked;
+		guessing = false;
+		void run(picked);
+	}
+
+	/** `scored`: the guess made for exactly this flight (others are never scored). */
+	async function run(scored: [number, number] | null = null) {
 		coach.pause();
+		guessRight = null;
 		await ctrl.run();
+		if (scored && guess === scored && (ctrl.status === 'success' || ctrl.status === 'fail')) {
+			const { x, y } = ctrl.player;
+			guessRight = Math.round(x.target) === scored[0] && Math.round(y.target) === scored[1];
+		}
+		settle();
+	}
+
+	function stop() {
+		ctrl.stop();
+		// Stopped between steps: no flight will settle, so let the coach watch again.
+		if (ctrl.status === 'idle') coach.activity();
+	}
+
+	async function advance() {
+		if (!ctrl.stepping) forgetGuess();
+		coach.pause();
+		await ctrl.advance();
+		if (!ctrl.stepping) settle();
+	}
+
+	/** After a flight: cheer or console, and let the coach watch again. */
+	function settle() {
 		if (ctrl.status === 'success') {
 			coach.succeeded();
 			play('success');
@@ -455,6 +554,12 @@
 				{mission.goalText}
 			</p>
 		</div>
+		{#if driver}
+			<span
+				class="flex shrink-0 flex-col rounded-xl bg-muted px-3 py-1 text-sm leading-tight font-semibold max-lg:hidden"
+				><span>👆 {t.duo.taps(driver)}</span><span>🗺️ {t.duo.says(caller)}</span></span
+			>
+		{/if}
 		{#if onHelp}<HelpButton {help} onToggle={onHelp} />{/if}
 		<Button
 			variant="ghost"
@@ -555,13 +660,56 @@
 		</div>
 
 		<div
-			class="relative grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-4 rounded-3xl bg-card/70 p-4 portrait:row-start-1 portrait:gap-2 portrait:p-3"
+			class="relative grid min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-4 rounded-3xl bg-card/70 p-4 portrait:row-start-1 portrait:grid-rows-[minmax(0,1fr)_auto] portrait:gap-2 portrait:p-3"
 		>
+			<!-- A question for the grown-ups, at their eye level (not on phones: no room). -->
+			{#if mission.parentTip}
+				<p
+					class="flex items-center gap-2 rounded-xl bg-white/70 px-3 py-1.5 text-sm text-muted-foreground portrait:hidden"
+				>
+					<Users class="size-4 shrink-0" /><span
+						><b class="font-semibold">{t.workspace.parentTip}:</b>
+						{mission.parentTip}</span
+					>
+				</p>
+			{:else}
+				<span class="portrait:hidden"></span>
+			{/if}
 			<div class="relative min-h-0">
-				<DroneStage player={ctrl.player} fog={mission.fog} {phantom} glow={pointer?.cell ?? null} />
+				<DroneStage
+					player={ctrl.player}
+					fog={mission.fog}
+					{phantom}
+					glow={pointer?.cell ?? null}
+					{guess}
+					onPick={guessing ? pick : undefined}
+				/>
 				<Coach {coach} />
 			</div>
 			<div class="flex flex-col gap-3 portrait:gap-2">
+				{#if guessing}
+					<div
+						class="flex items-center justify-between gap-3 rounded-2xl bg-fuchsia-500 px-4 py-2 text-lg font-bold text-white"
+					>
+						{t.workspace.guessAsk}
+						<Button
+							variant="secondary"
+							class="h-12 press rounded-xl"
+							onclick={() => {
+								forgetGuess();
+								void run();
+							}}>{t.workspace.guessSkip}</Button
+						>
+					</div>
+				{:else if guessRight !== null && ctrl.status !== 'running'}
+					<p
+						class="rounded-2xl px-4 py-2 text-center text-lg font-bold {guessRight
+							? 'bg-fuchsia-500 text-white'
+							: 'bg-fuchsia-100 text-fuchsia-900'}"
+					>
+						{guessRight ? t.workspace.guessRight : t.workspace.guessWrong}
+					</p>
+				{/if}
 				{#if ctrl.notice}
 					<p
 						class="rounded-2xl bg-warn px-4 py-2 text-center text-lg font-bold text-warn-foreground"
@@ -577,6 +725,9 @@
 						)}
 					>
 						{ctrl.message}
+						{#if ctrl.status === 'success' && ctrl.fixed && !revealed}
+							<p class="mt-1 text-base font-semibold">🔧 {t.workspace.fixed}</p>
+						{/if}
 						{#if ctrl.status === 'success' && revealed}
 							<p class="mt-1 text-base font-semibold">{t.supervisor.withSolution}</p>
 						{:else if ctrl.status === 'success'}
@@ -586,7 +737,9 @@
 										<Star
 											class={cn(
 												'size-9',
-												i <= ctrl.stars ? 'fill-yellow-300 text-yellow-300' : 'text-white/50'
+												i <= Math.min(ctrl.stars, maxStars)
+													? 'fill-yellow-300 text-yellow-300'
+													: 'text-white/50'
 											)}
 										/>
 									</span>
@@ -602,17 +755,50 @@
 					</div>
 				{/if}
 				<div class="flex gap-3 portrait:gap-2">
-					{#if ctrl.status === 'running'}
+					{#if ctrl.stepping}
+						<!-- Step by step: one drone move per tap, or fly the rest, or stop. -->
+						<Button
+							data-step
+							class="h-16 grow press rounded-2xl bg-drone text-2xl font-bold text-drone-foreground"
+							disabled={ctrl.stepBusy}
+							aria-label={t.workspace.nextStep}
+							onclick={advance}
+							><Footprints class="size-7" /><span class="max-xl:hidden portrait:hidden"
+								>{t.workspace.nextStep}</span
+							></Button
+						>
+						<Button
+							variant="secondary"
+							class="size-16 press rounded-2xl"
+							aria-label={t.workspace.flyRest}
+							disabled={ctrl.stepBusy}
+							onclick={() => run()}><Play class="size-7" /></Button
+						>
+						<Button
+							class="size-16 press rounded-2xl bg-destructive text-white"
+							aria-label={t.workspace.stop}
+							onclick={stop}><Square class="size-7" /></Button
+						>
+					{:else if ctrl.status === 'running'}
 						<Button
 							class="h-16 grow press rounded-2xl bg-destructive text-2xl font-bold text-white"
-							onclick={() => ctrl.stop()}><Square class="size-7" />{t.workspace.stop}</Button
+							onclick={stop}><Square class="size-7" />{t.workspace.stop}</Button
 						>
 					{:else}
 						<Button
 							data-start
 							class="h-16 grow press rounded-2xl bg-drone text-2xl font-bold text-drone-foreground"
 							disabled={ctrl.program.length === 0}
-							onclick={run}><Play class="size-7" />{t.workspace.start}</Button
+							onclick={start}><Play class="size-7" />{t.workspace.start}</Button
+						>
+						<Button
+							data-step
+							variant="secondary"
+							class="size-16 press rounded-2xl"
+							title={t.workspace.step}
+							aria-label={t.workspace.step}
+							disabled={ctrl.program.length === 0 || ctrl.stepBusy || guessing}
+							onclick={advance}><Footprints class="size-7" /></Button
 						>
 					{/if}
 					<Button
@@ -625,10 +811,16 @@
 					>
 					<Button
 						variant="secondary"
-						class="h-16 press rounded-2xl px-5 text-xl"
+						class="h-16 min-w-16 press rounded-2xl px-5 text-xl"
+						aria-label={t.workspace.reset}
 						disabled={ctrl.status === 'running'}
-						onclick={() => ctrl.resetStage()}
-						><RotateCcw class="size-6" />{t.workspace.reset}</Button
+						onclick={() => {
+							forgetGuess();
+							ctrl.resetStage();
+						}}
+						><RotateCcw class="size-6" /><span class="max-xl:hidden portrait:hidden"
+							>{t.workspace.reset}</span
+						></Button
 					>
 				</div>
 			</div>
@@ -640,6 +832,25 @@
 </div>
 
 <DragLayer {drag} {ghost} />
+{#if driver && swapBanner}
+	<!-- Tap anywhere (or wait) to dismiss. -->
+	<button
+		class="fixed inset-0 z-50 grid place-items-center bg-black/30"
+		onclick={() => (swapBanner = false)}
+		transition:fade={{ duration: 200 }}
+	>
+		<span
+			class="star-pop rounded-3xl bg-card px-10 py-8 text-center shadow-2xl"
+			style:animation-delay="0ms"
+		>
+			<span class="block font-display text-4xl font-bold">
+				{driver === 1 && mission.id === missions[0]?.id ? t.duo.start : t.duo.swap}
+			</span>
+			<span class="mt-3 block text-2xl">👆 {t.duo.taps(driver)}</span>
+			<span class="block text-2xl">🗺️ {t.duo.says(caller)}</span>
+		</span>
+	</button>
+{/if}
 {#if guideStep && !drag.active}
 	<GuideHand step={guideStep} />
 {/if}

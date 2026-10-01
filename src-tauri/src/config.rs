@@ -28,6 +28,10 @@ pub struct StationConfig {
     pub sound: bool,
     pub enabled_missions: Option<Vec<String>>,
     pub qr_url: String,
+    /// Where the static web build is hosted (…/flug); empty = no take-home replay QR.
+    pub replay_url: String,
+    /// Wall display: the screen only shows the day's flights, no visitor input.
+    pub wall_mode: bool,
     pub name_retention_days: u32,
     pub manual_peers: Vec<String>,
     pub smtp: SmtpSettings,
@@ -48,6 +52,10 @@ pub struct EditableConfig {
     pub sound: bool,
     pub enabled_missions: Option<Vec<String>>,
     pub qr_url: String,
+    #[serde(default)]
+    pub replay_url: String,
+    #[serde(default)]
+    pub wall_mode: bool,
     pub name_retention_days: u32,
     pub manual_peers: Vec<String>,
     pub smtp: SmtpSettings,
@@ -86,12 +94,20 @@ impl Default for StationConfig {
             sound: true,
             enabled_missions: None,
             qr_url: "https://www.htl-villach.at".into(),
+            replay_url: String::new(),
+            wall_mode: false,
             name_retention_days: 7,
             manual_peers: Vec::new(),
             smtp: SmtpSettings::default(),
             pin_hash: None,
         }
     }
+}
+
+/// Only http(s) addresses make a working QR code; a fragment would clash with the one we append.
+fn clean_replay_url(url: &str) -> String {
+    let url = url.trim().split('#').next().unwrap_or_default();
+    if url.starts_with("https://") || url.starts_with("http://") { url.to_string() } else { String::new() }
 }
 
 impl StationConfig {
@@ -105,6 +121,8 @@ impl StationConfig {
             sound: self.sound,
             enabled_missions: self.enabled_missions.clone(),
             qr_url: self.qr_url.clone(),
+            replay_url: self.replay_url.clone(),
+            wall_mode: self.wall_mode,
             name_retention_days: self.name_retention_days,
             manual_peers: self.manual_peers.clone(),
             smtp: self.smtp.clone(),
@@ -121,6 +139,8 @@ impl StationConfig {
         // An empty selection would leave visitors with nothing to play: treat it as "all".
         self.enabled_missions = e.enabled_missions.filter(|list| !list.is_empty());
         self.qr_url = e.qr_url.trim().to_string();
+        self.replay_url = clean_replay_url(&e.replay_url);
+        self.wall_mode = e.wall_mode;
         self.name_retention_days = e.name_retention_days.clamp(1, 365);
         self.manual_peers = e
             .manual_peers
@@ -340,5 +360,34 @@ mod tests {
         cfg.apply(e);
         assert_eq!(cfg.name_retention_days, 1);
         assert_eq!(cfg.manual_peers, vec!["192.168.0.5:47800".to_string(), "10.0.0.2".to_string()]);
+    }
+
+    #[test]
+    fn replay_url_and_wall_mode_are_off_in_old_files_and_can_be_set() {
+        let cfg: StationConfig = serde_json::from_str(r#"{"stationName":"A"}"#).unwrap();
+        assert_eq!(cfg.replay_url, "");
+        assert!(!cfg.wall_mode);
+        let old: EditableConfig = serde_json::from_value(serde_json::json!({
+            "stationName": "A", "eventCode": "", "syncEnabled": true, "idleSeconds": 90, "fullscreen": true,
+            "enabledMissions": null, "qrUrl": "", "nameRetentionDays": 7, "manualPeers": [], "smtp": {}
+        }))
+        .unwrap();
+        assert_eq!(old.replay_url, "");
+        assert!(!old.wall_mode);
+        let mut cfg = cfg;
+        let mut e = cfg.editable();
+        e.replay_url = "  https://lab.example.org/flug  ".into();
+        e.wall_mode = true;
+        cfg.apply(e);
+        assert_eq!(cfg.replay_url, "https://lab.example.org/flug");
+        let mut e = cfg.editable();
+        e.replay_url = "javascript:alert(1)".into();
+        cfg.apply(e);
+        assert_eq!(cfg.replay_url, "");
+        let mut e = cfg.editable();
+        e.replay_url = "https://x.org/flug#old".into();
+        cfg.apply(e);
+        assert_eq!(cfg.replay_url, "https://x.org/flug");
+        assert!(cfg.wall_mode);
     }
 }

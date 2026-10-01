@@ -8,6 +8,7 @@
 		"start": { "x": 2, "y": 4, "dir": "N" }
 	},
 	"guide": true,
+	"parentTip": "Fragen Sie: Wie viele Felder muss die Drohne fliegen? Zählt gemeinsam!",
 	"blocks": ["takeoff", "forward", "land"],
 	"goal": { "type": "complete" },
 	"stars": { "optimalBlocks": 3, "maxRunsFor3": 3 },

@@ -19,7 +19,15 @@ export const de = {
 		space: 'Leerzeichen',
 		delete: 'Löschen',
 		done: 'Fertig',
-		go: "Los geht's!"
+		go: "Los geht's!",
+		duo: 'Zu zweit spielen',
+		duoHint: 'Einer tippt, einer sagt an – nach jeder Mission tauscht ihr.'
+	},
+	duo: {
+		taps: (n: number) => `Spieler ${n} tippt`,
+		says: (n: number) => `Spieler ${n} sagt an`,
+		swap: 'Jetzt tauscht ihr!',
+		start: 'Los geht’s zu zweit!'
 	},
 	map: {
 		pilot: 'Pilot',
@@ -46,6 +54,29 @@ export const de = {
 		qrTitle: 'Mehr über die HTL Villach',
 		qrHint: 'Scanne den Code mit deinem Handy.',
 		again: 'Nächster Pilot'
+	},
+	replay: {
+		qrTitle: 'Scanne deinen Flug fürs Handy',
+		title: 'Dein Flug bei CodingLab – HTL Villach',
+		subtitle: 'So bist du mit deiner Drohne geflogen.',
+		loading: 'Flug wird geladen …',
+		missing: 'Hier ist kein Flug zu sehen. Scanne den QR-Code am Ende deines Besuchs nochmal.',
+		home: 'Zuhause weiterprogrammieren',
+		biber: 'Biber der Informatik – knifflige Rätsel zum Mitmachen',
+		school: 'Mehr über die HTL Villach',
+		replay: 'Nochmal abspielen',
+		admin: 'Web-Version für den Flug zum Mitnehmen (QR-Code)',
+		adminHint: 'Adresse, unter der die Web-Version liegt – leer lassen zum Ausschalten'
+	},
+	wall: {
+		title: 'CodingLab – HTL Villach',
+		subtitle: 'Programmier eine Drohne – gleich hier am Stand!',
+		today: 'Heute geflogene Missionen',
+		flight: 'Flug des Tages',
+		example: 'Beispielflug',
+		by: (name: string) => `geflogen von ${name}`,
+		empty: 'Heute ist noch niemand geflogen – sei die Nummer 1!',
+		admin: 'Wanddisplay (nur Zuschauen, keine Eingabe)'
 	},
 	idle: {
 		title: 'Bist du noch da?',
@@ -123,7 +154,9 @@ export const de = {
 		empty: 'Du bist heute die Nummer 1!',
 		you: 'Du',
 		close: 'Schließen',
-		minutes: (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} min`
+		minutes: (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} min`,
+		place: (n: number) => `Platz ${n}`,
+		flown: (n: number) => `Heute: ${n} ${n === 1 ? 'Mission' : 'Missionen'} geflogen`
 	},
 	logbook: {
 		title: 'Logbuch',
@@ -177,6 +210,15 @@ export const de = {
 		nextMission: 'Nächste Mission',
 		editNumber: 'Tippe auf eine Zahl. Dann kannst du sie ändern.',
 		fresh: 'Neu!',
+		guessAsk: 'Wo landet die Drohne? Tippe auf ein Feld!',
+		guessSkip: 'Einfach starten',
+		guessRight: 'Richtig vorhergesagt – du denkst wie ein Programmierer!',
+		guessWrong: 'Die Drohne ist woanders gelandet als getippt. Schau, wo sie abbiegt!',
+		step: 'Schritt für Schritt',
+		nextStep: 'Nächster Schritt',
+		flyRest: 'Rest fliegen',
+		fixed: 'Fehler gefunden und repariert – wie echte Programmierer!',
+		parentTip: 'Für Erwachsene',
 		help: 'Hilfe',
 		helpComing: 'Hilfe kommt!'
 	},
@@ -185,6 +227,8 @@ export const de = {
 		enterPin: 'PIN für die Betreuung',
 		showSolution: 'Lösung zeigen',
 		solutionHint: 'Zählt nicht für Sterne.',
+		orderBlocks: 'Blöcke zum Ordnen',
+		orderHint: 'Die Lösung gemischt. Höchstens 2 Sterne.',
 		withSolution: 'Mit der Lösung geschafft. Probier die nächste Mission selbst!',
 		goTo: 'Zu Mission …',
 		clearHelp: 'Hilferuf beenden',
@@ -219,16 +263,17 @@ export const de = {
 		ask: 'Hilf mir'
 	},
 	stops: {
-		edge: 'Hoppla – hier ist die Karte zu Ende!',
-		building: 'Autsch! Da steht ein Gebäude.',
-		notFlying: 'Die Drohne muss zuerst abheben.',
-		alreadyFlying: 'Die Drohne fliegt schon.',
-		noParcel: 'Hier liegt kein Paket.',
-		notCarrying: 'Du hast kein Paket dabei.',
-		wrongDropSpot: 'Hier ist kein Abgabeplatz.',
-		badNumber: 'Diese Zahl passt hier nicht.',
-		unknownCommand: 'Diesen Befehl kennt die Drohne nicht.',
-		tooManySteps: 'Deine Drohne fliegt endlos im Kreis!',
+		// The drone speaks for itself and takes the blame: kids read cold errors as their failure.
+		edge: 'Hoppla! Hier hört die Karte auf – da konnte ich nicht weiter.',
+		building: 'Autsch! Ich bin gegen ein Haus geflogen.',
+		notFlying: 'Ich stehe noch am Boden – ich muss zuerst abheben.',
+		alreadyFlying: 'Ich fliege doch schon!',
+		noParcel: 'Ich habe hier kein Paket gefunden.',
+		notCarrying: 'Ich habe gar kein Paket dabei.',
+		wrongDropSpot: 'Hier ist kein Abgabeplatz für mein Paket.',
+		badNumber: 'Mit dieser Zahl kann ich nichts anfangen.',
+		unknownCommand: 'Diesen Befehl kenne ich nicht.',
+		tooManySteps: 'Mir wird schwindlig – ich fliege endlos im Kreis!',
 		// Block programs cannot loop forever, so a timeout is a slow computer, not the child's fault.
 		timeout: 'Die Drohne hat zu lange gebraucht. Probier es nochmal!'
 	},
@@ -241,8 +286,10 @@ export const de = {
 		default: 'Da ist etwas schiefgelaufen.'
 	},
 	outcome: {
-		stillFlying: 'Fast! Vergiss nicht zu landen.',
-		missed: 'Knapp daneben. Probier es nochmal.'
+		stillFlying: 'Fast! Ich schwebe noch – sag mir, dass ich landen soll.',
+		missed: 'Knapp daneben – ich bin nicht am Ziel gelandet. Probier es nochmal!',
+		/** Which block it was, so the child knows where to look. */
+		blame: (n: number, block: string) => `Das war Block ${n}: „${block}“.`
 	}
 };
 

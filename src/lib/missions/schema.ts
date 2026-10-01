@@ -40,6 +40,10 @@ export const MissionSchema = z
 		goal: z.object({ type: z.literal('complete') }),
 		fog: z.boolean().default(false),
 		editablePython: z.boolean().default(false),
+		/** A question for parents to ask their child (shown small, at adult eye level). */
+		parentTip: z.string().min(1).max(120).optional(),
+		/** Before the first run the child guesses where the drone ends up (predict, then run). */
+		predict: z.boolean().default(false),
 		/** First mission: an animated hand shows each step of the solution. */
 		guide: z.boolean().default(false),
 		starter: z.array(BlockNodeSchema).optional(),

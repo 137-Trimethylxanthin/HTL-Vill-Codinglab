@@ -41,3 +41,14 @@ test('calling for help does not widen the workspace on a phone', async ({ page }
 });
 
 test('30 blocks fit a phone', ({ page }) => checkLongProgram(page, 390, 844));
+
+test('step-by-step buttons fit a phone', async ({ page }) => {
+	await toMap(page);
+	await openMission(page, 'Erster Flug');
+	await page.locator('[data-drop-trash] button', { hasText: 'Abheben' }).click();
+	await page.getByRole('button', { name: 'Schritt für Schritt' }).click();
+	await expect(page.getByRole('button', { name: 'Nächster Schritt' })).toBeVisible({
+		timeout: 20_000
+	});
+	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

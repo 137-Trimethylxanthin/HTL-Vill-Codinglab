@@ -83,12 +83,19 @@ const ROUND: Duration = Duration::from_secs(30);
 pub const MAX_PEERS: usize = 32;
 const PEER_EXPIRY: Duration = Duration::from_secs(600);
 const STICKY_MS: i64 = 90_000;
-const MAX_BODY_BYTES: usize = 256 * 1024;
+// Records now carry flight paths (~2 KB each): a 500-record push batch must still fit.
+const MAX_BODY_BYTES: usize = 2 * 1024 * 1024;
 const MAX_REPLY_BYTES: u64 = 2 * 1024 * 1024;
 /// A station that has not reported for this long shows as "offline" in the overview.
 pub const OFFLINE_MS: i64 = 30_000;
 /// One slow or dead peer must not stall the supervisor overview.
 const STATUS_TIMEOUT: Duration = Duration::from_secs(2);
+/// A visitor counts as stuck after this many failed runs in a row, ...
+const STUCK_FAILS: u32 = 3;
+/// ... this long on one mission without solving it, ...
+const STUCK_MISSION_MS: i64 = 4 * 60_000;
+/// ... or this long without a tap while on a mission.
+const STUCK_IDLE_MS: i64 = 45_000;
 const OVERVIEW_HTML: &str = include_str!("overview.html");
 
 /// The event code is the swarm's shared secret: it is never sent in the clear.
@@ -112,8 +119,36 @@ pub struct StationStatus {
     pub since: Option<i64>,
     pub last_activity: i64,
     pub runs: u32,
+    /// Failed runs in a row on the current mission.
+    pub fails: u32,
     pub help: bool,
     pub solved: u32,
+}
+
+/// Why a station shows "HÄNGT" in the overview.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum StuckReason {
+    Fails,
+    Long,
+    Idle,
+}
+
+/// A visitor on a mission who probably needs someone: failing again and again, long on it, or not touching anything.
+/// Only the mission screen counts: after solving ("complete") nobody is stuck.
+fn stuck_reason(status: &StationStatus, mission_ms: Option<i64>, idle_ms: i64) -> Option<StuckReason> {
+    if status.screen != "mission" {
+        return None;
+    }
+    if status.fails >= STUCK_FAILS {
+        Some(StuckReason::Fails)
+    } else if mission_ms.is_some_and(|ms| ms >= STUCK_MISSION_MS) {
+        Some(StuckReason::Long)
+    } else if idle_ms >= STUCK_IDLE_MS {
+        Some(StuckReason::Idle)
+    } else {
+        None
+    }
 }
 
 /// One row of the supervisor overview. Durations are measured by the station itself,
@@ -131,6 +166,16 @@ pub struct StatusView {
     pub mission_ms: Option<i64>,
     pub idle_ms: i64,
     pub offline: bool,
+    pub stuck: bool,
+    pub stuck_reason: Option<StuckReason>,
+}
+
+impl StatusView {
+    /// Recomputed by whoever shows the row, so older peers (without the field) are flagged too.
+    fn mark_stuck(&mut self) {
+        self.stuck_reason = if self.offline { None } else { stuck_reason(&self.status, self.mission_ms, self.idle_ms) };
+        self.stuck = self.stuck_reason.is_some();
+    }
 }
 
 pub struct Shared {
@@ -164,7 +209,7 @@ impl Shared {
             return StatusView { station_id, station_name, offline: true, ..Default::default() };
         };
         let now = now_ms();
-        StatusView {
+        let mut view = StatusView {
             station_id,
             station_name,
             age_ms: now - at,
@@ -172,7 +217,10 @@ impl Shared {
             idle_ms: (now - status.last_activity).max(0),
             offline: now - at > OFFLINE_MS,
             status,
-        }
+            ..Default::default()
+        };
+        view.mark_stuck();
+        view
     }
 }
 
@@ -281,11 +329,12 @@ fn status_of(address: &str, event: &str) -> Option<StatusView> {
     read_json(reply).ok()
 }
 
-/// Help first, then stations that are online, then whoever has been on their mission longest.
+/// Help first, then stuck visitors, then stations that are online, then whoever has been on their mission longest.
 fn sort_overview(rows: &mut [StatusView]) {
     rows.sort_by(|a, b| {
         b.status.help
             .cmp(&a.status.help)
+            .then(b.stuck.cmp(&a.stuck))
             .then(a.offline.cmp(&b.offline))
             .then(b.mission_ms.unwrap_or(-1).cmp(&a.mission_ms.unwrap_or(-1)))
             .then(a.station_name.cmp(&b.station_name))
@@ -319,6 +368,7 @@ async fn overview_data(State(shared): State<Arc<Shared>>, Query(q): Query<CodeQu
                 if v.offline {
                     v.status.help = false;
                 }
+                v.mark_stuck();
                 v.station_id = peer.station;
                 if v.station_name.is_empty() {
                     v.station_name = peer.name;
@@ -996,7 +1046,7 @@ mod tests {
     }
 
     #[test]
-    fn sorts_help_first_then_longest_on_a_mission() {
+    fn sorts_help_first_then_stuck_then_longest_on_a_mission() {
         let row = |name: &str, help: bool, offline: bool, mission_ms: Option<i64>| StatusView {
             station_name: name.into(),
             status: StationStatus { help, ..Default::default() },
@@ -1009,10 +1059,45 @@ mod tests {
             row("short", false, false, Some(60_000)),
             row("gone", false, true, None),
             row("help", true, false, Some(1_000)),
+            StatusView { stuck: true, ..row("stuck", false, false, Some(30_000)) },
             row("long", false, false, Some(600_000)),
         ];
         sort_overview(&mut rows);
         let names: Vec<&str> = rows.iter().map(|r| r.station_name.as_str()).collect();
-        assert_eq!(names, vec!["help", "long", "short", "idle", "gone"]);
+        assert_eq!(names, vec!["help", "stuck", "long", "short", "idle", "gone"]);
+    }
+
+    #[test]
+    fn flags_a_visitor_who_is_stuck_on_a_mission() {
+        let on = |fails: u32| StationStatus { fails, ..status("mission", false) };
+        assert_eq!(stuck_reason(&on(3), Some(10_000), 0), Some(StuckReason::Fails));
+        assert_eq!(stuck_reason(&on(2), Some(10_000), 0), None, "two misses are normal");
+        assert_eq!(stuck_reason(&on(0), Some(STUCK_MISSION_MS), 0), Some(StuckReason::Long));
+        assert_eq!(stuck_reason(&on(0), Some(STUCK_MISSION_MS - 1), 0), None);
+        assert_eq!(stuck_reason(&on(0), Some(10_000), STUCK_IDLE_MS), Some(StuckReason::Idle));
+        assert_eq!(stuck_reason(&on(0), Some(10_000), STUCK_IDLE_MS - 1), None);
+        assert_eq!(stuck_reason(&on(5), Some(STUCK_MISSION_MS), STUCK_IDLE_MS), Some(StuckReason::Fails), "the clearest reason wins");
+        // Solved, on the map or waiting for a visitor: nobody to help, however long it takes.
+        for screen in ["complete", "map", "attract"] {
+            let s = StationStatus { fails: 5, ..status(screen, false) };
+            assert_eq!(stuck_reason(&s, Some(STUCK_MISSION_MS * 2), STUCK_IDLE_MS * 2), None, "{screen}");
+        }
+    }
+
+    #[test]
+    fn own_row_says_stuck_and_offline_rows_never_do() {
+        let s = shared("TDOT");
+        let long_ago = chrono::Utc::now().timestamp_millis() - STUCK_MISSION_MS - 1_000;
+        s.set_status(StationStatus { since: Some(long_ago), ..status("mission", false) });
+        let view = s.own_view();
+        assert!(view.stuck);
+        assert_eq!(view.stuck_reason, Some(StuckReason::Long));
+        let json = serde_json::to_value(&view).unwrap();
+        assert_eq!(json["stuck"], true);
+        assert_eq!(json["stuckReason"], "long");
+        let mut gone = StatusView { offline: true, ..view };
+        gone.mark_stuck();
+        assert!(!gone.stuck);
+        assert_eq!(gone.stuck_reason, None);
     }
 }
