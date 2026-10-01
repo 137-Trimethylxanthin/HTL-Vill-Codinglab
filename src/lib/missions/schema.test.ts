@@ -23,6 +23,15 @@ describe('parseMission', () => {
 		expect(m.editablePython).toBe(false);
 	});
 
+	it('checks hint targets against hints, blocks and the map', () => {
+		expect(parseMission({ ...valid, hintTargets: [{ cell: [2, 0] }] }).hintTargets).toEqual([
+			{ cell: [2, 0] }
+		]);
+		expect(() => parseMission({ ...valid, hintTargets: [{ block: 'photo' }] })).toThrow(/Ziel/);
+		expect(() => parseMission({ ...valid, hintTargets: [{ cell: [5, 5] }] })).toThrow(/Ziel/);
+		expect(() => parseMission({ ...valid, hintTargets: [null, null] })).toThrow(/Ziel/);
+	});
+
 	it('rejects rows of different length', () => {
 		expect(() => parseMission({ ...valid, map: { ...valid.map, rows: ['..P', '..'] } })).toThrow(
 			/Zeilen/

@@ -23,10 +23,10 @@ describe('World', () => {
 		expect(w.call('forward', 2, 2)).toBe(true);
 		expect(w.call('land', 3)).toBe(true);
 		expect(w.events).toEqual([
-			{ kind: 'takeoff', line: 1 },
-			{ kind: 'move', line: 2, x: 0, y: 1 },
-			{ kind: 'move', line: 2, x: 0, y: 0 },
-			{ kind: 'land', line: 3 }
+			{ kind: 'takeoff', line: 1, call: 1 },
+			{ kind: 'move', line: 2, x: 0, y: 1, call: 2 },
+			{ kind: 'move', line: 2, x: 0, y: 0, call: 2 },
+			{ kind: 'land', line: 3, call: 3 }
 		]);
 		expect(w.snapshot()).toMatchObject({ x: 0, y: 0, flying: false });
 		expect(w.stop).toBeNull();
@@ -58,7 +58,14 @@ describe('World', () => {
 		const w = new World(mission(['.', 'B', '.']));
 		w.call('takeoff', 1);
 		expect(w.call('forward', 2, 2)).toBe(false);
-		expect(w.events.at(-1)).toEqual({ kind: 'crash', line: 2, x: 0, y: 1, into: 'building' });
+		expect(w.events.at(-1)).toEqual({
+			kind: 'crash',
+			line: 2,
+			x: 0,
+			y: 1,
+			into: 'building',
+			call: 2
+		});
 		expect(w.stop).toEqual({ reason: 'crash', code: 'building', line: 2 });
 		expect(w.snapshot()).toMatchObject({ x: 0, y: 2 });
 	});
@@ -109,8 +116,8 @@ describe('World', () => {
 		w.call('turn_right', 4);
 		expect(w.sense('obstacle_ahead', 5)).toBe(true);
 		expect(w.events.filter((e) => e.kind === 'sense')).toEqual([
-			{ kind: 'sense', line: 3, ahead: true },
-			{ kind: 'sense', line: 5, ahead: true }
+			{ kind: 'sense', line: 3, ahead: true, call: 1 },
+			{ kind: 'sense', line: 5, ahead: true, call: 3 }
 		]);
 		expect(w.snapshot()).toMatchObject({ x: 0, y: 2 });
 	});

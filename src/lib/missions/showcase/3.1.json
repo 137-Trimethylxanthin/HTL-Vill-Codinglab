@@ -16,6 +16,7 @@
 		"Sonst flieg einen Schritt vorwärts.",
 		"Wiederhole 9: Wenn Hindernis, Rechts drehen. Sonst Vorwärts."
 	],
+	"hintTargets": [{ "block": "if_obstacle" }, { "block": "forward" }, { "block": "repeat" }],
 	"solution": [
 		{ "id": "s1", "type": "takeoff" },
 		{

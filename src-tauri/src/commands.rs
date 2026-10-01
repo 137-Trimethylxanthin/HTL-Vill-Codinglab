@@ -6,7 +6,7 @@ use crate::error::{AppError, AppResult};
 use crate::mail;
 use crate::history::{History, SessionRecord};
 use crate::secrets::{self, SMTP_SECRET};
-use crate::sync::{PeerInfo, Peers};
+use crate::sync::{self, PeerInfo, Peers, Shared, StationStatus};
 use std::sync::Arc;
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
@@ -19,6 +19,7 @@ pub struct AppState {
     pub emails: EmailStore,
     pub history: Arc<History>,
     pub peers: Arc<Peers>,
+    pub sync: Arc<Shared>,
 }
 
 impl AppState {
@@ -180,6 +181,18 @@ pub fn list_records(state: State<'_, AppState>) -> AppResult<Vec<SessionRecord>>
 #[tauri::command]
 pub fn peers(state: State<'_, AppState>) -> AppResult<Vec<PeerInfo>> {
     Ok(state.peers.list())
+}
+
+/// The frontend reports what this station shows, for the supervisor overview.
+#[tauri::command]
+pub fn publish_status(state: State<'_, AppState>, status: StationStatus) {
+    state.sync.set_status(status);
+}
+
+/// Where a phone in the same network reaches this station's sync server.
+#[tauri::command]
+pub fn lan_urls() -> Vec<String> {
+    sync::lan_addresses().into_iter().map(|ip| format!("http://{ip}:{}", sync::SYNC_PORT)).collect()
 }
 
 #[tauri::command]

@@ -17,6 +17,7 @@ export async function seedStation(page: Page, overrides: Record<string, unknown>
 			syncEnabled: false,
 			idleSeconds: 90,
 			fullscreen: true,
+			sound: true,
 			enabledMissions: null,
 			qrUrl: 'https://www.htl-villach.at',
 			nameRetentionDays: 7,

@@ -19,6 +19,8 @@ export interface Frame {
 	hit?: boolean;
 	/** Sensor frames: was there an obstacle ahead? */
 	ahead?: boolean;
+	/** Drone command the frame belongs to (see DroneEvent.call). */
+	call?: number;
 }
 
 const DURATION: Record<DroneEvent['kind'], number> = {
@@ -84,6 +86,13 @@ export function buildTimeline(
 			case 'crash':
 				break;
 		}
-		return { ...frame, pose, line: event.line, kind: event.kind, ms: DURATION[event.kind] };
+		return {
+			...frame,
+			pose,
+			line: event.line,
+			kind: event.kind,
+			ms: DURATION[event.kind],
+			call: event.call
+		};
 	});
 }

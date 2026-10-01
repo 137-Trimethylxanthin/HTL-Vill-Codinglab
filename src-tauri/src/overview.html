@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="de">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<title>CodingLab – Übersicht</title>
+		<style>
+			:root {
+				color-scheme: light dark;
+				--bg: #f1f5f9;
+				--card: #ffffff;
+				--text: #0f172a;
+				--muted: #64748b;
+				--help: #dc2626;
+				--off: #94a3b8;
+			}
+			@media (prefers-color-scheme: dark) {
+				:root {
+					--bg: #0f172a;
+					--card: #1e293b;
+					--text: #f1f5f9;
+					--muted: #94a3b8;
+				}
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				padding: 16px;
+				background: var(--bg);
+				color: var(--text);
+				font: 20px/1.35 system-ui, sans-serif;
+			}
+			h1 {
+				margin: 0 0 4px;
+				font-size: 28px;
+			}
+			#state {
+				margin: 0 0 16px;
+				color: var(--muted);
+				font-size: 16px;
+			}
+			#state.bad {
+				color: var(--help);
+				font-weight: 700;
+			}
+			ul {
+				display: grid;
+				gap: 12px;
+				margin: 0;
+				padding: 0;
+				list-style: none;
+			}
+			li {
+				padding: 14px 16px;
+				border-radius: 16px;
+				background: var(--card);
+				box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+			}
+			li.help {
+				outline: 4px solid var(--help);
+			}
+			li.offline {
+				opacity: 0.6;
+			}
+			.top {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+			.name {
+				flex: 1;
+				min-width: 0;
+				overflow: hidden;
+				font-size: 24px;
+				font-weight: 700;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.badge {
+				padding: 4px 12px;
+				border-radius: 999px;
+				color: #fff;
+				font-size: 20px;
+				font-weight: 800;
+				letter-spacing: 0.05em;
+			}
+			.badge.help {
+				background: var(--help);
+				animation: pulse 1s ease-in-out infinite alternate;
+			}
+			.badge.off {
+				background: var(--off);
+			}
+			.what {
+				margin-top: 4px;
+				font-size: 22px;
+			}
+			.meta {
+				margin-top: 2px;
+				color: var(--muted);
+			}
+			@keyframes pulse {
+				to {
+					opacity: 0.55;
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.badge.help {
+					animation: none;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<h1>CodingLab – Stationen</h1>
+		<p id="state">Wird geladen …</p>
+		<ul id="list"></ul>
+		<script>
+			const code = new URLSearchParams(location.search).get('code') || '';
+			const list = document.getElementById('list');
+			const state = document.getElementById('state');
+			const SCREENS = {
+				attract: 'Wartet auf Besucher',
+				pilot: 'Gibt den Namen ein',
+				map: 'Auf der Missionskarte',
+				finale: 'Am Ende (Zertifikat)'
+			};
+
+			function el(tag, cls, text) {
+				const e = document.createElement(tag);
+				if (cls) e.className = cls;
+				if (text) e.textContent = text;
+				return e;
+			}
+
+			function what(s) {
+				if (s.offline) return 'offline';
+				if (s.missionId) {
+					const title = s.missionTitle ? ' „' + s.missionTitle + '“' : '';
+					return (s.screen === 'complete' ? 'Geschafft: ' : '') + 'Mission ' + s.missionId + title;
+				}
+				return SCREENS[s.screen] || '–';
+			}
+
+			function meta(s) {
+				if (s.offline) return '';
+				const parts = [];
+				if (s.missionMs != null) parts.push('seit ' + Math.floor(s.missionMs / 60000) + ' Min.');
+				if (s.screen === 'mission') parts.push(s.runs + (s.runs === 1 ? ' Versuch' : ' Versuche'));
+				if (s.screen !== 'attract') parts.push(s.solved + ' geschafft');
+				return parts.join(' · ');
+			}
+
+			function render(stations) {
+				list.replaceChildren(
+					...stations.map((s) => {
+						const li = el('li', (s.help ? 'help ' : '') + (s.offline ? 'offline' : ''));
+						const top = el('div', 'top');
+						top.append(el('span', 'name', s.stationName || 'Station'));
+						if (s.help) top.append(el('span', 'badge help', 'HILFE'));
+						if (s.offline) top.append(el('span', 'badge off', 'offline'));
+						li.append(top, el('div', 'what', what(s)));
+						const m = meta(s);
+						if (m) li.append(el('div', 'meta', m));
+						return li;
+					})
+				);
+			}
+
+			async function poll() {
+				try {
+					const reply = await fetch('/overview/data?code=' + encodeURIComponent(code), {
+						cache: 'no-store'
+					});
+					if (reply.status === 403) throw new Error('Falscher Event-Code oder Austausch aus.');
+					if (!reply.ok) throw new Error('Station antwortet nicht.');
+					const data = await reply.json();
+					render(data.stations || []);
+					state.className = '';
+					state.textContent = 'Aktualisiert ' + new Date().toLocaleTimeString('de-AT');
+				} catch (e) {
+					state.className = 'bad';
+					state.textContent = e instanceof TypeError ? 'Keine Verbindung zur Station.' : e.message;
+				}
+			}
+
+			poll();
+			setInterval(poll, 3000);
+		</script>
+	</body>
+</html>

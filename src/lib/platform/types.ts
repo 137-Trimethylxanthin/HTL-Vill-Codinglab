@@ -1,4 +1,5 @@
 import type { PeerInfo, SessionRecord } from '$lib/history/types';
+import type { StationStatus } from '$lib/session/status';
 
 export interface SmtpSettings {
 	host: string;
@@ -14,6 +15,8 @@ export interface EditableConfig {
 	syncEnabled: boolean;
 	idleSeconds: number;
 	fullscreen: boolean;
+	/** Sound effects; missing in settings saved by older versions (treat as on). */
+	sound?: boolean;
 	/** null = all missions */
 	enabledMissions: string[] | null;
 	qrUrl: string;
@@ -50,7 +53,8 @@ export class PlatformError extends Error {
 /** Everything the frontend needs from the device. The only place that knows about Tauri. */
 export interface Platform {
 	kind: 'tauri' | 'web';
-	features: { certificate: boolean; email: boolean };
+	/** overview: the station serves the supervisor overview (desktop app only). */
+	features: { certificate: boolean; email: boolean; overview: boolean };
 	/** Ask the backend what this device can do; call once before use. */
 	init(): Promise<void>;
 	appVersion(): Promise<string>;
@@ -72,6 +76,10 @@ export interface Platform {
 	saveSession(record: SessionRecord): Promise<void>;
 	listRecords(): Promise<SessionRecord[]>;
 	peers(): Promise<PeerInfo[]>;
+	/** Tell the supervisor overview what this station shows. */
+	publishStatus(status: StationStatus): Promise<void>;
+	/** Base URLs (http://ip:port) where phones in the same network reach this station. */
+	lanUrls(): Promise<string[]>;
 	deleteHistory(pin: string): Promise<number>;
 	saveTextFile(pin: string, fileName: string, contents: string): Promise<string | null>;
 }
@@ -82,6 +90,7 @@ export const editableOf = (c: PublicConfig): EditableConfig => ({
 	syncEnabled: c.syncEnabled,
 	idleSeconds: c.idleSeconds,
 	fullscreen: c.fullscreen,
+	sound: c.sound !== false,
 	enabledMissions: c.enabledMissions,
 	qrUrl: c.qrUrl,
 	nameRetentionDays: c.nameRetentionDays,

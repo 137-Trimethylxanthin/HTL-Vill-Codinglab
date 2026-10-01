@@ -144,7 +144,10 @@ export class DragController {
 		if (hit?.kind === 'trash' && source.kind === 'palette') hit = null;
 		else if (hit?.kind === 'slot' && !this.canDrop(source, hit.target)) hit = null;
 		// A new object on every pointer move would re-render the list and restart its slide animations.
-		if (!sameHit(hit, this.hover)) this.hover = hit;
+		if (sameHit(hit, this.hover)) return;
+		this.hover = hit;
+		// Over a slot the block shrinks back to its real size, as if pulled into place.
+		this.scale.target = hit?.kind === 'slot' ? 1 : 1.08;
 	}
 
 	private finish() {

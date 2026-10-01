@@ -12,6 +12,7 @@
 	} from '$lib/platform/types';
 	import { IdleTimer } from '$lib/session/idle.svelte';
 	import Logbook from './Logbook.svelte';
+	import OverviewLink from './OverviewLink.svelte';
 	import PinPad from './PinPad.svelte';
 
 	let {
@@ -249,6 +250,9 @@
 					><input type="checkbox" class="size-6" bind:checked={form.fullscreen} />{t.admin
 						.fullscreen}</label
 				>
+				<label class="flex items-center gap-3 text-lg"
+					><input type="checkbox" class="size-6" bind:checked={form.sound} />{t.admin.sound}</label
+				>
 				<label class="flex flex-col gap-1"
 					>{t.admin.qrUrl}<input class={field} bind:value={form.qrUrl} /></label
 				>
@@ -358,6 +362,8 @@
 			{/if}
 
 			<Logbook {platform} {pin} />
+
+			<OverviewLink {platform} config={store.config} />
 
 			<section class="flex flex-col gap-3">
 				<h2 class="text-2xl font-bold">{t.admin.changePin}</h2>

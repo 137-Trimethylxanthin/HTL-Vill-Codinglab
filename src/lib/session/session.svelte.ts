@@ -1,6 +1,9 @@
 import type { Mission } from '$lib/missions/schema';
 import type { EndedBy, MissionResult, Screen, SessionSummary } from './types';
 
+/** A second tap on "Hilfe" this soon after the first is the same tap (double tap), not "cancel". */
+export const HELP_GUARD_MS = 400;
+
 /** One visitor's walk through the Showcase. Wrong-state calls are ignored on purpose (double taps). */
 export class Session {
 	screen = $state<Screen>('attract');
@@ -8,7 +11,16 @@ export class Session {
 	results = $state<Record<string, MissionResult>>({});
 	currentId = $state<string | null>(null);
 	lastResult = $state<MissionResult | null>(null);
+	/** The visitor asked for a supervisor. */
+	help = $state(false);
+	/** When the current mission was opened (0 = none). */
+	openedAt = $state(0);
+	/** Missions whose reference solution a supervisor loaded: they never count for stars. */
+	revealed = $state<string[]>([]);
+	/** Counts "show solution" presses, so pressing it again loads the solution again. */
+	revealTick = $state(0);
 	private startedAt = 0;
+	private helpToggledAt = -Infinity;
 
 	constructor(
 		readonly missions: Mission[],
@@ -48,6 +60,36 @@ export class Session {
 		return r !== undefined && !r.skipped && r.stars > 0;
 	}
 
+	isRevealed(id: string): boolean {
+		return this.revealed.includes(id);
+	}
+
+	toggleHelp() {
+		const now = this.now();
+		if (now - this.helpToggledAt < HELP_GUARD_MS) return;
+		this.helpToggledAt = now;
+		this.help = !this.help;
+	}
+
+	clearHelp() {
+		this.help = false;
+	}
+
+	/** Supervisor: load the solution for the current mission. Solving it then counts as skipped. */
+	reveal() {
+		if (this.screen !== 'mission' || this.currentId === null) return;
+		if (!this.isRevealed(this.currentId)) this.revealed = [...this.revealed, this.currentId];
+		this.revealTick += 1;
+		this.help = false;
+	}
+
+	/** Supervisor: jump straight to a mission from the map, a mission or the complete screen. */
+	goTo(id: string) {
+		if (this.screen === 'mission' && this.currentId === id) return;
+		this.backToMap();
+		this.open(id);
+	}
+
 	/** First unsolved mission after `id` (wrapping around); from the start when `id` is null. */
 	nextAfter(id: string | null): string | null {
 		const start = id === null ? 0 : this.missions.findIndex((m) => m.id === id) + 1;
@@ -80,12 +122,15 @@ export class Session {
 		if (this.screen !== 'map' && this.screen !== 'complete') return;
 		if (!this.missions.some((m) => m.id === id)) return;
 		this.currentId = id;
+		this.openedAt = this.now();
 		this.screen = 'mission';
 	}
 
 	/** Stores a solved mission (best stars win) without leaving it — the kid may still tap "Karte". */
 	record(result: MissionResult) {
 		if (this.screen !== 'mission' || result.id !== this.currentId) return;
+		if (this.isRevealed(result.id)) result = { ...result, stars: 0, skipped: true };
+		this.help = false;
 		const previous = this.results[result.id];
 		const keep = previous !== undefined && !previous.skipped && previous.stars >= result.stars;
 		this.results = { ...this.results, [result.id]: keep ? previous : result };
@@ -94,7 +139,7 @@ export class Session {
 	complete(result: MissionResult) {
 		if (this.screen !== 'mission' || result.id !== this.currentId) return;
 		this.record(result);
-		this.lastResult = result;
+		this.lastResult = this.isRevealed(result.id) ? { ...result, stars: 0, skipped: true } : result;
 		this.screen = 'complete';
 	}
 
@@ -107,11 +152,16 @@ export class Session {
 				[id]: { id, stars: 0, runs: 0, blocks: 0, seconds: 0, skipped: true, path: [] }
 			};
 		}
+		// Help is asked for in a mission; on the map nobody could switch it off again.
+		this.help = false;
 		this.screen = 'map';
 	}
 
 	backToMap() {
-		if (this.screen === 'mission' || this.screen === 'complete') this.screen = 'map';
+		if (this.screen === 'mission' || this.screen === 'complete') {
+			this.help = false;
+			this.screen = 'map';
+		}
 	}
 
 	continue() {
@@ -122,6 +172,7 @@ export class Session {
 			return;
 		}
 		this.currentId = next;
+		this.openedAt = this.now();
 		this.screen = 'mission';
 	}
 
@@ -152,6 +203,10 @@ export class Session {
 		this.results = {};
 		this.currentId = null;
 		this.lastResult = null;
+		this.help = false;
+		this.openedAt = 0;
+		this.revealed = [];
+		this.revealTick = 0;
 		this.startedAt = 0;
 		return summary;
 	}

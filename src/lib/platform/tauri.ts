@@ -12,14 +12,17 @@ async function call<T>(command: string, args?: Record<string, unknown>): Promise
 }
 
 export function createTauriPlatform(): Platform {
-	const features = { certificate: true, email: true };
+	const features = { certificate: true, email: true, overview: true };
 	return {
 		kind: 'tauri',
 		features,
 		init: async () => {
 			const info = await call<{ mobile: boolean; os: string }>('platform_info').catch(() => null);
-			// Phones have no place to save the PDF yet.
-			if (info?.mobile) features.certificate = false;
+			// Phones have no place to save the PDF yet, and serve no overview (desktop-only server).
+			if (info?.mobile) {
+				features.certificate = false;
+				features.overview = false;
+			}
 		},
 		appVersion: async () => (await import('@tauri-apps/api/app')).getVersion(),
 		checkUpdate: async () => {
@@ -52,6 +55,8 @@ export function createTauriPlatform(): Platform {
 		saveSession: (record) => call('save_session', { record }),
 		listRecords: () => call('list_records'),
 		peers: () => call('peers'),
+		publishStatus: (status) => call('publish_status', { status }),
+		lanUrls: () => call('lan_urls'),
 		deleteHistory: (pin) => call('delete_history', { pin }),
 		saveTextFile: (pin, fileName, contents) => call('save_text_file', { pin, fileName, contents })
 	};

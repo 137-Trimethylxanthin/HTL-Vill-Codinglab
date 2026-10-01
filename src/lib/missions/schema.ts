@@ -40,15 +40,42 @@ export const MissionSchema = z
 		goal: z.object({ type: z.literal('complete') }),
 		fog: z.boolean().default(false),
 		editablePython: z.boolean().default(false),
+		/** First mission: an animated hand shows each step of the solution. */
+		guide: z.boolean().default(false),
 		starter: z.array(BlockNodeSchema).optional(),
 		stars: z.object({
 			optimalBlocks: z.number().int().positive(),
 			maxRunsFor3: z.number().int().positive()
 		}),
 		hints: z.array(z.string().min(1)).min(1),
+		/** Per hint: a palette block to wiggle or a map cell [x, y] to glow while it is shown. */
+		hintTargets: z
+			.array(
+				z
+					.object({
+						block: z.enum(BLOCK_TYPES).optional(),
+						cell: z.tuple([z.number().int(), z.number().int()]).optional()
+					})
+					.nullable()
+			)
+			.optional(),
 		solution: z.array(BlockNodeSchema).min(1)
 	})
 	.superRefine((m, ctx) => {
+		m.hintTargets?.forEach((target, i) => {
+			const [x, y] = target?.cell ?? [0, 0];
+			if (
+				i >= m.hints.length ||
+				(target?.block && !m.blocks.includes(target.block)) ||
+				!m.map.rows[y]?.[x]
+			) {
+				ctx.addIssue({
+					code: 'custom',
+					path: ['hintTargets', i],
+					message: 'Ziel passt nicht zu den Tipps, Blöcken oder der Karte.'
+				});
+			}
+		});
 		const { rows, start } = m.map;
 		if (rows.some((row) => row.length !== rows[0].length)) {
 			ctx.addIssue({

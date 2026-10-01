@@ -24,6 +24,8 @@ pub struct StationConfig {
     pub idle_seconds: u32,
     /// Kiosk mode: the window covers the whole screen.
     pub fullscreen: bool,
+    /// Short sound effects (snap, takeoff, success).
+    pub sound: bool,
     pub enabled_missions: Option<Vec<String>>,
     pub qr_url: String,
     pub name_retention_days: u32,
@@ -42,11 +44,17 @@ pub struct EditableConfig {
     pub sync_enabled: bool,
     pub idle_seconds: u32,
     pub fullscreen: bool,
+    #[serde(default = "sound_default")]
+    pub sound: bool,
     pub enabled_missions: Option<Vec<String>>,
     pub qr_url: String,
     pub name_retention_days: u32,
     pub manual_peers: Vec<String>,
     pub smtp: SmtpSettings,
+}
+
+fn sound_default() -> bool {
+    true
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -75,6 +83,7 @@ impl Default for StationConfig {
             sync_enabled: true,
             idle_seconds: 90,
             fullscreen: true,
+            sound: true,
             enabled_missions: None,
             qr_url: "https://www.htl-villach.at".into(),
             name_retention_days: 7,
@@ -93,6 +102,7 @@ impl StationConfig {
             sync_enabled: self.sync_enabled,
             idle_seconds: self.idle_seconds,
             fullscreen: self.fullscreen,
+            sound: self.sound,
             enabled_missions: self.enabled_missions.clone(),
             qr_url: self.qr_url.clone(),
             name_retention_days: self.name_retention_days,
@@ -107,6 +117,7 @@ impl StationConfig {
         self.sync_enabled = e.sync_enabled;
         self.idle_seconds = e.idle_seconds.clamp(30, 600);
         self.fullscreen = e.fullscreen;
+        self.sound = e.sound;
         // An empty selection would leave visitors with nothing to play: treat it as "all".
         self.enabled_missions = e.enabled_missions.filter(|list| !list.is_empty());
         self.qr_url = e.qr_url.trim().to_string();
@@ -292,6 +303,17 @@ mod tests {
         assert_eq!(loaded.station_id, cfg.station_id);
         assert_eq!(loaded.event_code, "TDOT");
     }
+    #[test]
+    fn sound_is_on_by_default_and_missing_in_old_files() {
+        let cfg: StationConfig = serde_json::from_str(r#"{"stationName":"A"}"#).unwrap();
+        assert!(cfg.sound);
+        let mut e = cfg.editable();
+        e.sound = false;
+        let mut cfg = cfg;
+        cfg.apply(e);
+        assert!(!cfg.sound);
+    }
+
     #[test]
     fn is_fullscreen_by_default_and_can_be_turned_off() {
         let mut cfg = StationConfig::default();

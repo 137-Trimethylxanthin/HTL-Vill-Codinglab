@@ -21,7 +21,8 @@ import type { PythonRunner } from '$lib/runtime/client';
 import type { MissionResult } from '$lib/session/types';
 import type { RunResult } from '$lib/sim/result';
 import { Player } from '$lib/stage/player.svelte';
-import { buildTimeline, startPose } from '$lib/stage/timeline';
+import { buildTimeline, startPose, type Frame } from '$lib/stage/timeline';
+import { loopSpans, nextRounds } from './rounds';
 
 /** Stop taps this soon after Start (and Start taps this soon after Stop) are ignored: double taps on the same spot. */
 export const STOP_GUARD_MS = 400;
@@ -44,6 +45,12 @@ export class MissionRun {
 	notice = $state<string | null>(null);
 	stars = $state<Stars>(0);
 	speed = $state<1 | 2>(1);
+	/** Round of each running repeat loop (block id → round), while the drone flies. */
+	rounds = $state<Record<string, number>>({});
+	/** Block where the last run crashed or stopped with an error. */
+	failedId = $state<string | null>(null);
+	/** Called for every animation frame (sound effects). */
+	onFrame?: (frame: Frame) => void;
 	readonly player = new Player();
 	private readonly startedAt = Date.now();
 	private runStartedAt = 0;
@@ -136,6 +143,8 @@ export class MissionRun {
 
 	resetStage() {
 		this.gen++;
+		this.rounds = {};
+		this.failedId = null;
 		this.player.reset(startPose(this.mission.map.start), this.mission.map.rows);
 		this.status = 'idle';
 		this.message = null;
@@ -168,9 +177,16 @@ export class MissionRun {
 			return;
 		}
 		if (gen !== this.gen) return;
+		const spans = loopSpans(this.program, this.python.lineOf);
+		let prev: Frame | null = null;
 		const finished = await this.player.play(
 			buildTimeline(this.mission.map.start, result.events),
-			() => this.speed
+			() => this.speed,
+			(frame) => {
+				this.rounds = nextRounds(this.rounds, spans, prev, frame);
+				prev = frame;
+				this.onFrame?.(frame);
+			}
 		);
 		if (gen !== this.gen) return;
 		if (!finished) {
@@ -187,6 +203,8 @@ export class MissionRun {
 		} else {
 			this.status = 'fail';
 			this.message = outcomeMessage(result);
+			const line = result.stop?.line ?? result.pyError?.line;
+			this.failedId = line ? (this.python.blockAt[line] ?? null) : null;
 		}
 	}
 

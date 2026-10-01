@@ -47,6 +47,15 @@ export function findBlock(program: BlockNode[], id: string): BlockNode | undefin
 	return undefined;
 }
 
+/** Every block type used in the program, nested ones included. */
+export function blockTypes(program: BlockNode[]): BlockType[] {
+	return program.flatMap((node) => [
+		node.type,
+		...blockTypes(node.children ?? []),
+		...blockTypes(node.else ?? [])
+	]);
+}
+
 export function removeBlock(program: BlockNode[], id: string): BlockNode[] {
 	return program
 		.filter((node) => node.id !== id)

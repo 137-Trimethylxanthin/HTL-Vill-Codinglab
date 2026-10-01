@@ -26,9 +26,15 @@ pub fn run() {
             let dir = app.path().app_data_dir()?;
             let config = std::sync::Arc::new(Mutex::new(config::load(&dir)?));
             let history = std::sync::Arc::new(history::History::open(&dir.join("history.sqlite"))?);
-            let peers = sync::start(std::sync::Arc::new(sync::Shared { history: history.clone(), config: config.clone() }));
+            let shared = std::sync::Arc::new(sync::Shared {
+                history: history.clone(),
+                config: config.clone(),
+                peers: Default::default(),
+                status: Mutex::new(None),
+            });
+            let peers = sync::start(shared.clone());
             let config_for_window = config.clone();
-            app.manage(AppState { emails: emails::EmailStore::new(&dir), config, dir, history, peers });
+            app.manage(AppState { emails: emails::EmailStore::new(&dir), config, dir, history, peers, sync: shared });
             if let Ok(cfg) = config_for_window.lock() {
                 commands::apply_window(app.handle(), &cfg);
             }
@@ -50,6 +56,8 @@ pub fn run() {
             commands::save_session,
             commands::list_records,
             commands::peers,
+            commands::publish_status,
+            commands::lan_urls,
             commands::delete_history,
             commands::save_text_file,
         ])

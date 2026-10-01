@@ -32,4 +32,12 @@ test('the workspace fits a phone', async ({ page }) => {
 	expect(stage.y).toBeLessThan(palette.y);
 });
 
+test('calling for help does not widen the workspace on a phone', async ({ page }) => {
+	await toMap(page);
+	await openMission(page, 'Erster Flug');
+	await page.getByRole('button', { name: 'Hilfe', exact: true }).click();
+	await expect(page.getByRole('button', { name: 'Hilfe kommt!' })).toBeVisible();
+	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test('30 blocks fit a phone', ({ page }) => checkLongProgram(page, 390, 844));

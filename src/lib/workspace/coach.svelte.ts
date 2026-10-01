@@ -1,6 +1,8 @@
 /** Decides when the coach shows which hint. Hints get more concrete each time. */
 export class CoachState {
 	hint = $state<string | null>(null);
+	/** Index of the hint on screen (for its pointer), null when none is shown. */
+	shown = $state<number | null>(null);
 	private level = 0;
 	private fails = 0;
 	private done = false;
@@ -35,6 +37,7 @@ export class CoachState {
 	succeeded() {
 		this.done = true;
 		this.hint = null;
+		this.shown = null;
 		clearTimeout(this.timer);
 	}
 
@@ -45,6 +48,7 @@ export class CoachState {
 
 	dismiss() {
 		this.hint = null;
+		this.shown = null;
 	}
 
 	dispose() {
@@ -53,7 +57,8 @@ export class CoachState {
 
 	private show() {
 		if (this.hints.length === 0) return;
-		this.hint = this.hints[Math.min(this.level, this.hints.length - 1)];
+		this.shown = Math.min(this.level, this.hints.length - 1);
+		this.hint = this.hints[this.shown];
 		this.level += 1;
 	}
 

@@ -15,6 +15,7 @@
 		"Flieg zuerst ganz nach oben.",
 		"Abheben, Vorwärts 4, Rechts drehen, Vorwärts 4, Landen."
 	],
+	"hintTargets": [{ "block": "turn_right" }, { "cell": [0, 0] }, null],
 	"solution": [
 		{ "id": "s1", "type": "takeoff" },
 		{ "id": "s2", "type": "forward", "n": 4 },

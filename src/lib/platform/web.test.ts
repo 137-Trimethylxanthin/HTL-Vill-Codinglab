@@ -45,7 +45,7 @@ describe('web platform', () => {
 	it('has a no-op init', async () => {
 		const p = createWebPlatform(new MemoryStorage());
 		await p.init();
-		expect(p.features).toEqual({ certificate: false, email: false });
+		expect(p.features).toEqual({ certificate: false, email: false, overview: false });
 	});
 
 	it('stores the fullscreen choice', async () => {
@@ -64,7 +64,7 @@ describe('web platform', () => {
 		expect(cfg.hasPin).toBe(false);
 		expect(cfg.idleSeconds).toBe(90);
 		expect(cfg.stationId).toHaveLength(36);
-		expect(p.features).toEqual({ certificate: false, email: false });
+		expect(p.features).toEqual({ certificate: false, email: false, overview: false });
 	});
 
 	it('sets and checks the PIN', async () => {
@@ -127,5 +127,22 @@ describe('web platform', () => {
 		await p.setPin(null, '2468');
 		expect(await p.deleteHistory('2468')).toBe(1);
 		expect(await p.listRecords()).toHaveLength(0);
+	});
+
+	it('has no supervisor overview, but accepts status quietly', async () => {
+		const p = createWebPlatform(new MemoryStorage());
+		await expect(
+			p.publishStatus({
+				screen: 'map',
+				missionId: null,
+				missionTitle: null,
+				since: null,
+				lastActivity: 0,
+				runs: 0,
+				help: false,
+				solved: 0
+			})
+		).resolves.toBeUndefined();
+		expect(await p.lanUrls()).toEqual([]);
 	});
 });

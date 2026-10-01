@@ -21,7 +21,7 @@ describe('tauri platform', () => {
 		const p = createTauriPlatform();
 		expect(p.features.certificate).toBe(true);
 		await p.init();
-		expect(p.features).toEqual({ certificate: false, email: true });
+		expect(p.features).toEqual({ certificate: false, email: true, overview: false });
 	});
 
 	it('maps backend errors to PlatformError', async () => {

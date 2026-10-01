@@ -8,6 +8,7 @@ export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
 	syncEnabled: false,
 	idleSeconds: 90,
 	fullscreen: true,
+	sound: true,
 	enabledMissions: null,
 	qrUrl: HTL_URL,
 	nameRetentionDays: 7,

@@ -65,6 +65,7 @@ export const de = {
 		eventHint: 'Ohne Event-Code tauschen die Stationen keine Ergebnisse aus.',
 		idleSeconds: 'Zurücksetzen nach Sekunden ohne Eingabe',
 		fullscreen: 'Vollbild (Kiosk-Modus)',
+		sound: 'Töne (Einrasten, Abheben, Geschafft)',
 		missions: 'Missionen',
 		qrUrl: 'Link im QR-Code',
 		mail: 'E-Mail',
@@ -174,7 +175,30 @@ export const de = {
 		next: 'Weiter',
 		prevMission: 'Vorige Mission',
 		nextMission: 'Nächste Mission',
-		editNumber: 'Tippe auf eine Zahl. Dann kannst du sie ändern.'
+		editNumber: 'Tippe auf eine Zahl. Dann kannst du sie ändern.',
+		fresh: 'Neu!',
+		help: 'Hilfe',
+		helpComing: 'Hilfe kommt!'
+	},
+	supervisor: {
+		title: 'Betreuung',
+		enterPin: 'PIN für die Betreuung',
+		showSolution: 'Lösung zeigen',
+		solutionHint: 'Zählt nicht für Sterne.',
+		withSolution: 'Mit der Lösung geschafft. Probier die nächste Mission selbst!',
+		goTo: 'Zu Mission …',
+		clearHelp: 'Hilferuf beenden',
+		nextVisitor: 'Nächster Besucher',
+		nextConfirm: 'Wirklich? Nochmal tippen.',
+		close: 'Schließen',
+		helpOn: 'Hilfe wurde gerufen.',
+		mission: (id: string, title: string) => `Mission ${id} · ${title}`,
+		overview: 'Übersicht am Handy',
+		overviewHint:
+			'Mit dem Handy im selben Netz scannen. Zeigt alle Stationen, Hilferufe und wer schon lange an einer Mission sitzt.',
+		overviewNeeds:
+			'Für die Übersicht am Handy: Event-Code eintragen und speichern (Austausch muss an sein).',
+		overviewNoAddress: 'Keine Netzwerk-Adresse gefunden. Ist die Station im Netz?'
 	},
 	blocks: {
 		takeoff: 'Abheben',

@@ -244,6 +244,44 @@
 	animation: land 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* The block a hint is about: a little wiggle every two seconds. */
+@keyframes wiggle {
+	0%,
+	60%,
+	100% {
+		rotate: 0deg;
+	}
+	70% {
+		rotate: -4deg;
+	}
+	80% {
+		rotate: 4deg;
+	}
+	90% {
+		rotate: -2deg;
+	}
+}
+.wiggle {
+	animation: wiggle 2s ease-in-out infinite;
+}
+
+/* `translate`, not `transform`: list items also slide via transform animations. */
+@keyframes ripple {
+	0%,
+	100% {
+		translate: 0 0;
+	}
+	35% {
+		translate: 0 7px;
+	}
+	70% {
+		translate: 0 -2px;
+	}
+}
+.ripple {
+	animation: ripple 380ms ease-out both;
+}
+
 @keyframes shake {
 	0%,
 	100% {

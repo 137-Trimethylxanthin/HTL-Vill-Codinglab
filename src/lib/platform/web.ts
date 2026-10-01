@@ -22,6 +22,7 @@ const defaults = (): Stored => {
 			syncEnabled: false,
 			idleSeconds: 90,
 			fullscreen: true,
+			sound: true,
 			enabledMissions: null,
 			qrUrl: HTL_URL,
 			nameRetentionDays: 7,
@@ -83,7 +84,7 @@ export function createWebPlatform(storage: Storage): Platform {
 
 	return {
 		kind: 'web',
-		features: { certificate: false, email: false },
+		features: { certificate: false, email: false, overview: false },
 		init: async () => {},
 		appVersion: async () => __APP_VERSION__,
 		checkUpdate: async () => null,
@@ -144,6 +145,8 @@ export function createWebPlatform(storage: Storage): Platform {
 		},
 		listRecords: async () => readHistory(),
 		peers: async () => [],
+		publishStatus: async () => {},
+		lanUrls: async () => [],
 		deleteHistory: async (pin) => {
 			await check(read(), pin);
 			const n = readHistory().length;

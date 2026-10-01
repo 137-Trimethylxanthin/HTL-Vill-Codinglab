@@ -15,6 +15,7 @@
 		"Mit Wiederhole sparst du viele Blöcke.",
 		"Wiederhole 4: Vorwärts 2, Rechts drehen."
 	],
+	"hintTargets": [{ "cell": [1, 1] }, { "block": "repeat" }, null],
 	"solution": [
 		{ "id": "s1", "type": "takeoff" },
 		{

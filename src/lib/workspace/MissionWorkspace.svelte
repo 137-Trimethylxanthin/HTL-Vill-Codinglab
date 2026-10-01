@@ -12,7 +12,14 @@
 	import { untrack } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { findBlock, type Slot } from '$lib/blocks/edit';
+	import {
+		blockTypes,
+		createBlock,
+		findBlock,
+		insertBlock,
+		moveBlock,
+		type Slot
+	} from '$lib/blocks/edit';
 	import { BLOCKS } from '$lib/blocks/registry';
 	import { DragController } from '$lib/dnd/controller.svelte';
 	import { edgeSpeed, pickTarget, type Gap, type ListGeom } from '$lib/dnd/geometry';
@@ -21,13 +28,22 @@
 	import type { Mission } from '$lib/missions/schema';
 	import type { PythonRunner } from '$lib/runtime/client';
 	import DroneStage from '$lib/stage/DroneStage.svelte';
+	import { longPress } from '$lib/ui/long-press';
 	import { cn } from '$lib/utils';
+	import type { Frame } from '$lib/stage/timeline';
+	import { play, type Effect } from '$lib/ui/sound';
 	import BlockPalette from './BlockPalette.svelte';
+	import Poof from './Poof.svelte';
+	import { previewBlock, type Preview } from './preview';
+	import { nextGuideStep } from './guide';
+	import GuideHand from './GuideHand.svelte';
+	import { SHOWCASE } from '$lib/missions';
 	import { blockColor } from './colors';
 	import Coach from './Coach.svelte';
 	import { CoachState } from './coach.svelte';
 	import Confetti from './Confetti.svelte';
 	import DragLayer from './DragLayer.svelte';
+	import HelpButton from './HelpButton.svelte';
 	import { MissionRun } from './mission-run.svelte';
 	import ProgramList from './ProgramList.svelte';
 	import PythonView from './PythonView.svelte';
@@ -39,7 +55,13 @@
 		onSkip,
 		onSolved,
 		onDone,
-		onActivity
+		onActivity,
+		help = false,
+		onHelp,
+		onSupervisor,
+		onRuns,
+		revealed = false,
+		missions = SHOWCASE
 	}: {
 		mission: Mission;
 		runner: PythonRunner;
@@ -50,6 +72,15 @@
 		onDone: (result: MissionResult) => void;
 		/** Watching a flight counts as activity: the idle reset must not fire mid-flight. */
 		onActivity?: () => void;
+		/** Supervisor tools: help request, hidden menu (hold the mission id), run count for the overview. */
+		help?: boolean;
+		onHelp?: () => void;
+		onSupervisor?: () => void;
+		onRuns?: (runs: number) => void;
+		/** A supervisor showed the solution: success earns no stars, so show none. */
+		revealed?: boolean;
+		/** Missions this station plays, in order (for the "Neu!" badges). */
+		missions?: Mission[];
 	} = $props();
 
 	let tab = $state<'program' | 'python'>('program');
@@ -71,7 +102,20 @@
 
 	// The page re-creates this component per mission ({#key}), so these live for one mission.
 	const ctrl = $derived(new MissionRun(mission, runner));
+	const FRAME_SOUNDS: Partial<Record<Frame['kind'], Effect>> = {
+		takeoff: 'takeoff',
+		land: 'land',
+		crash: 'crash',
+		photo: 'photo'
+	};
+	$effect(() => {
+		ctrl.onFrame = (frame) => {
+			const effect = FRAME_SOUNDS[frame.kind];
+			if (effect) play(effect);
+		};
+	});
 	const coach = $derived(new CoachState(mission.hints));
+	$effect(() => onRuns?.(ctrl.runs));
 	$effect(() => {
 		const current = coach;
 		return () => current.dispose();
@@ -84,8 +128,20 @@
 		if (!id) return;
 		landedId = id;
 		clearTimeout(landTimer);
-		landTimer = setTimeout(() => (landedId = null), 450);
+		// Long enough for the squish and for the ripple to run down the blocks below.
+		landTimer = setTimeout(() => (landedId = null), 700);
 		navigator.vibrate?.(8);
+		play('snap');
+	}
+
+	let poofs = $state<{ id: number; x: number; y: number; color: string }[]>([]);
+	let poofId = 0;
+
+	function burst(x: number, y: number, color: string) {
+		const id = ++poofId;
+		poofs = [...poofs, { id, x, y, color }];
+		setTimeout(() => (poofs = poofs.filter((p) => p.id !== id)), 600);
+		play('poof');
 	}
 
 	function apply(op: DropOp) {
@@ -93,6 +149,7 @@
 		switch (op.kind) {
 			case 'tap':
 				if (op.source.kind === 'palette') landed(ctrl.add(op.source.type));
+				else peek(op.source.id);
 				break;
 			case 'insert':
 				landed(ctrl.insert(op.type, op.target));
@@ -101,9 +158,12 @@
 				ctrl.move(op.id, op.target);
 				landed(op.id);
 				break;
-			case 'remove':
+			case 'remove': {
+				const node = findBlock(ctrl.program, op.id);
+				if (node) burst(drag.x.current, drag.y.current, blockColor(node.type));
 				ctrl.remove(op.id);
 				break;
+			}
 			case 'cancel':
 				break;
 		}
@@ -232,6 +292,7 @@
 			drag.cancel();
 			current.dispose();
 			clearTimeout(landTimer);
+			clearTimeout(peekTimer);
 		};
 	});
 
@@ -280,6 +341,53 @@
 		)
 	);
 
+	const guideStep = $derived(
+		mission.guide && ctrl.status === 'idle' ? nextGuideStep(ctrl.program, mission.solution) : null
+	);
+
+	// What the coach's current hint points at.
+	const pointer = $derived(
+		coach.shown === null ? null : (mission.hintTargets?.[coach.shown] ?? null)
+	);
+
+	// Blocks no earlier mission offered get a "Neu!" badge until they are used.
+	const fresh = $derived.by(() => {
+		const at = missions.findIndex((m) => m.id === mission.id);
+		// In the very first mission everything is new: no badges there.
+		if (at <= 0) return [];
+		const before = missions.slice(0, at);
+		return mission.blocks.filter((type) => !before.some((m) => m.blocks.includes(type)));
+	});
+	const used = $derived(new Set(blockTypes(ctrl.program)));
+
+	// Phantom drone: what a block will do, shown while it is dragged or after tapping it.
+	let peekId = $state<string | null>(null);
+	let peekTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function peek(id: string) {
+		peekId = id;
+		clearTimeout(peekTimer);
+		peekTimer = setTimeout(() => (peekId = null), 3000);
+	}
+
+	const PREVIEW_ID = 'preview';
+	const phantom = $derived.by((): Preview | null => {
+		// In the fog the phantom would give away what is hidden.
+		if (mission.fog || ctrl.status === 'running') return null;
+		const source = drag.active;
+		const target = drag.hover?.kind === 'slot' ? drag.hover.target : null;
+		if (source?.kind === 'palette') {
+			if (!target) return null;
+			const node = { ...createBlock(source.type), id: PREVIEW_ID };
+			return previewBlock(insertBlock(ctrl.program, node, target), mission, PREVIEW_ID);
+		}
+		if (source?.kind === 'program') {
+			const program = target ? moveBlock(ctrl.program, source.id, target) : ctrl.program;
+			return previewBlock(program, mission, source.id);
+		}
+		return peekId ? previewBlock(ctrl.program, mission, peekId) : null;
+	});
+
 	const ghost = $derived.by(() => {
 		const source = drag.active;
 		if (!source) return null;
@@ -292,8 +400,13 @@
 	async function run() {
 		coach.pause();
 		await ctrl.run();
-		if (ctrl.status === 'success') coach.succeeded();
-		else if (ctrl.status === 'fail') coach.failed();
+		if (ctrl.status === 'success') {
+			coach.succeeded();
+			play('success');
+		} else if (ctrl.status === 'fail') {
+			coach.failed();
+			play('fail');
+		}
 		// A superseded run returns while a newer one flies: leave the coach paused then.
 		else if (ctrl.status !== 'running') coach.activity();
 	}
@@ -321,7 +434,9 @@
 <div
 	class="grid h-full grid-rows-[auto_minmax(0,1fr)] gap-4 bg-sky p-4 portrait:gap-3 portrait:p-3"
 >
-	<header class="flex items-center gap-3 rounded-3xl bg-card px-3 py-3 shadow-sm">
+	<header
+		class="flex items-center gap-3 rounded-3xl bg-card px-3 py-3 shadow-sm portrait:gap-2 portrait:py-2"
+	>
 		<Button
 			variant="ghost"
 			class="h-14 min-w-14 shrink-0 press rounded-2xl px-4 text-lg"
@@ -329,13 +444,18 @@
 			onclick={() => onBack()}
 			><MapIcon class="size-7" /><span class="max-md:hidden">{t.workspace.back}</span></Button
 		>
-		<span class="rounded-xl bg-drone px-3 py-1 font-display text-xl font-bold text-drone-foreground"
-			>{mission.id}</span
+		<span
+			class="rounded-xl bg-drone px-3 py-1 font-display text-xl font-bold text-drone-foreground"
+			use:longPress={{ onLong: () => onSupervisor?.() }}>{mission.id}</span
 		>
-		<div class="min-w-0 grow">
+		<!-- w-0: the title shrinks (and truncates) instead of widening the header on phones. -->
+		<div class="w-0 min-w-0 grow">
 			<h1 class="truncate text-3xl font-bold portrait:text-2xl">{mission.title}</h1>
-			<p class="text-lg text-muted-foreground portrait:text-base">{mission.goalText}</p>
+			<p class="text-lg text-muted-foreground portrait:text-sm portrait:leading-snug">
+				{mission.goalText}
+			</p>
 		</div>
+		{#if onHelp}<HelpButton {help} onToggle={onHelp} />{/if}
 		<Button
 			variant="ghost"
 			class="h-14 min-w-14 shrink-0 press rounded-2xl px-4 text-lg"
@@ -360,6 +480,8 @@
 			<BlockPalette
 				blocks={mission.blocks}
 				scrollable={paletteScrolls}
+				pointAt={pointer?.block ?? null}
+				fresh={fresh.filter((type) => !used.has(type))}
 				disabled={ctrl.status === 'running'}
 				onGrab={(type, e) => grab({ kind: 'palette', type }, e)}
 				onAdd={(type) => apply({ kind: 'tap', source: { kind: 'palette', type } })}
@@ -397,8 +519,11 @@
 					{landedId}
 					{gapHeight}
 					gapType={ghost?.type ?? null}
+					rounds={ctrl.status === 'running' ? ctrl.rounds : {}}
+					failedId={ctrl.failedId}
 					onRemove={(id) => {
 						coach.activity();
+						play('poof');
 						ctrl.remove(id);
 					}}
 					onStep={(id, delta) => {
@@ -433,7 +558,7 @@
 			class="relative grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-4 rounded-3xl bg-card/70 p-4 portrait:row-start-1 portrait:gap-2 portrait:p-3"
 		>
 			<div class="relative min-h-0">
-				<DroneStage player={ctrl.player} fog={mission.fog} />
+				<DroneStage player={ctrl.player} fog={mission.fog} {phantom} glow={pointer?.cell ?? null} />
 				<Coach {coach} />
 			</div>
 			<div class="flex flex-col gap-3 portrait:gap-2">
@@ -452,7 +577,9 @@
 						)}
 					>
 						{ctrl.message}
-						{#if ctrl.status === 'success'}
+						{#if ctrl.status === 'success' && revealed}
+							<p class="mt-1 text-base font-semibold">{t.supervisor.withSolution}</p>
+						{:else if ctrl.status === 'success'}
 							<span class="mt-1 flex justify-center gap-1">
 								{#each [1, 2, 3] as i (i)}
 									<span class="star-pop" style:animation-delay="{i * 160}ms">
@@ -465,6 +592,8 @@
 									</span>
 								{/each}
 							</span>
+						{/if}
+						{#if ctrl.status === 'success'}
 							<Button
 								class="mt-2 h-14 press rounded-2xl bg-white px-8 text-xl font-bold text-success"
 								onclick={() => onDone(ctrl.result())}>{t.workspace.next}</Button
@@ -480,6 +609,7 @@
 						>
 					{:else}
 						<Button
+							data-start
 							class="h-16 grow press rounded-2xl bg-drone text-2xl font-bold text-drone-foreground"
 							disabled={ctrl.program.length === 0}
 							onclick={run}><Play class="size-7" />{t.workspace.start}</Button
@@ -502,7 +632,7 @@
 					>
 				</div>
 			</div>
-			{#if ctrl.status === 'success' && !prefersReducedMotion.current}
+			{#if ctrl.status === 'success' && !revealed && !prefersReducedMotion.current}
 				<Confetti />
 			{/if}
 		</div>
@@ -510,3 +640,9 @@
 </div>
 
 <DragLayer {drag} {ghost} />
+{#if guideStep && !drag.active}
+	<GuideHand step={guideStep} />
+{/if}
+{#each poofs as p (p.id)}
+	<Poof x={p.x} y={p.y} color={p.color} />
+{/each}

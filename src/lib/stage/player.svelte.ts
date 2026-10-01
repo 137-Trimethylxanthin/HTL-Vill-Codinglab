@@ -52,7 +52,11 @@ export class Player {
 	 * Plays the frames. Resolves true if finished, false if cancelled by reset/stop/another play.
 	 * `speed` is read before every frame, so the speed button works during a flight.
 	 */
-	async play(frames: Frame[], speed: () => number = () => 1): Promise<boolean> {
+	async play(
+		frames: Frame[],
+		speed: () => number = () => 1,
+		onFrame?: (frame: Frame) => void
+	): Promise<boolean> {
 		const token = ++this.token;
 		this.playing = true;
 		for (const frame of frames) {
@@ -83,6 +87,7 @@ export class Player {
 			this.heading.target = pose.heading;
 			this.lift.target = pose.flying ? 1 : 0;
 			this.carrying = pose.carrying;
+			onFrame?.(frame);
 			await sleep(frame.ms / speed());
 		}
 		if (token !== this.token) return false;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	appendBlock,
+	blockTypes,
 	canInsert,
 	createBlock,
 	findBlock,
@@ -19,6 +20,12 @@ const tree = (): BlockNode[] => [
 ];
 const leaf = (id = 'x'): BlockNode => ({ id, type: 'land' });
 const ids = (nodes: BlockNode[] | undefined) => (nodes ?? []).map((n) => n.id);
+
+describe('blockTypes', () => {
+	it('lists the types of all blocks, nested ones included', () => {
+		expect(blockTypes(tree())).toEqual(['takeoff', 'repeat', 'forward', 'if_obstacle', 'forward']);
+	});
+});
 
 describe('createBlock', () => {
 	it('gives parameter blocks their default and containers empty bodies', () => {

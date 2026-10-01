@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SHOWCASE } from '$lib/missions';
-import { Session } from './session.svelte';
+import { HELP_GUARD_MS, Session } from './session.svelte';
 import type { MissionResult } from './types';
 
 const result = (
@@ -185,5 +185,102 @@ describe('Session', () => {
 		expect(s.startedAtMs).toBe(1000);
 		s.reset('quit');
 		expect(s.startedAtMs).toBe(0);
+	});
+
+	it('toggles help, but a double tap is one tap', () => {
+		const { s, advance } = atMap();
+		s.toggleHelp();
+		s.toggleHelp();
+		expect(s.help).toBe(true);
+		advance(HELP_GUARD_MS);
+		s.toggleHelp();
+		expect(s.help).toBe(false);
+	});
+
+	it('clears help when the mission is solved, by a supervisor or on reset', () => {
+		const { s, advance } = atMap();
+		s.open('1.1');
+		s.toggleHelp();
+		s.record(result('1.1', 2));
+		expect(s.help).toBe(false);
+		advance(HELP_GUARD_MS);
+		s.toggleHelp();
+		s.clearHelp();
+		expect(s.help).toBe(false);
+		advance(HELP_GUARD_MS);
+		s.toggleHelp();
+		s.reset('idle');
+		expect(s.help).toBe(false);
+	});
+
+	it('clears help when the visitor leaves the mission', () => {
+		const { s, advance } = atMap();
+		s.open('1.1');
+		s.toggleHelp();
+		s.backToMap();
+		expect(s.help).toBe(false);
+		s.open('1.1');
+		advance(HELP_GUARD_MS);
+		s.toggleHelp();
+		s.skip();
+		expect(s.help).toBe(false);
+	});
+
+	it('remembers when the current mission was opened', () => {
+		const { s, advance } = atMap();
+		advance(5000);
+		s.open('1.1');
+		expect(s.openedAt).toBe(6000);
+		s.complete(result('1.1', 3));
+		advance(1000);
+		s.continue();
+		expect(s.openedAt).toBe(7000);
+		s.reset('quit');
+		expect(s.openedAt).toBe(0);
+	});
+
+	it('never gives stars for a revealed solution', () => {
+		const { s } = atMap();
+		s.open('1.1');
+		s.toggleHelp();
+		s.reveal();
+		expect(s.help).toBe(false);
+		expect(s.isRevealed('1.1')).toBe(true);
+		s.reveal();
+		expect(s.revealTick).toBe(2);
+		expect(s.revealed).toEqual(['1.1']);
+		s.complete(result('1.1', 3));
+		expect(s.results['1.1']).toMatchObject({ stars: 0, skipped: true });
+		expect(s.lastResult).toMatchObject({ stars: 0, skipped: true });
+		expect(s.isSolved('1.1')).toBe(false);
+		expect(s.totalStars).toBe(0);
+		s.reset('quit');
+		expect(s.revealed).toEqual([]);
+		expect(s.revealTick).toBe(0);
+	});
+
+	it('keeps a result earned before the solution was revealed', () => {
+		const { s } = atMap();
+		s.open('1.1');
+		s.record(result('1.1', 2));
+		s.reveal();
+		s.record(result('1.1', 3));
+		expect(s.results['1.1']).toMatchObject({ stars: 2, skipped: false });
+	});
+
+	it('lets a supervisor jump to any mission', () => {
+		const { s } = atMap();
+		s.open('1.1');
+		s.goTo('3.1');
+		expect(s.screen).toBe('mission');
+		expect(s.currentId).toBe('3.1');
+		s.complete(result('3.1', 1));
+		s.goTo('2.1');
+		expect(s.currentId).toBe('2.1');
+		s.goTo('nope');
+		expect(s.screen).toBe('map');
+		const idle = new Session(SHOWCASE);
+		idle.goTo('1.1');
+		expect(idle.screen).toBe('attract');
 	});
 });

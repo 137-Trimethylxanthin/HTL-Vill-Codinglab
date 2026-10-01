@@ -73,7 +73,7 @@ describe('executor', () => {
 		const code = `${HEADER}takeoff()\nif obstacle_ahead():\n    turn_right()\nelse:\n    forward(1)\n`;
 		const result = executor.run(code, m11);
 		expect(result.events.map((e) => e.kind)).toEqual(['takeoff', 'sense', 'move']);
-		expect(result.events[1]).toEqual({ kind: 'sense', line: 4, ahead: false });
+		expect(result.events[1]).toEqual({ kind: 'sense', line: 4, ahead: false, call: 2 });
 	});
 
 	it('stops a sensor loop at the event limit', () => {

@@ -38,6 +38,8 @@
 		landedId = null,
 		gapHeight = null,
 		gapType = null,
+		rounds = {},
+		failedId = null,
 		onRemove,
 		onStep,
 		onGrab
@@ -52,6 +54,8 @@
 		gapHeight?: number | null;
 		/** Type of the block being dragged: the drop gap takes its colour. */
 		gapType?: BlockType | null;
+		rounds?: Record<string, number>;
+		failedId?: string | null;
 		onRemove: (id: string) => void;
 		onStep: (id: string, delta: number) => void;
 		onGrab: (id: string, e: PointerEvent) => void;
@@ -85,13 +89,19 @@
 
 {#snippet list(nodes: BlockNode[], parent: string | null, slot: Slot)}
 	{@const items = itemsFor(nodes, parent, slot)}
+	{@const landedAt = landedId ? items.findIndex((i) => i.node?.id === landedId) : -1}
 	<ol
 		data-drop-slot={slot}
 		data-drop-parent={parent ?? ''}
 		class={cn('flex flex-col', parent !== null && 'min-h-16 py-1')}
 	>
-		{#each items as item (item.key)}
+		{#each items as item, k (item.key)}
+			<!-- Blocks below a block that just landed get a little push, one after the other. -->
 			<li
+				class={cn(landedAt >= 0 && k > landedAt && 'ripple')}
+				style:animation-delay={landedAt >= 0 && k > landedAt
+					? `${Math.min(k - landedAt, 6) * 40}ms`
+					: undefined}
 				data-block-id={item.node?.id}
 				animate:slide
 				in:scale={{ start: 0.7, duration: item.node ? 0 : ms(280), easing: backOut }}
@@ -112,6 +122,8 @@
 							n={node.n}
 							active={node.id === activeId}
 							clamp={open}
+							round={rounds[node.id]}
+							failed={node.id === failedId}
 							onStep={locked ? undefined : (delta) => onStep(node.id, delta)}
 							onRemove={locked ? undefined : () => onRemove(node.id)}
 						/>

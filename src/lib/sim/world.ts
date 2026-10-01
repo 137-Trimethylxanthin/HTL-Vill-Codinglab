@@ -1,13 +1,17 @@
 import type { StopCode } from '$lib/i18n/de';
 import type { Dir, Mission } from '$lib/missions/schema';
 
-export type DroneEvent =
+export type DroneEvent = (
 	| { kind: 'takeoff' | 'land' | 'pickup' | 'drop'; line: number }
 	| { kind: 'move'; line: number; x: number; y: number }
 	| { kind: 'turn'; line: number; dir: Dir }
 	| { kind: 'photo'; line: number; hit: boolean }
 	| { kind: 'sense'; line: number; ahead: boolean }
-	| { kind: 'crash'; line: number; x: number; y: number; into: 'building' | 'edge' };
+	| { kind: 'crash'; line: number; x: number; y: number; into: 'building' | 'edge' }
+) & {
+	/** Which drone command produced the event (counts from 1); forward(3) gives 3 events of one call. */
+	call?: number;
+};
 
 export interface Stop {
 	reason: 'crash' | 'error' | 'limit' | 'timeout';
@@ -35,6 +39,7 @@ const MAX_STEPS_PER_CALL = 99;
 export class World {
 	readonly events: DroneEvent[] = [];
 	stop: Stop | null = null;
+	private calls = 0;
 	private s: WorldSnapshot;
 
 	constructor(
@@ -67,6 +72,7 @@ export class World {
 	/** Executes one drone command. Returns false when the program must stop. */
 	call(name: string, line: number, arg?: unknown): boolean {
 		if (this.stop) return false;
+		this.calls++;
 		switch (name) {
 			case 'takeoff':
 				if (this.s.flying) return this.fail('error', 'alreadyFlying', line);
@@ -109,6 +115,7 @@ export class World {
 	/** Answers a sensor question. Returns undefined when the program must stop. */
 	sense(name: string, line: number): boolean | undefined {
 		if (this.stop) return undefined;
+		this.calls++;
 		if (name !== 'obstacle_ahead') {
 			this.fail('error', 'unknownCommand', line);
 			return undefined;
@@ -137,7 +144,7 @@ export class World {
 			const tile = this.s.rows[y]?.[x];
 			if (tile === undefined || tile === 'B') {
 				const into = tile === 'B' ? 'building' : 'edge';
-				this.events.push({ kind: 'crash', line, x, y, into });
+				this.events.push({ kind: 'crash', line, x, y, into, call: this.calls });
 				return this.fail('crash', into, line);
 			}
 			this.s.x = x;
@@ -160,7 +167,7 @@ export class World {
 
 	private push(event: DroneEvent): boolean {
 		if (this.events.length >= this.maxEvents) return this.fail('limit', 'tooManySteps', event.line);
-		this.events.push(event);
+		this.events.push({ ...event, call: this.calls });
 		return true;
 	}
 

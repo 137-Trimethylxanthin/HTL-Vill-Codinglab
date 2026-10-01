@@ -36,6 +36,14 @@ Die Stationen finden sich im selben Netz von selbst — kein Server, keine Einri
 - Handys/Tablets oder Netze, die das Finden blockieren: unter **„Stationen von Hand“** die IP-Adressen der anderen Stationen eintragen (z. B. `192.168.1.20, 192.168.1.21:47800`).
 - Die Stationen verwenden Port **47800** (TCP). Eine Firewall muss ihn im lokalen Netz erlauben.
 
+## Betreuung auf dem Gang
+
+Für Betreuer gibt es den [Spickzettel](SPICKZETTEL.md): Lösungen aller Missionen, häufige Fehler, Tipps.
+
+- **Übersicht am Handy:** Admin → „Übersicht am Handy“ → QR-Code scannen. Zeigt alle Stationen, Hilferufe und wer schon lange an einer Mission sitzt. Braucht den Event-Code und Port 47800 (wie der Austausch).
+- **Hilfe-Knopf:** Kinder rufen in der Mission mit „Hilfe“ einen Betreuer; auf der Übersicht erscheint **HILFE**.
+- **Betreuungs-Menü:** Missionsnummer oben links **2 Sekunden halten** (oder **Strg + Umschalt + H**), dann die Admin-PIN: Lösung zeigen (zählt nicht für Sterne), zu einer Mission springen, Hilferuf beenden, nächster Besucher.
+
 ## E-Mail
 
 1. SMTP-Server, Port, STARTTLS, Benutzer, Passwort und Absender eintragen, **Speichern**.

@@ -15,6 +15,7 @@
 		"Nimm das Paket. Dann dreh dich nach rechts.",
 		"Gib das Paket ab. Dann lande."
 	],
+	"hintTargets": [{ "cell": [1, 4] }, { "block": "pick_up" }, { "block": "drop" }],
 	"solution": [
 		{ "id": "s1", "type": "takeoff" },
 		{ "id": "s2", "type": "forward", "n": 3 },

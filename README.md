@@ -68,6 +68,6 @@ macOS-Builds sind nicht signiert: beim ersten Start Rechtsklick → Öffnen.
 | `src/lib/platform`                   | **einziger** Zugang zu Tauri (plus Web-Ersatz)                                                                    |
 | `src-tauri/src`                      | `config`, `admin` (PIN), `secrets`, `emails`, `certificate`, `mail`, `history` (SQLite), `sync` (LAN), `commands` |
 
-Weitere Doku: [Betrieb am Tag der offenen Tür](docs/BETRIEB.md) · [Missionen erstellen](docs/MISSIONEN.md) · Design: `docs/superpowers/specs/`.
+Weitere Doku: [Betrieb am Tag der offenen Tür](docs/BETRIEB.md) · [Spickzettel für Betreuer](docs/SPICKZETTEL.md) · [Missionen erstellen](docs/MISSIONEN.md) · Design: `docs/superpowers/specs/`.
 
 Schrift im Zertifikat: Noto Sans (`src-tauri/fonts/LICENSE-noto-fonts.txt`).

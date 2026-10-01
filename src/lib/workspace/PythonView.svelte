@@ -55,7 +55,7 @@
 	<pre class="min-h-0 overflow-auto rounded-2xl bg-slate-900 p-4 font-mono text-lg leading-8"><code
 			>{#each lines as line, i (i)}<div
 					class={cn(
-						'-mx-2 rounded-lg border-l-4 border-transparent px-2 transition-colors',
+						'-mx-2 rounded-r-lg border-l-4 border-transparent px-2 transition-colors',
 						activeLine === i + 1 && 'bg-drone/40'
 					)}
 					style:border-left-color={lineColors[i + 1]}><span

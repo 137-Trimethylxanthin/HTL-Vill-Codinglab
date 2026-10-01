@@ -12,6 +12,8 @@
 		n,
 		active = false,
 		clamp = false,
+		round,
+		failed = false,
 		onStep,
 		onRemove
 	}: {
@@ -20,6 +22,10 @@
 		active?: boolean;
 		/** Header of an open repeat/if clamp: the arm continues below, the tab moves inside it. */
 		clamp?: boolean;
+		/** Current round of a running repeat loop. */
+		round?: number;
+		/** The run stopped at this block. */
+		failed?: boolean;
 		onStep?: (delta: number) => void;
 		onRemove?: () => void;
 	} = $props();
@@ -37,7 +43,8 @@
 		class={cn(
 			'puzzle flex min-h-14 items-center gap-3 rounded-2xl bg-(--blk) px-3 pt-2 pb-1 text-lg font-semibold text-white transition-transform duration-200',
 			clamp && 'rounded-bl-none',
-			active && 'scale-[1.03] ring-4 ring-white ring-inset'
+			active && 'scale-[1.03] ring-4 ring-white ring-inset',
+			failed && 'shake ring-4 ring-destructive ring-inset'
 		)}
 	>
 		<span class="grid size-10 shrink-0 place-items-center rounded-xl bg-white/20">
@@ -63,6 +70,13 @@
 						disabled={n >= spec.param.max}><Plus class="size-5" /></button
 					>
 				</div>
+			{:else if round !== undefined}
+				<!-- Re-created each round, so the squish plays every time the loop starts over. -->
+				{#key round}
+					<span class="land rounded-lg bg-white px-2 text-2xl text-(--blk) tabular-nums"
+						>{round}/{n}</span
+					>
+				{/key}
 			{:else}
 				<span class="rounded-lg bg-white/20 px-2 text-2xl tabular-nums">{n}</span>
 			{/if}

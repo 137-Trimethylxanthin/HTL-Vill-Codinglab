@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { setSoundEnabled, unlockSound } from '$lib/ui/sound';
 	import { onDestroy, onMount } from 'svelte';
 	import AdminScreen from '$lib/admin/AdminScreen.svelte';
+	import SupervisorMenu from '$lib/admin/SupervisorMenu.svelte';
 	import { configKey, StationStore } from '$lib/config/station.svelte';
 	import { toRecord } from '$lib/history/record';
 	import { t } from '$lib/i18n/de';
@@ -18,6 +20,7 @@
 	import { IdleTimer } from '$lib/session/idle.svelte';
 	import { installKioskGuards } from '$lib/session/kiosk';
 	import { Session } from '$lib/session/session.svelte';
+	import { buildStatus, StatusPublisher } from '$lib/session/status';
 	import type { SessionSummary } from '$lib/session/types';
 	import MissionWorkspace from '$lib/workspace/MissionWorkspace.svelte';
 
@@ -34,6 +37,26 @@
 	let runner = $state<PythonRunner | null>(null);
 	let phase = $state<'loading' | 'ready' | 'failed'>('loading');
 	let adminOpen = $state(false);
+	let supervisorOpen = $state(false);
+	/** Start presses in the open mission, for the supervisor overview. */
+	let runs = $state(0);
+
+	// Supervisors see every station's status on their phones (no visitor names).
+	const publisher = new StatusPublisher((status) => platform.publishStatus(status));
+	$effect(() => publisher.update(buildStatus(session, runs)));
+
+	/** A supervisor loaded the solution: the workspace starts over with it as the program. */
+	const workspaceMission = $derived.by(() => {
+		const m = session.current;
+		return m && session.isRevealed(m.id) ? { ...m, starter: m.solution } : m;
+	});
+
+	function activity() {
+		idle.activity();
+		publisher.activity();
+	}
+
+	$effect(() => setSoundEnabled(station.config.sound !== false));
 
 	/** Settings changed (or first loaded): new idle time, mission selection, fresh session. */
 	let lastConfig = '';
@@ -59,12 +82,14 @@
 				applyConfig();
 				if (!station.config.hasPin) adminOpen = true;
 			});
+		publisher.start();
 		return installKioskGuards(window, import.meta.env.DEV);
 	});
 
 	onDestroy(() => {
 		runner?.dispose();
 		idle.stop();
+		publisher.stop();
 	});
 
 	// After every screen change, ignore input briefly: the second tap of a double tap
@@ -80,7 +105,7 @@
 
 	// The idle timer runs on every screen except the attract loop, and never during admin.
 	$effect(() => {
-		if (adminOpen || session.screen === 'attract') idle.stop();
+		if (adminOpen || supervisorOpen || session.screen === 'attract') idle.stop();
 		else idle.start();
 	});
 
@@ -91,17 +116,27 @@
 	});
 
 	function onKey(e: KeyboardEvent) {
-		idle.activity();
+		activity();
 		if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'a') {
 			e.preventDefault();
 			adminOpen = true;
 		}
+		if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'h') {
+			e.preventDefault();
+			if (session.screen === 'mission' && !adminOpen) supervisorOpen = true;
+		}
 	}
 </script>
 
-<svelte:window onpointerdown={() => idle.activity()} onkeydown={onKey} />
+<svelte:window
+	onpointerdown={() => {
+		activity();
+		unlockSound();
+	}}
+	onkeydown={onKey}
+/>
 
-<div class="contents" inert={settling || adminOpen}>
+<div class="contents" inert={settling || adminOpen || supervisorOpen}>
 	{#if phase !== 'ready' || !runner}
 		<Splash failed={phase === 'failed'} />
 	{:else if session.screen === 'attract'}
@@ -110,16 +145,22 @@
 		<Pilot onDone={(name) => session.setPilot(name)} />
 	{:else if session.screen === 'map'}
 		<MissionMap {session} onOpen={(id) => session.open(id)} onFinish={() => session.finish()} />
-	{:else if session.screen === 'mission' && session.current}
-		{#key session.current.id}
+	{:else if session.screen === 'mission' && workspaceMission}
+		{#key `${workspaceMission.id}:${session.revealTick}`}
 			<MissionWorkspace
-				mission={session.current}
+				mission={workspaceMission}
 				{runner}
 				onBack={() => session.backToMap()}
 				onSkip={() => session.skip()}
 				onSolved={(result) => session.record(result)}
 				onDone={(result) => session.complete(result)}
-				onActivity={() => idle.activity()}
+				onActivity={activity}
+				help={session.help}
+				onHelp={() => session.toggleHelp()}
+				onSupervisor={() => (supervisorOpen = true)}
+				onRuns={(n) => (runs = n)}
+				revealed={session.currentId !== null && session.isRevealed(session.currentId)}
+				missions={session.missions}
 			/>
 		{/key}
 	{:else if session.screen === 'complete' && session.lastResult}
@@ -142,6 +183,15 @@
 
 {#if idle.warning}
 	<IdleOverlay remaining={idle.remaining} onContinue={() => idle.activity()} />
+{/if}
+
+{#if supervisorOpen}
+	<SupervisorMenu
+		{platform}
+		{session}
+		onNextVisitor={() => store(session.reset(session.screen === 'finale' ? 'finale' : 'quit'))}
+		onClose={() => (supervisorOpen = false)}
+	/>
 {/if}
 
 {#if adminOpen}

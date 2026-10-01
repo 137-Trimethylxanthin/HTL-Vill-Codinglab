@@ -1,9 +1,22 @@
 <script lang="ts">
 	import { t } from '$lib/i18n/de';
 	import type { Player } from './player.svelte';
+	import type { Preview } from '$lib/workspace/preview';
+	import PhantomDrone from './PhantomDrone.svelte';
 	import { visibleCells } from './visibility';
 
-	let { player, fog = false }: { player: Player; fog?: boolean } = $props();
+	let {
+		player,
+		fog = false,
+		phantom = null,
+		glow = null
+	}: {
+		player: Player;
+		fog?: boolean;
+		phantom?: Preview | null;
+		/** A cell the coach's hint is about. */
+		glow?: [number, number] | null;
+	} = $props();
 
 	const CELL = 100;
 	const rows = $derived(player.rows);
@@ -135,6 +148,24 @@
 		{/if}
 	{/each}
 
+	<!-- Where the drone has been: a trail of dots. -->
+	{#each player.visited as key (key)}
+		{@const [vx, vy] = key.split(',').map(Number)}
+		<circle cx={(vx + 0.5) * CELL} cy={(vy + 0.5) * CELL} r="7" class="fill-drone/50" />
+	{/each}
+
+	{#if glow}
+		<rect
+			x={glow[0] * CELL + 4}
+			y={glow[1] * CELL + 4}
+			width={CELL - 8}
+			height={CELL - 8}
+			rx="14"
+			stroke-width="8"
+			class="glow fill-none stroke-yellow-400"
+		/>
+	{/if}
+
 	<!-- shadow grows apart from the drone while it flies -->
 	<ellipse
 		cx={cx + lift * 10}
@@ -201,6 +232,10 @@
 		</g>
 	{/key}
 
+	{#if phantom}
+		<PhantomDrone preview={phantom} cell={CELL} />
+	{/if}
+
 	{#key player.flash}
 		{#if player.flash > 0}
 			<rect {width} {height} rx="24" class="flash pointer-events-none fill-white" />
@@ -216,6 +251,14 @@
 	}
 	.bump {
 		animation: bump 0.5s ease-out;
+	}
+	.glow {
+		animation: glow 1.2s ease-in-out infinite;
+	}
+	@keyframes glow {
+		50% {
+			opacity: 0.35;
+		}
 	}
 	.parcel-drop {
 		animation: parcel-drop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
