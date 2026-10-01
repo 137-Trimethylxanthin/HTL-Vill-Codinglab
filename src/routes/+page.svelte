@@ -1,5 +1,9 @@
 <script lang="ts">
 	import { setSoundEnabled, unlockSound } from '$lib/ui/sound';
+	import type { BlockNode } from '$lib/blocks/types';
+	import MasterScreen from '$lib/master/MasterScreen.svelte';
+	import PauseOverlay from '$lib/master/PauseOverlay.svelte';
+	import type { RemoteCommand } from '$lib/platform/types';
 	import { onDestroy, onMount } from 'svelte';
 	import AdminScreen from '$lib/admin/AdminScreen.svelte';
 	import SupervisorMenu from '$lib/admin/SupervisorMenu.svelte';
@@ -22,7 +26,7 @@
 	import { installKioskGuards } from '$lib/session/kiosk';
 	import { ORDERED_MAX_STARS, Session } from '$lib/session/session.svelte';
 	import { seededRandom, shuffleBlocks } from '$lib/session/order';
-	import { buildStatus, StatusPublisher } from '$lib/session/status';
+	import { buildStatus, StatusPublisher, type LivePose } from '$lib/session/status';
 	import type { SessionSummary } from '$lib/session/types';
 	import MissionWorkspace from '$lib/workspace/MissionWorkspace.svelte';
 
@@ -47,7 +51,56 @@
 
 	// Supervisors see every station's status on their phones (no visitor names).
 	const publisher = new StatusPublisher((status) => platform.publishStatus(status));
-	$effect(() => publisher.update(buildStatus(session, runs, fails)));
+	// What a master station sees: live blocks and drone, and whether it paused us.
+	let live = $state<{ program: BlockNode[]; pose: LivePose } | null>(null);
+	let paused = $state<{ text: string } | null>(null);
+	let message = $state<string | null>(null);
+	let messageTimer: ReturnType<typeof setTimeout> | undefined;
+	let pauseTimer: ReturnType<typeof setTimeout> | undefined;
+	const PAUSE_MAX_MS = 15 * 60_000;
+	$effect(() => publisher.update(buildStatus(session, runs, fails, live, paused !== null)));
+
+	/** A command from the master station (already authenticated by the backend). */
+	function remote(cmd: RemoteCommand) {
+		// A master steers others; it is never paused or reset by one (two masters, own bulk send).
+		if (station.config.master && cmd.kind !== 'message' && cmd.kind !== 'settings') return;
+		switch (cmd.kind) {
+			case 'reset':
+				paused = null;
+				message = null;
+				supervisorOpen = false;
+				store(session.reset(session.screen === 'finale' ? 'finale' : 'quit'));
+				break;
+			case 'pause':
+				paused = cmd.on ? { text: cmd.text ?? '' } : null;
+				clearTimeout(pauseTimer);
+				// If the master goes away, a paused kiosk must not stay paused for the rest of the day.
+				if (cmd.on) pauseTimer = setTimeout(() => (paused = null), PAUSE_MAX_MS);
+				break;
+			case 'message':
+				message = cmd.text;
+				clearTimeout(messageTimer);
+				messageTimer = setTimeout(() => (message = null), 12_000);
+				break;
+			case 'endHelp':
+				session.clearHelp();
+				break;
+			case 'showSolution':
+				session.reveal();
+				break;
+			case 'settings': {
+				// The backend saved the new settings already. Only a new mission selection needs a
+				// fresh visitor; idle time and sound apply without kicking anyone out.
+				const before = JSON.stringify(station.config.enabledMissions);
+				void station.load(platform).then(() => {
+					idle.setIdleMs(station.config.idleSeconds * 1000);
+					if (JSON.stringify(station.config.enabledMissions) !== before) applyConfig();
+					else lastConfig = configKey(station.config);
+				});
+				break;
+			}
+		}
+	}
 
 	/**
 	 * A supervisor loaded the solution (or its blocks shuffled, to put in order): the workspace
@@ -93,7 +146,14 @@
 				if (!station.config.hasPin) adminOpen = true;
 			});
 		publisher.start();
-		return installKioskGuards(window, import.meta.env.DEV);
+		const offRemote = platform.onRemoteCommand(remote);
+		const offGuards = installKioskGuards(window, import.meta.env.DEV);
+		return () => {
+			offRemote();
+			offGuards();
+			clearTimeout(messageTimer);
+			clearTimeout(pauseTimer);
+		};
 	});
 
 	onDestroy(() => {
@@ -113,9 +173,17 @@
 		return () => clearTimeout(timer);
 	});
 
-	// The idle timer runs on every screen except the attract loop, and never during admin.
+	// The idle timer runs on every screen except the attract loop, and never during admin,
+	// on a wall or master display, or while a master paused this station (an announcement).
 	$effect(() => {
-		if (adminOpen || supervisorOpen || station.config.wallMode || session.screen === 'attract')
+		if (
+			adminOpen ||
+			supervisorOpen ||
+			paused !== null ||
+			station.config.wallMode ||
+			station.config.master ||
+			session.screen === 'attract'
+		)
 			idle.stop();
 		else idle.start();
 	});
@@ -147,8 +215,16 @@
 	onkeydown={onKey}
 />
 
-<div class="contents" inert={settling || adminOpen || supervisorOpen}>
-	{#if station.config.wallMode}
+<div class="contents" inert={settling || adminOpen || supervisorOpen || paused !== null}>
+	{#if station.config.master && platform.features.master}
+		<!-- Master: watches and steers all stations; no visitor flow here. -->
+		<MasterScreen
+			{platform}
+			config={station.config}
+			missions={SHOWCASE}
+			onAdmin={() => (adminOpen = true)}
+		/>
+	{:else if station.config.wallMode}
 		<!-- Wall display: only watching, no visitor flow. -->
 		<Wall
 			{platform}
@@ -178,6 +254,7 @@
 				onHelp={() => session.toggleHelp()}
 				onSupervisor={() => (supervisorOpen = true)}
 				onRuns={(n) => (runs = n)}
+				onLive={(l) => (live = l)}
 				onFails={(n) => (fails = n)}
 				revealed={session.currentId !== null && session.isRevealed(session.currentId)}
 				missions={session.missions}
@@ -206,6 +283,16 @@
 	{/if}
 </div>
 
+{#if paused}
+	<PauseOverlay text={paused.text} />
+{/if}
+{#if message}
+	<button
+		class="fixed inset-x-0 top-6 z-50 mx-auto w-fit max-w-[90vw] rounded-3xl bg-htl px-8 py-5 text-center text-2xl font-bold text-white shadow-2xl"
+		onclick={() => (message = null)}>{message}</button
+	>
+{/if}
+
 {#if idle.warning}
 	<IdleOverlay remaining={idle.remaining} onContinue={() => idle.activity()} />
 {/if}
@@ -226,6 +313,8 @@
 		missions={SHOWCASE}
 		onClose={() => {
 			adminOpen = false;
+			// Admin (behind the PIN) is the local way out of a pause the master forgot to lift.
+			paused = null;
 			// Only a real settings change resets the visitor.
 			if (configKey(station.config) !== lastConfig) applyConfig();
 		}}

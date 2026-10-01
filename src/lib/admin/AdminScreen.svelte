@@ -268,6 +268,25 @@
 					><input type="checkbox" class="size-6" bind:checked={form.wallMode} />{t.wall
 						.admin}</label
 				>
+				{#if platform.features.master}
+					<!-- Optional: one PC watches and steers all stations; without it nothing changes. -->
+					<div class="flex flex-col gap-2 rounded-2xl bg-muted p-4">
+						<button
+							type="button"
+							class="h-14 press rounded-2xl px-6 text-lg font-bold {form.master
+								? 'bg-destructive text-white'
+								: 'bg-htl text-white'}"
+							disabled={busy || (!form.master && !form.eventCode.trim())}
+							onclick={() => {
+								form.master = !form.master;
+								save();
+							}}>{form.master ? t.leitstand.demote : t.leitstand.promote}</button
+						>
+						<span class="text-base text-muted-foreground"
+							>{form.eventCode.trim() ? t.leitstand.promoteHint : t.leitstand.promoteNeeds}</span
+						>
+					</div>
+				{/if}
 				<label class="flex flex-col gap-1"
 					>{t.logbook.retention}<input
 						class={field}

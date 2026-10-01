@@ -22,6 +22,7 @@ export async function seedStation(page: Page, overrides: Record<string, unknown>
 			qrUrl: 'https://www.htl-villach.at',
 			replayUrl: '',
 			wallMode: false,
+			master: false,
 			nameRetentionDays: 7,
 			manualPeers: [],
 			smtp: { host: '', port: 587, username: '', from: '', starttls: true },

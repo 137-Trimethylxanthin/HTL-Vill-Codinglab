@@ -27,8 +27,36 @@ describe('buildStatus', () => {
 			runs: 3,
 			fails: 2,
 			help: true,
-			solved: 2
+			solved: 2,
+			paused: false
 		});
+	});
+
+	it('sends the blocks and the drone for the master, but only in a mission', () => {
+		const live = {
+			program: [{ id: 'a', type: 'takeoff' as const }],
+			pose: { x: 1, y: 2, heading: 90, flying: true, carrying: false }
+		};
+		expect(buildStatus(source({ startedAtMs: 1000 }), 0, 0, live, true)).toMatchObject({
+			program: [['takeoff']],
+			pose: live.pose,
+			visitSince: 1000,
+			paused: true
+		});
+		expect(buildStatus(source({ screen: 'map' }), 0, 0, live)).not.toHaveProperty('program');
+	});
+
+	it('sends a flying drone at least once a second', () => {
+		vi.useFakeTimers();
+		const sent: unknown[] = [];
+		const p = new StatusPublisher(async (s) => void sent.push(s));
+		for (let i = 0; i < 10; i++) {
+			p.update(buildStatus(source({}), i));
+			vi.advanceTimersByTime(300);
+		}
+		expect(sent.length).toBeGreaterThanOrEqual(2);
+		p.stop();
+		vi.useRealTimers();
 	});
 
 	it('has no mission on the map, even if one was open before', () => {

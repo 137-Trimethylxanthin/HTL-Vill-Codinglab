@@ -32,6 +32,8 @@ pub struct StationConfig {
     pub replay_url: String,
     /// Wall display: the screen only shows the day's flights, no visitor input.
     pub wall_mode: bool,
+    /// Master station: sees the whole fleet and may send commands to the other stations.
+    pub master: bool,
     pub name_retention_days: u32,
     pub manual_peers: Vec<String>,
     pub smtp: SmtpSettings,
@@ -56,6 +58,8 @@ pub struct EditableConfig {
     pub replay_url: String,
     #[serde(default)]
     pub wall_mode: bool,
+    #[serde(default)]
+    pub master: bool,
     pub name_retention_days: u32,
     pub manual_peers: Vec<String>,
     pub smtp: SmtpSettings,
@@ -96,6 +100,7 @@ impl Default for StationConfig {
             qr_url: "https://www.htl-villach.at".into(),
             replay_url: String::new(),
             wall_mode: false,
+            master: false,
             name_retention_days: 7,
             manual_peers: Vec::new(),
             smtp: SmtpSettings::default(),
@@ -123,6 +128,7 @@ impl StationConfig {
             qr_url: self.qr_url.clone(),
             replay_url: self.replay_url.clone(),
             wall_mode: self.wall_mode,
+            master: self.master,
             name_retention_days: self.name_retention_days,
             manual_peers: self.manual_peers.clone(),
             smtp: self.smtp.clone(),
@@ -141,6 +147,7 @@ impl StationConfig {
         self.qr_url = e.qr_url.trim().to_string();
         self.replay_url = clean_replay_url(&e.replay_url);
         self.wall_mode = e.wall_mode;
+        self.master = e.master;
         self.name_retention_days = e.name_retention_days.clamp(1, 365);
         self.manual_peers = e
             .manual_peers
@@ -389,5 +396,23 @@ mod tests {
         cfg.apply(e);
         assert_eq!(cfg.replay_url, "https://x.org/flug");
         assert!(cfg.wall_mode);
+    }
+
+    #[test]
+    fn master_is_off_in_old_files_and_can_be_set() {
+        let cfg: StationConfig = serde_json::from_str(r#"{"stationName":"A"}"#).unwrap();
+        assert!(!cfg.master);
+        let old: EditableConfig = serde_json::from_value(serde_json::json!({
+            "stationName": "A", "eventCode": "", "syncEnabled": true, "idleSeconds": 90, "fullscreen": true,
+            "enabledMissions": null, "qrUrl": "", "nameRetentionDays": 7, "manualPeers": [], "smtp": {}
+        }))
+        .unwrap();
+        assert!(!old.master);
+        let mut cfg = cfg;
+        let mut e = cfg.editable();
+        e.master = true;
+        cfg.apply(e);
+        assert!(cfg.master);
+        assert_eq!(serde_json::to_value(cfg.public(false)).unwrap()["master"], true);
     }
 }

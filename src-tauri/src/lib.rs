@@ -6,6 +6,7 @@ mod emails;
 mod error;
 mod history;
 mod mail;
+mod remote;
 mod secrets;
 mod sync;
 
@@ -31,6 +32,14 @@ pub fn run() {
                 config: config.clone(),
                 peers: Default::default(),
                 status: Mutex::new(None),
+                dir: dir.clone(),
+                inbox: Default::default(),
+            });
+            // Commands from the master go on to the frontend.
+            let handle = app.handle().clone();
+            shared.inbox.on_command(move |cmd| {
+                use tauri::Emitter;
+                let _ = handle.emit(remote::EVENT_NAME, cmd);
             });
             let peers = sync::start(shared.clone());
             let config_for_window = config.clone();
@@ -58,6 +67,8 @@ pub fn run() {
             commands::peers,
             commands::publish_status,
             commands::lan_urls,
+            commands::fleet,
+            commands::send_command,
             commands::delete_history,
             commands::save_text_file,
         ])

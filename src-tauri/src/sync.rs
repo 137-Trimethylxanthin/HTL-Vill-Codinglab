@@ -78,9 +78,17 @@ use std::time::{Duration, Instant};
 
 pub const SYNC_PORT: u16 = 47800;
 pub const SERVICE_TYPE: &str = "_codinglab._tcp.local.";
-pub const PROTOCOL: &str = "1";
+/// Bumped whenever the wire format changes: older builds are then refused instead of half-working.
+/// 2: the swarm header carries `swarm_token`, commands are bound to their recipient.
+pub const PROTOCOL: &str = "2";
+/// Proves membership of the event on every request between stations; carries `swarm_token`, never the code.
+pub const SWARM_HEADER: &str = "x-codinglab-event";
 const ROUND: Duration = Duration::from_secs(30);
 pub const MAX_PEERS: usize = 32;
+/// A peer that answered a sync round this recently is never pushed out of the list by newcomers.
+const TRUSTED_MS: i64 = 5 * 60_000;
+/// At most this many stations per IP address (one machine must not fill the list).
+const MAX_PEERS_PER_IP: usize = 4;
 const PEER_EXPIRY: Duration = Duration::from_secs(600);
 const STICKY_MS: i64 = 90_000;
 // Records now carry flight paths (~2 KB each): a 500-record push batch must still fit.
@@ -98,14 +106,27 @@ const STUCK_MISSION_MS: i64 = 4 * 60_000;
 const STUCK_IDLE_MS: i64 = 45_000;
 const OVERVIEW_HTML: &str = include_str!("overview.html");
 
-/// The event code is the swarm's shared secret: it is never sent in the clear.
-/// mDNS and /health only carry this short hash so stations can group by event.
+/// The event code is the swarm's shared secret and never leaves the station. Three values are derived
+/// from it, each under its own label so none can be computed from another:
+/// - `event_hash` (public: mDNS, /health) only lets stations group by event;
+/// - `swarm_token` goes in SWARM_HEADER and opens /records and /status;
+/// - the command key (remote.rs) signs commands, so neither of the others is enough to steer a station.
 pub fn event_hash(code: &str) -> String {
     use sha2::{Digest, Sha256};
     if code.is_empty() {
         return String::new();
     }
     Sha256::digest(format!("codinglab-event:{code}").as_bytes())[..6].iter().map(|b| format!("{b:02x}")).collect()
+}
+
+/// Sent in SWARM_HEADER instead of the code. A peer that learns it can read and add records,
+/// but cannot derive the code or the command key from it. Empty code, empty token.
+pub fn swarm_token(code: &str) -> String {
+    use sha2::{Digest, Sha256};
+    if code.is_empty() {
+        return String::new();
+    }
+    Sha256::digest(format!("codinglab-swarm:{code}").as_bytes()).iter().map(|b| format!("{b:02x}")).collect()
 }
 
 /// What the frontend last reported about this station (src/lib/session/status.ts). No visitor names.
@@ -123,7 +144,28 @@ pub struct StationStatus {
     pub fails: u32,
     pub help: bool,
     pub solved: u32,
+    /// The visitor's block program, compact and opaque here (for the master's live view).
+    pub program: Option<serde_json::Value>,
+    pub pose: Option<Pose>,
+    /// When the current visitor started (ms epoch).
+    pub visit_since: Option<i64>,
+    /// The master paused this station.
+    pub paused: bool,
 }
+
+/// Where the drone is right now, for the master's live view.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Pose {
+    pub x: f64,
+    pub y: f64,
+    pub heading: f64,
+    pub flying: bool,
+    pub carrying: bool,
+}
+
+/// A bigger program is not shown live (status rows stay small).
+pub const MAX_PROGRAM_BYTES: usize = 8 * 1024;
 
 /// Why a station shows "HÄNGT" in the overview.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -164,10 +206,14 @@ pub struct StatusView {
     pub age_ms: i64,
     /// Time on the current mission.
     pub mission_ms: Option<i64>,
+    /// Time since the current visitor started.
+    pub visit_ms: Option<i64>,
     pub idle_ms: i64,
     pub offline: bool,
     pub stuck: bool,
     pub stuck_reason: Option<StuckReason>,
+    /// The station's own clock when it built this row (ms epoch; 0 = unknown), to show clock skew.
+    pub now: i64,
 }
 
 impl StatusView {
@@ -184,36 +230,43 @@ pub struct Shared {
     pub peers: Arc<Peers>,
     /// The latest status and when it arrived (ms epoch).
     pub status: Mutex<Option<(StationStatus, i64)>>,
+    /// Where the config is saved (remote settings).
+    pub dir: std::path::PathBuf,
+    /// Commands from the master: replay guard and the hand-over to the frontend.
+    pub inbox: crate::remote::Inbox,
 }
 
 impl Shared {
-    fn identity(&self) -> Option<(String, String, u32, bool)> {
+    pub(crate) fn identity(&self) -> Option<(String, String, u32, bool)> {
         let cfg = self.config.lock().ok()?;
         // Without an event code there is no secret, so the station neither serves nor syncs.
         let enabled = cfg.sync_enabled && !cfg.event_code.is_empty();
         Some((cfg.station_id.clone(), cfg.event_code.clone(), cfg.name_retention_days, enabled))
     }
 
-    pub fn set_status(&self, status: StationStatus) {
+    pub fn set_status(&self, mut status: StationStatus) {
+        drop_big_program(&mut status);
         if let Ok(mut slot) = self.status.lock() {
             *slot = Some((status, now_ms()));
         }
     }
 
     /// This station's row; offline if the frontend never reported or stopped reporting.
-    fn own_view(&self) -> StatusView {
+    pub(crate) fn own_view(&self) -> StatusView {
         let (station_id, station_name) =
             self.config.lock().map(|c| (c.station_id.clone(), c.station_name.clone())).unwrap_or_default();
         let latest = self.status.lock().ok().and_then(|s| s.clone());
-        let Some((status, at)) = latest else {
-            return StatusView { station_id, station_name, offline: true, ..Default::default() };
-        };
         let now = now_ms();
+        let Some((status, at)) = latest else {
+            return StatusView { station_id, station_name, offline: true, now, ..Default::default() };
+        };
         let mut view = StatusView {
             station_id,
             station_name,
             age_ms: now - at,
             mission_ms: status.since.map(|t| (now - t).max(0)),
+            visit_ms: status.visit_since.map(|t| (now - t).max(0)),
+            now,
             idle_ms: (now - status.last_activity).max(0),
             offline: now - at > OFFLINE_MS,
             status,
@@ -224,7 +277,14 @@ impl Shared {
     }
 }
 
-fn now_ms() -> i64 {
+/// A program too big for a status row is not shown (ours or a peer's).
+fn drop_big_program(status: &mut StationStatus) {
+    if status.program.as_ref().is_some_and(|p| serde_json::to_vec(p).map_or(true, |b| b.len() > MAX_PROGRAM_BYTES)) {
+        status.program = None;
+    }
+}
+
+pub(crate) fn now_ms() -> i64 {
     chrono::Utc::now().timestamp_millis()
 }
 
@@ -239,10 +299,11 @@ struct Page {
     last: i64,
 }
 
-fn same_swarm(shared: &Shared, headers: &HeaderMap) -> Result<u32, StatusCode> {
+pub(crate) fn same_swarm(shared: &Shared, headers: &HeaderMap) -> Result<u32, StatusCode> {
     let (_, event, retention, enabled) = shared.identity().ok_or(StatusCode::SERVICE_UNAVAILABLE)?;
     let header = |name: &str| headers.get(name).and_then(|v| v.to_str().ok()).unwrap_or_default().to_string();
-    if !enabled || header("x-codinglab-v") != PROTOCOL || header("x-codinglab-event") != event {
+    // Constant time: how long the check takes says nothing about how much of the token was right.
+    if !enabled || header("x-codinglab-v") != PROTOCOL || !crate::remote::same_bytes(header(SWARM_HEADER).as_bytes(), swarm_token(&event).as_bytes()) {
         return Err(StatusCode::FORBIDDEN);
     }
     Ok(retention)
@@ -322,7 +383,7 @@ async fn overview(State(shared): State<Arc<Shared>>, Query(q): Query<CodeQuery>)
 fn status_of(address: &str, event: &str) -> Option<StatusView> {
     let reply = ureq::get(&format!("http://{address}/status"))
         .timeout(STATUS_TIMEOUT)
-        .set("x-codinglab-event", event)
+        .set(SWARM_HEADER, &swarm_token(event))
         .set("x-codinglab-v", PROTOCOL)
         .call()
         .ok()?;
@@ -330,24 +391,37 @@ fn status_of(address: &str, event: &str) -> Option<StatusView> {
 }
 
 /// Help first, then stuck visitors, then stations that are online, then whoever has been on their mission longest.
-fn sort_overview(rows: &mut [StatusView]) {
-    rows.sort_by(|a, b| {
-        b.status.help
-            .cmp(&a.status.help)
-            .then(b.stuck.cmp(&a.stuck))
-            .then(a.offline.cmp(&b.offline))
-            .then(b.mission_ms.unwrap_or(-1).cmp(&a.mission_ms.unwrap_or(-1)))
-            .then(a.station_name.cmp(&b.station_name))
-    });
+fn overview_order(a: &StatusView, b: &StatusView) -> std::cmp::Ordering {
+    b.status.help
+        .cmp(&a.status.help)
+        .then(b.stuck.cmp(&a.stuck))
+        .then(a.offline.cmp(&b.offline))
+        .then(b.mission_ms.unwrap_or(-1).cmp(&a.mission_ms.unwrap_or(-1)))
+        .then(a.station_name.cmp(&b.station_name))
 }
 
-async fn overview_data(State(shared): State<Arc<Shared>>, Query(q): Query<CodeQuery>) -> Result<Json<serde_json::Value>, StatusCode> {
-    let event = check_code(&shared, q.code.as_deref())?;
+#[cfg(test)]
+fn sort_overview(rows: &mut [StatusView]) {
+    rows.sort_by(overview_order);
+}
+
+/// One row of the master's fleet view: the overview row plus where the station is reached.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FleetRow {
+    #[serde(flatten)]
+    pub view: StatusView,
+    /// Base URL of the peer (http://ip:port); empty for this station.
+    pub address: String,
+}
+
+/// This station plus every peer of the event, sorted like the overview. Peers are asked at once;
+/// a dead or slow one shows as offline after STATUS_TIMEOUT. Without an event code: only this station.
+pub async fn fleet_rows(shared: &Shared) -> Vec<FleetRow> {
     let own = shared.own_view();
-    // All peers are asked at once; each answer (or timeout) is collected afterwards.
-    let tasks: Vec<_> = shared
-        .peers
-        .targets(&event_hash(&event))
+    let event = shared.identity().map(|(_, e, _, _)| e).unwrap_or_default();
+    let peers = if event.is_empty() { Vec::new() } else { shared.peers.targets(&event_hash(&event)) };
+    let tasks: Vec<_> = peers
         .into_iter()
         .filter(|p| p.station != own.station_id)
         .map(|peer| {
@@ -358,10 +432,11 @@ async fn overview_data(State(shared): State<Arc<Shared>>, Query(q): Query<CodeQu
             })
         })
         .collect();
-    let mut rows = vec![own];
+    let mut rows = vec![FleetRow { view: own, address: String::new() }];
     for task in tasks {
         let Ok((peer, view)) = task.await else { continue };
-        let row = match view {
+        let address = format!("http://{}", peer.address);
+        let view = match view {
             Some(mut v) => {
                 v.offline = v.offline || v.age_ms > OFFLINE_MS;
                 // A help call from a station that went quiet is stale: do not keep it on top.
@@ -369,6 +444,7 @@ async fn overview_data(State(shared): State<Arc<Shared>>, Query(q): Query<CodeQu
                     v.status.help = false;
                 }
                 v.mark_stuck();
+                drop_big_program(&mut v.status);
                 v.station_id = peer.station;
                 if v.station_name.is_empty() {
                     v.station_name = peer.name;
@@ -377,9 +453,15 @@ async fn overview_data(State(shared): State<Arc<Shared>>, Query(q): Query<CodeQu
             }
             None => StatusView { station_id: peer.station, station_name: peer.name, offline: true, ..Default::default() },
         };
-        rows.push(row);
+        rows.push(FleetRow { view, address });
     }
-    sort_overview(&mut rows);
+    rows.sort_by(|a, b| overview_order(&a.view, &b.view));
+    rows
+}
+
+async fn overview_data(State(shared): State<Arc<Shared>>, Query(q): Query<CodeQuery>) -> Result<Json<serde_json::Value>, StatusCode> {
+    check_code(&shared, q.code.as_deref())?;
+    let rows: Vec<StatusView> = fleet_rows(&shared).await.into_iter().map(|r| r.view).collect();
     Ok(Json(serde_json::json!({ "stations": rows })))
 }
 
@@ -408,6 +490,7 @@ pub fn router(shared: Arc<Shared>) -> Router {
         .route("/status", get(get_status))
         .route("/overview", get(overview))
         .route("/overview/data", get(overview_data))
+        .route("/command", axum::routing::post(crate::remote::receive).layer(axum::extract::DefaultBodyLimit::max(crate::remote::MAX_COMMAND_BYTES)))
         .layer(axum::extract::DefaultBodyLimit::max(MAX_BODY_BYTES))
         .with_state(shared)
 }
@@ -416,7 +499,7 @@ pub fn router(shared: Arc<Shared>) -> Router {
 pub struct HttpRemote {
     station: String,
     base_url: String,
-    event: String,
+    token: String,
     agent: ureq::Agent,
 }
 
@@ -425,7 +508,7 @@ impl HttpRemote {
         Self {
             station: station.into(),
             base_url: base_url.trim_end_matches('/').into(),
-            event: event.into(),
+            token: swarm_token(event),
             agent: ureq::AgentBuilder::new().timeout(Duration::from_secs(5)).build(),
         }
     }
@@ -450,7 +533,7 @@ impl Remote for HttpRemote {
         let page = self
             .agent
             .get(&format!("{}/records", self.base_url))
-            .set("x-codinglab-event", &self.event)
+            .set(SWARM_HEADER, &self.token)
             .set("x-codinglab-v", PROTOCOL)
             .query("after", &after.to_string())
             .call()
@@ -463,7 +546,7 @@ impl Remote for HttpRemote {
         let reply = self
             .agent
             .post(&format!("{}/records", self.base_url))
-            .set("x-codinglab-event", &self.event)
+            .set(SWARM_HEADER, &self.token)
             .set("x-codinglab-v", PROTOCOL)
             .send_json(records)
             .map_err(net)?;
@@ -496,7 +579,7 @@ pub struct Peers {
 }
 
 impl Peers {
-    fn seen(&self, station: &str, name: &str, address: &str, event_hash: &str) {
+    pub(crate) fn seen(&self, station: &str, name: &str, address: &str, event_hash: &str) {
         let Ok(mut map) = self.map.lock() else { return };
         let now = Instant::now();
         map.retain(|_, e| now.duration_since(e.seen_at) < PEER_EXPIRY);
@@ -512,10 +595,26 @@ impl Peers {
             entry.seen_at = now;
             return;
         }
-        if map.len() >= MAX_PEERS
-            && let Some(oldest) = map.iter().min_by_key(|(_, e)| e.seen_at).map(|(k, _)| k.clone()) {
-                map.remove(&oldest);
-            }
+        // Room is made by dropping the stalest entry that did not answer lately (never-answered first);
+        // a station that works is never pushed out, however many newcomers announce themselves.
+        let ip = |a: &str| a.rsplit_once(':').map_or(a, |(host, _)| host).to_string();
+        let new_ip = ip(address);
+        let now_wall = now_ms();
+        let victim = |map: &HashMap<String, PeerEntry>, same_ip: bool| {
+            map.iter()
+                .filter(|(_, e)| !same_ip || ip(&e.info.address) == new_ip)
+                .filter(|(_, e)| !e.info.last_ok_ms.is_some_and(|t| now_wall - t < TRUSTED_MS))
+                .min_by_key(|(_, e)| (e.info.last_ok_ms.is_some(), e.seen_at))
+                .map(|(k, _)| k.clone())
+        };
+        if map.values().filter(|e| ip(&e.info.address) == new_ip).count() >= MAX_PEERS_PER_IP {
+            let Some(key) = victim(&map, true) else { return };
+            map.remove(&key);
+        }
+        if map.len() >= MAX_PEERS {
+            let Some(key) = victim(&map, false) else { return };
+            map.remove(&key);
+        }
         map.insert(
             station.into(),
             PeerEntry {
@@ -542,7 +641,7 @@ impl Peers {
             .unwrap_or_default()
     }
 
-    fn targets(&self, event_hash: &str) -> Vec<PeerInfo> {
+    pub(crate) fn targets(&self, event_hash: &str) -> Vec<PeerInfo> {
         let now = Instant::now();
         self.map
             .lock()
@@ -682,7 +781,7 @@ pub fn start(shared: Arc<Shared>) -> Arc<Peers> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::history::tests::record;
 
@@ -792,17 +891,19 @@ mod tests {
     use crate::config::StationConfig;
     use std::sync::{Arc, Mutex};
 
-    fn shared(event: &str) -> Arc<Shared> {
+    pub(crate) fn shared(event: &str) -> Arc<Shared> {
         let cfg = StationConfig { event_code: event.into(), ..Default::default() };
         Arc::new(Shared {
             history: Arc::new(History::in_memory().unwrap()),
             config: Arc::new(Mutex::new(cfg)),
             peers: Arc::new(Peers::default()),
             status: Mutex::new(None),
+            dir: std::env::temp_dir().join(format!("codinglab-test-{}", uuid::Uuid::new_v4())),
+            inbox: Default::default(),
         })
     }
 
-    async fn serve(s: Arc<Shared>) -> String {
+    pub(crate) async fn serve(s: Arc<Shared>) -> String {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
         tokio::spawn(async move { axum::serve(listener, router(s)).await.unwrap() });
@@ -851,13 +952,13 @@ mod tests {
         let url = serve(shared("TDOT")).await;
         let (bad, too_many) = tokio::task::spawn_blocking(move || {
             let bad = ureq::post(&format!("{url}/records"))
-                .set("x-codinglab-event", "TDOT")
+                .set(SWARM_HEADER, &swarm_token("TDOT"))
                 .set("x-codinglab-v", PROTOCOL)
                 .set("content-type", "application/json")
                 .send_string("{ nope");
             let many: Vec<SessionRecord> = (0..(MAX_PAGE + 1)).map(|i| record(&format!("r{i}"), "X", NOW, None)).collect();
             let too_many = ureq::post(&format!("{url}/records"))
-                .set("x-codinglab-event", "TDOT")
+                .set(SWARM_HEADER, &swarm_token("TDOT"))
                 .set("x-codinglab-v", PROTOCOL)
                 .send_json(&many);
             (bad.err().map(|e| e.to_string()), too_many.err().map(|e| e.to_string()))
@@ -952,7 +1053,7 @@ mod tests {
     fn get(url: &str, event: Option<&str>) -> Result<ureq::Response, String> {
         let mut req = ureq::get(url);
         if let Some(event) = event {
-            req = req.set("x-codinglab-event", event).set("x-codinglab-v", PROTOCOL);
+            req = req.set(SWARM_HEADER, &swarm_token(event)).set("x-codinglab-v", PROTOCOL);
         }
         req.call().map_err(|e| e.to_string())
     }
@@ -1099,5 +1200,185 @@ mod tests {
         gone.mark_stuck();
         assert!(!gone.stuck);
         assert_eq!(gone.stuck_reason, None);
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn fleet_has_this_station_a_live_peer_and_a_dead_one() {
+        let a = shared("TDOT");
+        let b = shared("TDOT");
+        a.set_status(status("attract", false));
+        let pose = Pose { x: 2.0, y: 3.0, heading: 90.0, flying: true, carrying: false };
+        b.set_status(StationStatus { program: Some(serde_json::json!(["takeoff", "forward"])), pose: Some(pose), visit_since: Some(1), paused: true, ..status("mission", false) });
+        let b_addr = serve(b).await.trim_start_matches("http://").to_string();
+        let hash = event_hash("TDOT");
+        a.peers.seen("B", "Halle B", &b_addr, &hash);
+        a.peers.seen("C", "Halle C", "127.0.0.1:1", &hash);
+        a.peers.seen("E", "fremd", "127.0.0.1:1", &event_hash("OTHER"));
+        let a_id = a.config.lock().unwrap().station_id.clone();
+        let rows = fleet_rows(&a).await;
+        let find = |id: &str| rows.iter().find(|r| r.view.station_id == id).unwrap_or_else(|| panic!("{id} missing: {rows:?}"));
+        assert_eq!(rows.len(), 3);
+        assert_eq!(find(&a_id).address, "");
+        assert!(!find(&a_id).view.offline);
+        let live = serde_json::to_value(find("B")).unwrap();
+        assert_eq!(live["address"], format!("http://{b_addr}"));
+        assert_eq!(live["offline"], false);
+        assert_eq!(live["program"], serde_json::json!(["takeoff", "forward"]));
+        assert_eq!(live["pose"]["heading"], 90.0);
+        assert_eq!(live["pose"]["flying"], true);
+        assert_eq!(live["visitSince"], 1);
+        assert_eq!(live["paused"], true);
+        assert!(find("C").view.offline);
+        assert_eq!(find("C").address, "http://127.0.0.1:1");
+        // Without an event code the fleet is just this station.
+        let alone = shared("");
+        alone.peers.seen("B", "Halle B", &b_addr, &event_hash(""));
+        assert_eq!(fleet_rows(&alone).await.len(), 1);
+    }
+
+    #[test]
+    fn drops_a_program_that_is_too_big() {
+        let s = shared("TDOT");
+        let big = serde_json::json!("x".repeat(MAX_PROGRAM_BYTES));
+        s.set_status(StationStatus { program: Some(big), paused: true, ..status("mission", false) });
+        let view = s.own_view();
+        assert_eq!(view.status.program, None);
+        assert!(view.status.paused, "the rest of the status stays");
+        s.set_status(StationStatus { program: Some(serde_json::json!({ "b": [1, 2] })), ..status("mission", false) });
+        assert!(s.own_view().status.program.is_some());
+        let old: StationStatus = serde_json::from_str(r#"{"screen":"map","lastActivity":1}"#).unwrap();
+        assert_eq!((old.program, old.pose, old.visit_since, old.paused), (None, None, None, false));
+    }
+
+    #[test]
+    fn derived_values_are_distinct() {
+        let token = swarm_token("TDOT");
+        assert_eq!(token.len(), 64);
+        assert!(!token.contains("TDOT"));
+        assert_ne!(token, event_hash("TDOT"));
+        assert!(!token.starts_with(&event_hash("TDOT")), "not just a longer event hash");
+        assert_ne!(token, crate::remote::sign("TDOT", b""), "not the command key's output either");
+        assert_ne!(token, swarm_token("OTHER"));
+        assert_eq!(swarm_token(""), "");
+    }
+
+    /// Records what a peer sends in the swarm header.
+    async fn header_spy() -> (String, Arc<Mutex<Vec<String>>>) {
+        let seen = Arc::new(Mutex::new(Vec::new()));
+        let sink = seen.clone();
+        let app = Router::new().fallback(move |headers: HeaderMap| {
+            let sink = sink.clone();
+            async move {
+                for (name, value) in &headers {
+                    sink.lock().unwrap().push(format!("{name}: {}", value.to_str().unwrap_or_default()));
+                }
+                StatusCode::FORBIDDEN
+            }
+        });
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap().to_string();
+        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        (addr, seen)
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn the_event_code_never_goes_over_the_wire() {
+        let (addr, seen) = header_spy().await;
+        let a = shared("GEHEIM-TDOT");
+        a.peers.seen("B", "spy", &addr, &event_hash("GEHEIM-TDOT"));
+        fleet_rows(&a).await;
+        let base = format!("http://{addr}");
+        tokio::task::spawn_blocking(move || {
+            let remote = HttpRemote::new("B", &base, "GEHEIM-TDOT");
+            let _ = remote.pull(0);
+            let _ = remote.push(&[]);
+        })
+        .await
+        .unwrap();
+        let seen = seen.lock().unwrap();
+        assert!(seen.len() > 3, "{seen:?}");
+        assert!(seen.iter().all(|h| !h.contains("GEHEIM")), "{seen:?}");
+        let token = format!("{SWARM_HEADER}: {}", swarm_token("GEHEIM-TDOT"));
+        assert_eq!(seen.iter().filter(|h| **h == token).count(), 3, "status, pull and push carry the token");
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn the_raw_code_or_an_old_build_is_refused() {
+        let url = serve(shared("TDOT")).await;
+        let codes = tokio::task::spawn_blocking(move || {
+            let status = |event: &str, v: &str| match ureq::get(&format!("{url}/status")).set(SWARM_HEADER, event).set("x-codinglab-v", v).call() {
+                Ok(r) => r.status(),
+                Err(ureq::Error::Status(code, _)) => code,
+                Err(e) => panic!("{e}"),
+            };
+            [status("TDOT", PROTOCOL), status("TDOT", "1"), status(&swarm_token("TDOT"), "1"), status(&event_hash("TDOT"), PROTOCOL), status(&swarm_token("TDOT"), PROTOCOL)]
+        })
+        .await
+        .unwrap();
+        assert_eq!(codes, [403, 403, 403, 403, 200]);
+    }
+
+    #[test]
+    fn rogue_announcements_cannot_push_out_working_peers() {
+        let peers = Peers::default();
+        for i in 0..MAX_PEERS {
+            peers.seen(&format!("real{i}"), "", &format!("10.0.0.{i}:47800"), "h");
+            if i % 2 == 0 {
+                peers.ok(&format!("real{i}"));
+            }
+        }
+        // Many rogue machines, each announcing many ids.
+        for m in 0..20 {
+            for i in 0..10 {
+                peers.seen(&format!("rogue{m}-{i}"), "", &format!("10.6.6.{m}:{}", 47800 + i), "h");
+            }
+        }
+        let list = peers.list();
+        assert_eq!(list.len(), MAX_PEERS);
+        for i in (0..MAX_PEERS).step_by(2) {
+            assert!(list.iter().any(|p| p.station == format!("real{i}")), "working real{i} was pushed out");
+        }
+        for m in 0..20 {
+            let from_one = list.iter().filter(|p| p.address.starts_with(&format!("10.6.6.{m}:"))).count();
+            assert!(from_one <= MAX_PEERS_PER_IP, "{from_one} entries from one machine");
+        }
+        // Once every entry works, a newcomer is not taken in at all.
+        let full = Peers::default();
+        for i in 0..MAX_PEERS {
+            full.seen(&format!("s{i}"), "", &format!("10.0.1.{i}:47800"), "h");
+            full.ok(&format!("s{i}"));
+        }
+        full.seen("late", "", "10.0.2.1:47800", "h");
+        assert!(full.list().iter().all(|p| p.station != "late"));
+    }
+
+    #[test]
+    fn one_machine_gets_a_few_entries_at_most() {
+        let peers = Peers::default();
+        for i in 0..10 {
+            peers.seen(&format!("s{i}"), "", &format!("10.0.0.9:{}", 47800 + i), "h");
+        }
+        let list = peers.list();
+        assert_eq!(list.len(), MAX_PEERS_PER_IP);
+        assert!(list.iter().any(|p| p.station == "s9"), "the newest is kept, the stalest goes");
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn fleet_drops_a_peers_oversized_program_and_keeps_its_clock() {
+        let a = shared("TDOT");
+        let b = shared("TDOT");
+        let now = chrono::Utc::now().timestamp_millis();
+        // Written past set_status, like a peer that does not check the size itself.
+        let big = StationStatus { program: Some(serde_json::json!("x".repeat(MAX_PROGRAM_BYTES))), visit_since: Some(now - 60_000), ..status("mission", false) };
+        *b.status.lock().unwrap() = Some((big, now));
+        let b_addr = serve(b).await.trim_start_matches("http://").to_string();
+        a.peers.seen("B", "Halle B", &b_addr, &event_hash("TDOT"));
+        let rows = fleet_rows(&a).await;
+        let row = rows.iter().find(|r| r.view.station_id == "B").unwrap();
+        assert_eq!(row.view.status.program, None);
+        assert!(row.view.visit_ms.is_some_and(|ms| ms >= 60_000), "{:?}", row.view.visit_ms);
+        assert!((row.view.now - now).abs() < 10_000, "the peer's own clock");
+        let json = serde_json::to_value(row).unwrap();
+        assert!(json["visitMs"].is_i64() && json["now"].is_i64());
     }
 }

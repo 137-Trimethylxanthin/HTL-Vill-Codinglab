@@ -6,7 +6,8 @@ use crate::error::{AppError, AppResult};
 use crate::mail;
 use crate::history::{History, SessionRecord};
 use crate::secrets::{self, SMTP_SECRET};
-use crate::sync::{self, PeerInfo, Peers, Shared, StationStatus};
+use crate::remote::{self, RemoteCommand, SendResult};
+use crate::sync::{self, FleetRow, PeerInfo, Peers, Shared, StationStatus};
 use std::sync::Arc;
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
@@ -193,6 +194,18 @@ pub fn publish_status(state: State<'_, AppState>, status: StationStatus) {
 #[tauri::command]
 pub fn lan_urls() -> Vec<String> {
     sync::lan_addresses().into_iter().map(|ip| format!("http://{ip}:{}", sync::SYNC_PORT)).collect()
+}
+
+/// This station and every peer of its event, for the master's fleet view.
+#[tauri::command]
+pub async fn fleet(state: State<'_, AppState>) -> AppResult<Vec<FleetRow>> {
+    Ok(sync::fleet_rows(&state.sync).await)
+}
+
+/// Master only: sends a command to the given stations (empty = all, this one included).
+#[tauri::command]
+pub async fn send_command(state: State<'_, AppState>, pin: String, targets: Vec<String>, command: RemoteCommand) -> AppResult<Vec<SendResult>> {
+    remote::send(&state.sync, &pin, targets, command).await
 }
 
 #[tauri::command]

@@ -33,6 +33,7 @@ const defaults = (): Stored => {
 			qrUrl: HTL_URL,
 			replayUrl: '',
 			wallMode: false,
+			master: false,
 			nameRetentionDays: 7,
 			manualPeers: [],
 			smtp: { host: '', port: 587, username: '', from: '', starttls: true }
@@ -92,7 +93,7 @@ export function createWebPlatform(storage: Storage): Platform {
 
 	return {
 		kind: 'web',
-		features: { certificate: false, email: false, overview: false },
+		features: { certificate: false, email: false, overview: false, master: false },
 		init: async () => {},
 		appVersion: async () => __APP_VERSION__,
 		checkUpdate: async () => null,
@@ -121,6 +122,8 @@ export function createWebPlatform(storage: Storage): Platform {
 				eventCode: config.eventCode.trim(),
 				qrUrl: config.qrUrl.trim(),
 				replayUrl: cleanReplayUrl(config.replayUrl),
+				// The browser has no server: it never acts as master.
+				master: false,
 				idleSeconds: Math.min(600, Math.max(30, Math.round(config.idleSeconds))),
 				enabledMissions: config.enabledMissions?.length ? config.enabledMissions : null,
 				nameRetentionDays: Math.min(365, Math.max(1, Math.round(config.nameRetentionDays))),
@@ -156,6 +159,9 @@ export function createWebPlatform(storage: Storage): Platform {
 		peers: async () => [],
 		publishStatus: async () => {},
 		lanUrls: async () => [],
+		fleet: async () => [],
+		sendCommand: unsupported,
+		onRemoteCommand: () => () => {},
 		deleteHistory: async (pin) => {
 			await check(read(), pin);
 			const n = readHistory().length;

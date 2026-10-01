@@ -44,6 +44,17 @@ Für Betreuer gibt es den [Spickzettel](SPICKZETTEL.md): Lösungen aller Mission
 - **Hilfe-Knopf:** Kinder rufen in der Mission mit „Hilfe“ einen Betreuer; auf der Übersicht erscheint **HILFE**.
 - **Betreuungs-Menü:** Missionsnummer oben links **2 Sekunden halten** (oder **Strg + Umschalt + H**), dann die Admin-PIN: Blöcke zum Ordnen (die Lösung gemischt, höchstens 2 Sterne), Lösung zeigen (zählt nicht für Sterne), zu einer Mission springen, Hilferuf beenden, nächster Besucher.
 
+## Leitstand (optional)
+
+Ein Master-PC ist **nicht nötig** – alles läuft auch ohne. Wer einen möchte: an einem Desktop-PC im selben Netz Admin öffnen → **„PC zum Master machen“** (Event-Code muss gesetzt sein). Der PC zeigt dann statt der Missionen den **Leitstand**:
+
+- jede Station als Kachel, live: Karte mit Drohne, die Blöcke des Kindes, Mission, HILFE/HÄNGT
+- **Zeit pro Mission** in Ampelfarben: grün = im Plan, gelb = etwas langsam, rot = braucht Hilfe (Maßstab: übliche Zeit der Mission heute, am Anfang feste Werte)
+- Befehle an ausgewählte oder alle Stationen: **Nächster Besucher**, **Pause/Weiter** (optional mit Text), **Nachricht**, **Hilferuf beenden**, **Lösung zeigen**, **Einstellungen übertragen** (Leerlauf-Zeit, Töne, Missionen)
+- rechts die Zahlen von heute
+
+Befehle brauchen die PIN des Master-PCs (bleibt 3 Minuten gespeichert) und sind mit dem Event-Code signiert; der Code selbst geht nie über das Netz. Eine vergessene Pause endet nach 15 Minuten von selbst oder wenn an der Station Admin geöffnet und geschlossen wird. **Alle Stationen müssen dieselbe Version haben** (ältere werden als offline angezeigt). Zurück: Admin → „Master beenden“.
+
 ## E-Mail
 
 1. SMTP-Server, Port, STARTTLS, Benutzer, Passwort und Absender eintragen, **Speichern**.

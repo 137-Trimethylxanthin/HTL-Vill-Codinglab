@@ -45,7 +45,12 @@ describe('web platform', () => {
 	it('has a no-op init', async () => {
 		const p = createWebPlatform(new MemoryStorage());
 		await p.init();
-		expect(p.features).toEqual({ certificate: false, email: false, overview: false });
+		expect(p.features).toEqual({
+			certificate: false,
+			email: false,
+			overview: false,
+			master: false
+		});
 	});
 
 	it('stores the fullscreen choice', async () => {
@@ -84,7 +89,12 @@ describe('web platform', () => {
 		expect(cfg.hasPin).toBe(false);
 		expect(cfg.idleSeconds).toBe(90);
 		expect(cfg.stationId).toHaveLength(36);
-		expect(p.features).toEqual({ certificate: false, email: false, overview: false });
+		expect(p.features).toEqual({
+			certificate: false,
+			email: false,
+			overview: false,
+			master: false
+		});
 	});
 
 	it('sets and checks the PIN', async () => {
@@ -165,5 +175,21 @@ describe('web platform', () => {
 			})
 		).resolves.toBeUndefined();
 		expect(await p.lanUrls()).toEqual([]);
+	});
+
+	it('never acts as master', async () => {
+		const p = createWebPlatform(new MemoryStorage());
+		expect((await p.getConfig()).master).toBe(false);
+		await p.setPin(null, '2468');
+		const config = { ...(await p.getConfig()), master: true };
+		expect((await p.saveConfig('2468', config)).master).toBe(false);
+		expect(await p.fleet()).toEqual([]);
+		await expect(p.sendCommand('2468', [], { kind: 'reset' })).rejects.toMatchObject({
+			code: 'unsupported'
+		});
+		const off = p.onRemoteCommand(() => {
+			throw new Error('never called');
+		});
+		expect(() => off()).not.toThrow();
 	});
 });

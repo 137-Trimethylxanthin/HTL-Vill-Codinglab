@@ -15,6 +15,12 @@ pub enum AppError {
     InvalidEmail,
     #[error("E-Mail konnte nicht gesendet werden: {0}")]
     Mail(String),
+    #[error("Diese Station ist nicht als Master eingerichtet.")]
+    NotMaster,
+    #[error("Ohne Event-Code gibt es keine Fernsteuerung.")]
+    NoEvent,
+    #[error("Keine Station ausgewählt.")]
+    NoTargets,
     #[error("Datei-Fehler: {0}")]
     Io(#[from] std::io::Error),
     #[error("Daten-Fehler: {0}")]
@@ -32,6 +38,9 @@ impl AppError {
             AppError::NoSmtp => "noSmtp",
             AppError::InvalidEmail => "invalidEmail",
             AppError::Mail(_) => "mail",
+            AppError::NotMaster => "notMaster",
+            AppError::NoEvent => "noEvent",
+            AppError::NoTargets => "noTargets",
             AppError::Io(_) => "io",
             AppError::Json(_) => "json",
             AppError::Other(_) => "other",

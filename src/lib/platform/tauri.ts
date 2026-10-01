@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { t } from '$lib/i18n/de';
-import { PlatformError, type Platform } from './types';
+import { PlatformError, type Platform, type RemoteCommand } from './types';
 
 async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
 	try {
@@ -12,7 +12,7 @@ async function call<T>(command: string, args?: Record<string, unknown>): Promise
 }
 
 export function createTauriPlatform(): Platform {
-	const features = { certificate: true, email: true, overview: true };
+	const features = { certificate: true, email: true, overview: true, master: true };
 	return {
 		kind: 'tauri',
 		features,
@@ -22,6 +22,7 @@ export function createTauriPlatform(): Platform {
 			if (info?.mobile) {
 				features.certificate = false;
 				features.overview = false;
+				features.master = false;
 			}
 		},
 		appVersion: async () => (await import('@tauri-apps/api/app')).getVersion(),
@@ -57,6 +58,25 @@ export function createTauriPlatform(): Platform {
 		peers: () => call('peers'),
 		publishStatus: (status) => call('publish_status', { status }),
 		lanUrls: () => call('lan_urls'),
+		fleet: () => call('fleet'),
+		sendCommand: (pin, targets, command) => call('send_command', { pin, targets, command }),
+		onRemoteCommand: (handler) => {
+			let unlisten: (() => void) | null = null;
+			let stopped = false;
+			void import('@tauri-apps/api/event')
+				.then(({ listen }) =>
+					listen<RemoteCommand>('remote-command', (event) => handler(event.payload))
+				)
+				.then((off) => {
+					if (stopped) off();
+					else unlisten = off;
+				})
+				.catch(() => {});
+			return () => {
+				stopped = true;
+				unlisten?.();
+			};
+		},
 		deleteHistory: (pin) => call('delete_history', { pin }),
 		saveTextFile: (pin, fileName, contents) => call('save_text_file', { pin, fileName, contents })
 	};

@@ -9,6 +9,7 @@ export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
 	idleSeconds: 90,
 	fullscreen: true,
 	sound: true,
+	master: false,
 	enabledMissions: null,
 	qrUrl: HTL_URL,
 	replayUrl: '',

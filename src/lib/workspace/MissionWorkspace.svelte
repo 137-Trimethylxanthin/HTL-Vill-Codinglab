@@ -38,6 +38,8 @@
 	import DroneStage from '$lib/stage/DroneStage.svelte';
 	import { longPress } from '$lib/ui/long-press';
 	import { cn } from '$lib/utils';
+	import type { BlockNode } from '$lib/blocks/types';
+	import type { LivePose } from '$lib/session/status';
 	import type { Frame } from '$lib/stage/timeline';
 	import { play, type Effect } from '$lib/ui/sound';
 	import BlockPalette from './BlockPalette.svelte';
@@ -73,6 +75,7 @@
 		driver = null,
 		maxStars = 3,
 		announceKey = '',
+		onLive,
 		missions = SHOWCASE
 	}: {
 		mission: Mission;
@@ -99,6 +102,8 @@
 		maxStars?: number;
 		/** Changes with every new turn (duo), so a rebuild of the same turn stays quiet. */
 		announceKey?: string;
+		/** The blocks and the drone right now, for a master station's live view. */
+		onLive?: (live: { program: BlockNode[]; pose: LivePose }) => void;
 		/** Missions this station plays, in order (for the "Neu!" badges). */
 		missions?: Mission[];
 	} = $props();
@@ -154,6 +159,19 @@
 	});
 	const coach = $derived(new CoachState(mission.hints));
 	$effect(() => onRuns?.(ctrl.runs));
+	$effect(() => {
+		const { x, y, heading, lift } = ctrl.player;
+		onLive?.({
+			program: ctrl.program,
+			pose: {
+				x: x.target,
+				y: y.target,
+				heading: heading.target,
+				flying: lift.target > 0.5,
+				carrying: ctrl.player.carrying
+			}
+		});
+	});
 	$effect(() => onFails?.(ctrl.fails));
 	$effect(() => {
 		const current = coach;
