@@ -151,6 +151,43 @@
 	--warn-foreground: oklch(0.95 0.05 85);
 }
 
+/* Block colours per category (white text on all of them). */
+:root {
+	--blk-flight: oklch(0.6 0.11 210);
+	--blk-move: oklch(0.65 0.18 42);
+	--blk-turn: oklch(0.66 0.15 78);
+	--blk-cargo: oklch(0.55 0.1 55);
+	--blk-camera: oklch(0.55 0.18 305);
+	--blk-loop: oklch(0.52 0.16 258);
+	--blk-condition: oklch(0.57 0.14 155);
+	/* Puzzle connector: a notch on top of every block, a matching tab below it. */
+	--notch-x: 1.75rem;
+	--notch-w: 2.25rem;
+	--notch-h: 0.5rem;
+	/* Width of the arm of a repeat/if clamp. */
+	--arm: 1rem;
+}
+
+/* Cuts the notch out of the top edge (border-radius still rounds the corners). */
+.puzzle {
+	mask:
+		linear-gradient(#000 0 0) 0 0 / var(--notch-x) var(--notch-h) no-repeat,
+		linear-gradient(#000 0 0) right 0 top 0 / calc(100% - var(--notch-x) - var(--notch-w))
+			var(--notch-h) no-repeat,
+		linear-gradient(#000 0 0) 0 var(--notch-h) / 100% calc(100% - var(--notch-h)) no-repeat;
+}
+
+/* The tab under a block; it fills the notch of the block below. */
+.puzzle-tab {
+	position: absolute;
+	left: calc(var(--tab-x, var(--notch-x)) + 2px);
+	bottom: calc(-1 * var(--notch-h) + 1px);
+	width: calc(var(--notch-w) - 4px);
+	height: var(--notch-h);
+	border-radius: 0 0 0.45rem 0.45rem;
+	background: var(--blk);
+}
+
 @theme inline {
 	--color-htl: var(--htl);
 	--color-drone: var(--drone);

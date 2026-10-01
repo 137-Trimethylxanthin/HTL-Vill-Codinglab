@@ -32,9 +32,11 @@ test('a long palette scrolls with a finger and blocks still drag out of it', asy
 
 test('the block that is running scrolls into view', async ({ page }) => {
 	await openMission(page, 'Erster Flug');
-	await palette(page, 'Abheben').click();
-	for (let i = 0; i < 12; i++) await palette(page, 'Vorwärts').click();
-	await palette(page, 'Landen').click();
+	// Taking off and landing over and over never crashes, so the flight reaches the last blocks.
+	for (let i = 0; i < 9; i++) {
+		await palette(page, 'Abheben').click();
+		await palette(page, 'Landen').click();
+	}
 	const scroller = page.locator('[data-drop-scroll]');
 	await scroller.evaluate((el) => (el.scrollTop = 0));
 	const overflow = await scroller.evaluate((el) => el.scrollHeight - el.clientHeight);

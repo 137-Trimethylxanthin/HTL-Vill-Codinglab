@@ -23,6 +23,7 @@
 	import DroneStage from '$lib/stage/DroneStage.svelte';
 	import { cn } from '$lib/utils';
 	import BlockPalette from './BlockPalette.svelte';
+	import { blockColor } from './colors';
 	import Coach from './Coach.svelte';
 	import { CoachState } from './coach.svelte';
 	import Confetti from './Confetti.svelte';
@@ -109,7 +110,7 @@
 	}
 
 	const MAGNET_PX = 40;
-	const ROW_GAP = 8; // gap-2 between list items
+	const ROW_GAP = 0; // blocks sit flush: each tab fills the notch of the block below
 
 	/**
 	 * Where an element sits once every running slide/scale animation has finished, in screen
@@ -269,6 +270,16 @@
 		gapHeight = source.kind === 'program' ? (el.closest('li')?.offsetHeight ?? null) : null;
 	}
 
+	// Each Python line gets the colour of the block it came from.
+	const lineColors = $derived(
+		Object.fromEntries(
+			Object.entries(ctrl.python.blockAt).flatMap(([line, id]) => {
+				const node = findBlock(ctrl.program, id);
+				return node ? [[Number(line), blockColor(node.type)]] : [];
+			})
+		)
+	);
+
 	const ghost = $derived.by(() => {
 		const source = drag.active;
 		if (!source) return null;
@@ -385,6 +396,7 @@
 					hover={drag.hover?.kind === 'slot' ? drag.hover.target : null}
 					{landedId}
 					{gapHeight}
+					gapType={ghost?.type ?? null}
 					onRemove={(id) => {
 						coach.activity();
 						ctrl.remove(id);
@@ -406,6 +418,7 @@
 					code={ctrl.python.code}
 					activeLine={ctrl.player.line}
 					numberTargets={ctrl.numberTargets}
+					{lineColors}
 					onNumber={mission.editablePython && ctrl.status !== 'running'
 						? (id, delta) => {
 								coach.activity();

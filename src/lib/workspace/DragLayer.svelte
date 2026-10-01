@@ -17,7 +17,7 @@
 	>
 		<div
 			class={cn(
-				'rounded-2xl shadow-2xl transition-opacity',
+				'drop-shadow-xl transition-opacity',
 				drag.rejected && 'shake',
 				drag.hover?.kind === 'trash' && 'opacity-50'
 			)}

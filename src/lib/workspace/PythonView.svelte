@@ -8,11 +8,14 @@
 		code,
 		activeLine,
 		numberTargets = {},
+		lineColors = {},
 		onNumber
 	}: {
 		code: string;
 		activeLine: number | null;
 		numberTargets?: Record<number, string>;
+		/** Line number → colour of the block that produced it. */
+		lineColors?: Record<number, string>;
 		onNumber?: (blockId: string, delta: number) => void;
 	} = $props();
 
@@ -52,9 +55,11 @@
 	<pre class="min-h-0 overflow-auto rounded-2xl bg-slate-900 p-4 font-mono text-lg leading-8"><code
 			>{#each lines as line, i (i)}<div
 					class={cn(
-						'-mx-2 rounded-lg px-2 transition-colors',
+						'-mx-2 rounded-lg border-l-4 border-transparent px-2 transition-colors',
 						activeLine === i + 1 && 'bg-drone/40'
-					)}><span class="mr-4 inline-block w-6 text-right text-slate-500 select-none">{i + 1}</span
+					)}
+					style:border-left-color={lineColors[i + 1]}><span
+						class="mr-4 inline-block w-6 text-right text-slate-500 select-none">{i + 1}</span
 					>{#each tokenizeLine(line) as token, j (j)}{#if editable && token.kind === 'number' && numberTargets[i + 1]}<button
 								class={cn(
 									'inline-grid min-h-14 min-w-14 place-items-center rounded-xl bg-amber-300/20 px-2 align-middle text-amber-300 underline decoration-dotted underline-offset-4',

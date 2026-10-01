@@ -3,10 +3,11 @@
 	import { backOut } from 'svelte/easing';
 	import { scale } from 'svelte/transition';
 	import type { DropTarget, Slot } from '$lib/blocks/edit';
-	import type { BlockNode } from '$lib/blocks/types';
+	import type { BlockNode, BlockType } from '$lib/blocks/types';
 	import { t } from '$lib/i18n/de';
 	import { cn } from '$lib/utils';
 	import BlockTile from './BlockTile.svelte';
+	import { blockColor } from './colors';
 
 	type Item = { key: string; node: BlockNode | null };
 
@@ -36,6 +37,7 @@
 		hover = null,
 		landedId = null,
 		gapHeight = null,
+		gapType = null,
 		onRemove,
 		onStep,
 		onGrab
@@ -48,6 +50,8 @@
 		landedId?: string | null;
 		/** Height of the block being moved; new blocks get the default tile height. */
 		gapHeight?: number | null;
+		/** Type of the block being dragged: the drop gap takes its colour. */
+		gapType?: BlockType | null;
 		onRemove: (id: string) => void;
 		onStep: (id: string, delta: number) => void;
 		onGrab: (id: string, e: PointerEvent) => void;
@@ -64,6 +68,8 @@
 			behavior: prefersReducedMotion.current ? 'auto' : 'smooth'
 		});
 	});
+
+	const gapColor = $derived(gapType ? blockColor(gapType) : 'var(--drone)');
 
 	/** Items of one list: without the dragged block, with a placeholder where it would land. */
 	function itemsFor(nodes: BlockNode[], parent: string | null, slot: Slot): Item[] {
@@ -82,11 +88,7 @@
 	<ol
 		data-drop-slot={slot}
 		data-drop-parent={parent ?? ''}
-		class={cn(
-			'flex flex-col gap-2',
-			parent !== null && 'min-h-16 rounded-2xl py-1',
-			parent !== null && items.length === 0 && 'border-2 border-dashed border-htl/30'
-		)}
+		class={cn('flex flex-col', parent !== null && 'min-h-16 py-1')}
 	>
 		{#each items as item (item.key)}
 			<li
@@ -97,6 +99,7 @@
 			>
 				{#if item.node}
 					{@const node = item.node}
+					{@const open = node.children !== undefined}
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
 						class={cn('touch-none', !locked && 'cursor-grab', node.id === landedId && 'land')}
@@ -108,38 +111,58 @@
 							type={node.type}
 							n={node.n}
 							active={node.id === activeId}
+							clamp={open}
 							onStep={locked ? undefined : (delta) => onStep(node.id, delta)}
 							onRemove={locked ? undefined : () => onRemove(node.id)}
 						/>
 					</div>
-					{#if node.children}
-						<div class="mt-2 ml-5 border-l-4 border-htl/30 pl-3">
-							{@render list(node.children, node.id, 'body')}
-						</div>
-					{/if}
-					{#if node.else}
-						<p class="mt-1 ml-5 text-sm font-bold text-muted-foreground uppercase">
-							{t.workspace.else}
-						</p>
-						<div class="ml-5 border-l-4 border-htl/30 pl-3">
-							{@render list(node.else, node.id, 'else')}
+					{#if open}
+						<!-- The C-shaped clamp: an arm down the left, a "sonst" bar, a foot with a tab. -->
+						<div class="drop-shadow-md" style:--blk={blockColor(node.type)}>
+							{@render arm(node.children ?? [], node.id, 'body')}
+							{#if node.else}
+								<div
+									class="relative flex h-9 items-center rounded-r-xl bg-(--blk) pl-4 text-sm font-bold text-white uppercase"
+									style:--tab-x="calc(var(--arm) + var(--notch-x))"
+								>
+									{t.workspace.else}
+									<span class="puzzle-tab"></span>
+								</div>
+								{@render arm(node.else, node.id, 'else')}
+							{/if}
+							<div class="relative h-4 w-36 rounded-tr-lg rounded-b-xl bg-(--blk)">
+								<span class="puzzle-tab"></span>
+							</div>
 						</div>
 					{/if}
 				{:else}
 					<div
 						data-drop-gap
-						class="breathe h-[4.25rem] rounded-2xl border-2 border-dashed border-drone bg-drone/15"
+						class="breathe h-[4.25rem] rounded-2xl border-2 border-dashed"
 						style:height={gapHeight ? `${gapHeight}px` : undefined}
+						style:border-color={gapColor}
+						style:background-color="color-mix(in oklch, {gapColor} 18%, transparent)"
 					></div>
 				{/if}
 			</li>
 		{/each}
 		{#if parent !== null && items.length === 0}
-			<li class="grid h-12 place-items-center text-sm text-muted-foreground">
+			<li
+				class="mx-1 grid h-12 place-items-center rounded-xl border-2 border-dashed border-(--blk)/40 text-sm text-muted-foreground"
+			>
 				{t.workspace.dropHere}
 			</li>
 		{/if}
 	</ol>
+{/snippet}
+
+{#snippet arm(nodes: BlockNode[], parent: string, slot: Slot)}
+	<div class="flex">
+		<div class="w-(--arm) shrink-0 bg-(--blk)"></div>
+		<div class="min-w-0 grow">
+			{@render list(nodes, parent, slot)}
+		</div>
+	</div>
 {/snippet}
 
 <section class="flex min-h-0 flex-1 flex-col gap-3">
